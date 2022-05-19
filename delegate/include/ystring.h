@@ -1500,4 +1500,15 @@ int inflateZ1end(Z1Ctx *Zc);
 int deflateZ1(Z1Ctx *Zc,PCStr(in),int len,PVStr(out),int osz);
 int inflateZ1(Z1Ctx *Zc,PCStr(in),int len,PVStr(out),int osz);
 
+// the shortest patch for comilation of delegate9.9.13 on recent Linuxes
+// @2020-0619, @SatoxITS, @ITS-more
+#pragma GCC diagnostic ignored "-Wparentheses"
+#pragma GCC diagnostic ignored "-Wcomment"
+#pragma GCC diagnostic ignored "-Wunused-result"
+#pragma GCC diagnostic ignored "-Wunused-value"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic ignored "-Wformat-extra-args"
+#pragma GCC diagnostic ignored "-Wnarrowing"
+//#pragma GCC diagnostic ignored "-Wstringop-overflow=" // for Pi
+
 #endif /* _YSTRING_H */

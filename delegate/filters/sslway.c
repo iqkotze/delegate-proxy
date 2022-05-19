@@ -59,9 +59,7 @@ Description:
     -{ss|st|St}/protocol enable STARTTLS for the protocol {SMTP,POP,IMAP,FTP}
     -bugs
 
-    -tls1 just talk TLSv1
-    -ssl2 just talk SSLv2
-    -ssl3 just talk SSLv3
+    -tls12 just talk TLSv1_2
 
   Usage:
     delegated FSV=sslway
@@ -174,9 +172,8 @@ extern "C" {
 #define SSL_VERIFY_CLIENT_ONCE		0x04
 
 #define SSL_CTRL_OPTIONS		32
-#define SSL_OP_NO_SSLv2			0x01000000
-#define SSL_OP_NO_SSLv3			0x02000000
-#define SSL_OP_NO_TLSv1			0x04000000
+#define SSL_OP_NO_TLSv1_2       0x08000000
+#define SSL_OP_NO_TLSv1_1       0x10000000
 
 typedef void SSL_CTX;
 typedef void SSL_METHOD;
@@ -218,7 +215,7 @@ BIGNUM *BN_new(BIGNUM *a);
 void BN_free(BIGNUM *a);
 char *BN_bn2hex(const BIGNUM *a);
 
-const char *SSLeay_version(int t);
+const char *OpenSSL_version(int t);
 
 BIO_METHOD *BIO_s_mem();
 BIO *BIO_new(BIO_METHOD*);
@@ -308,14 +305,8 @@ int  SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx,PCStr(file), int type);
 int  SSL_CTX_use_certificate_file(SSL_CTX *ctx,PCStr(file), int type);
 int  SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx,PCStr(file));/*OPT(0)*/
 
-SSL_METHOD *SSLv2_server_method(); /*OPT(0)*/
-SSL_METHOD *SSLv2_client_method(); /*OPT(0)*/
-SSL_METHOD *SSLv3_server_method();
-SSL_METHOD *SSLv3_client_method();
-SSL_METHOD *SSLv23_server_method();
-SSL_METHOD *SSLv23_client_method();
-SSL_METHOD *TLSv1_server_method();
-SSL_METHOD *TLSv1_client_method();
+SSL_METHOD *TLS_server_method(void);
+SSL_METHOD *TLS_client_method(void);
 
 X509_NAME *X509_get_issuer_name(X509 *a);
 int i2d_X509_bio(BIO *bp,X509 *x509);
@@ -933,6 +924,7 @@ static int showCurrentCipher(SSL *ssl){
 
 	if( sc = SSL_get_current_cipher(ssl) ){
 		if( descp = SSL_CIPHER_description(sc,desc,sizeof(desc)) ){
+			InitLog("-- CIPHER: %s",desc);
 			DEBUG("-- CIPHER: %s",desc);
 			return 0;
 		}
@@ -1126,7 +1118,8 @@ static SSLContext sslctx[2] = {
 static int   acc_bareHTTP = 0;
 static int   verify_depth = -1;
 static int   do_showCERT = 0;
-static const char *cipher_list = NULL;
+//static const char *cipher_list = "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA";
+static const char *cipher_list = "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384";
 
 #define sv_Start	sslctx[XACC].x_Start
 #define sv_Ready	sslctx[XACC].x_Ready
@@ -1185,23 +1178,13 @@ static SSL_CTX *ssl_new(int serv)
 		switch( sslver ){
 			case 1:
 				if( serv )
-					meth = SSLv2_server_method();
-				else	meth = SSLv2_client_method();
+					meth = TLS_server_method();
+				else	meth = TLS_client_method();
 				break;
 			case 2:
 				if( serv )
-					meth = SSLv3_server_method();
-				else	meth = SSLv3_client_method();
-				break;
-			case 3:
-				if( serv )
-					meth = SSLv23_server_method();
-				else	meth = SSLv23_client_method();
-				break;
-			case 4:
-				if( serv )
-					meth = TLSv1_server_method();
-				else	meth = TLSv1_client_method();
+					meth = TLS_server_method();
+				else	meth = TLS_client_method();
 				break;
 		}
 		if( meth == 0 ){
@@ -1210,8 +1193,8 @@ static SSL_CTX *ssl_new(int serv)
 	}
 	if( meth == 0 ){
 		if( serv )
-			meth = SSLv23_server_method();
-		else	meth = SSLv23_client_method();
+			meth = TLS_server_method();
+		else	meth = TLS_client_method();
 	}
 	ctx = SSL_CTX_new(meth);
 
@@ -1219,9 +1202,7 @@ static SSL_CTX *ssl_new(int serv)
 	if( sslnover = serv ? cl_sslnover : sv_sslnover ){
 		int opts = 0;
 		switch( sslnover ){
-			case 1: opts |= SSL_OP_NO_SSLv2; break;
-			case 2: opts |= SSL_OP_NO_SSLv3; break;
-			case 3: opts |= SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3; break;
+			case 1: opts |= SSL_OP_NO_TLSv1_1; break;
 		}
 		SSL_CTX_ctrl(ctx,SSL_CTRL_OPTIONS,opts,NULL);
 	}
@@ -2165,7 +2146,7 @@ static RSA *tmprsa_key;
 static RSA *tmprsa_callback(SSL *ctx,int exp,int bits)
 {
 	if( bits != 512 && bits != 1024 ){
-		bits = 512;
+		bits = 2048;
 	}
 	if( tmprsa_key == NULL ){
 		tmprsa_key = RSA_generate_key(bits,0x10001,NULL,NULL);
@@ -2871,7 +2852,7 @@ static int gen_session_cb(const SSL *ssl,unsigned char *id,unsigned int *id_len)
 static void put_help()
 {
 	syslog_ERROR("SSLway in %s/%s (%s)\r\n",NAME,VERSION,DATE);
-	syslog_ERROR("SSLlib %s\r\n",SSLeay_version(0));
+	syslog_ERROR("SSLlib %s\r\n",OpenSSL_version(0));
 }
 
 void initSSLwayCTX(SSLwayCTX *Sc){
@@ -3134,23 +3115,15 @@ int sslway_mainY(SSLwayCTX *Sc,int ac,char *av[],int client,int server,int bi,SS
 		}else
 		if( strncmp(arg,"-vs",3) == 0 ){
 		}else
-		if( strneq(arg,"-no_ssl",7) ){
+		if( strneq(arg,"-no_tls",7) ){
 			int sslnover = 0;
-			if( streq(arg+7,"2") ) sslnover = 1; else
-			if( streq(arg+7,"3") ) sslnover = 2; else
-			if( streq(arg+7,"23")) sslnover = 3;
+			if( streq(arg+7,"11") ) sslnover = 1;
 			sv_sslnover = cl_sslnover = sslnover;
-		}else
-		if( strneq(arg,"-ssl",4) ){
-			int sslver = 0;
-			if( streq(arg+4,"2") ) sslver = 1; else
-			if( streq(arg+4,"3") ) sslver = 2; else
-			if( streq(arg+4,"23")) sslver = 3;
-			sv_sslver = cl_sslver = sslver;
 		}else
 		if( strneq(arg,"-tls",4) ){
 			int sslver = 0;
-			if( streq(arg+4,"1") ) sslver = 4;
+			if( streq(arg+4,"11") ) sslver = 1; else
+			if( streq(arg+4,"12") ) sslver = 2;
 			sv_sslver = cl_sslver = sslver;
 		}else
 		if( strncasecmp(arg,"-ss",3) == 0 ){
@@ -3363,6 +3336,7 @@ int sslway_mainY(SSLwayCTX *Sc,int ac,char *av[],int client,int server,int bi,SS
 		ctx = ssl_new(0);
 		SSL_CTX_set_default_passwd_cb(ctx,(pem_password_cb*)cl_passwd);
 		if( cipher_list )
+			fprintf(stdout,"cipher_list %s \n", cipher_list);
 			SSL_CTX_set_cipher_list(ctx,cipher_list);
 		getcertdflt(ctx,1);
 		if( cl_cert != cl_cert_default || LIBFILE_IS(cl_cert,VStrNULL) )
@@ -3426,6 +3400,7 @@ SSL_CTX_sess_set_get_cb(ctx,get_session_cb);
 			SSL_CTX_ctrl(ctx,32/*SSL_CTRL_OPTIONS*/,ctrlopt,NULL);
 		SSL_CTX_set_default_passwd_cb(ctx,(pem_password_cb*)sv_passwd);
 		if( cipher_list )
+			fprintf(stdout,"cipher_list %s \n", cipher_list);
 			SSL_CTX_set_cipher_list(ctx,cipher_list);
 
 		Lap("before loadContext");
@@ -3639,9 +3614,9 @@ int sslway_dl(){
 		return sslway_dl0();
 	}else
 	if( ok = sslway_dl0() ){
-		InitLog("+++ loaded %s\n",SSLeay_version(0));
+		InitLog("+++ loaded %s\n",OpenSSL_version(0));
 		if( lDYLIB() )
-		printf("+++ loaded %s\n",SSLeay_version(0));
+		printf("+++ loaded %s\n",OpenSSL_version(0));
 		return ok;
 	}else{
 		return 0;
@@ -3652,17 +3627,17 @@ const char *SSLVersion(){
 		return "Not Yet";
 	if( with_dl < 0 )
 		return "None";
-	return SSLeay_version(0);
+	return OpenSSL_version(0);
 }
 int putSSLverX(FILE *fp,PCStr(fmt)){
 	if( with_dl <= 0 )
 		return 0;
-	fprintf(fp,"%s",SSLeay_version(0));
+	fprintf(fp,"%s",OpenSSL_version(0));
 	return 1;
 }
 void putSSLver(FILE *fp){
 	if( 0 < with_dl )
-		fprintf(fp,"Loaded: %s\r\n",SSLeay_version(0));
+		fprintf(fp,"Loaded: %s\r\n",OpenSSL_version(0));
 }
 
 int sslway_main(int ac,const char *av[])

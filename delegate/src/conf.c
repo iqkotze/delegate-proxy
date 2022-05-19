@@ -62,7 +62,7 @@ const char *DELEGATE_VARDIR        = "${DGROOT?&:/var/spool/delegate}";
 #if _MSC_VER
 const char *DELEGATE_LDPATH        = "${ETCDIR};${LIBDIR};${EXECDIR};${STARTDIR};${HOME}/lib;/Windows;/";
 #else
-const char *DELEGATE_LDPATH        = "${ETCDIR};${LIBDIR};${EXECDIR};${STARTDIR};${HOME}/lib;/usr/local/lib;/usr/lib;/lib";
+const char *DELEGATE_LDPATH        = "${ETCDIR};${LIBDIR};${EXECDIR};${STARTDIR};${HOME}/lib;/usr/lib/x86_64-linux-gnu;/usr/local/lib;/usr/lib;/lib";
 #endif
 const char *DELEGATE_LIBDIR        = "${VARDIR}/lib";
 const char *DELEGATE_LIBPATH       = ".;${STARTDIR};${LIBDIR};${EXECDIR};${ETCDIR}";

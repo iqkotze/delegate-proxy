@@ -5,6 +5,7 @@
 /*
  *  Get the count of bufferd characters.
  */
+#define _LIBIO_H // @2020-0619, @SatoxITS @ITS-more
 #ifdef __linux__
 #if defined(__STDIO_STREAM_BUFFER_RAVAIL)
 #define READYCC(fp)      __STDIO_STREAM_BUFFER_RAVAIL(fp)

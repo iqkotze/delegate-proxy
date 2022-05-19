@@ -70,6 +70,8 @@ static const char *libpat[16] = {
 #else
 #if !defined(_MSC_VER)
 	"dglib%s.so",
+	"lib%s.so.1.0.0",
+	"lib%s.so.1.1",
 	"lib%s.so.0.9.8",    /* 9.2.5 for a while */
 	"lib%s.so",
 	"lib%s.so.1.0.0",    /* 9.9.9 mod-140602e OpenSSL nowadays in 2014 */
@@ -245,12 +247,12 @@ int dl_libraryX(const char *libname,DLMap *dlmap,const char *mode){
 			if( lDYLIB() ){
 				fprintf(stderr,"--- DYLIB_%s=%s\n",libname,pat1);
 			}
-			iLog("--- LOADED DYLIB_%s=%s\n",libname,pat1);
+            InitLog("--- LOADED DYLIB_%s=%s\n",libname,pat1);
 		}else{
 			err = dlerror();
 			fprintf(stderr,"--- FAILED DYLIB_%s=%s : %s\n",libname,pat1,
 				err?err:"");
-			iLog("--E FAILED [%s] DYLIB_%s=%s : %s\n",cwd,libname,
+            InitLog("--E FAILED [%s] DYLIB_%s=%s : %s\n",cwd,libname,
 				pat1,err?err:"");
 		}
 	}
@@ -298,7 +300,7 @@ int dl_libraryX(const char *libname,DLMap *dlmap,const char *mode){
 		if( handle == 0 )
 		handle = dlopen(libpath,RTLD_NOW);
 		InitLog("--- [%s] %X %s\n",libname,p2i(handle),libpath);
-		iLog("--- [%s] %X %s",libname,p2i(handle),libpath);
+		iLog("--- [%s] %X %s\n",libname,p2i(handle),libpath);
 		if( lDYLIB() || lPATHFIND() ){
 			if( err = dlerror() ){
 				InitLog("{l}-- [%s] %s\n",libname,err);
@@ -332,9 +334,8 @@ int dl_libraryX(const char *libname,DLMap *dlmap,const char *mode){
 		 && *(char**)(dl[i].addr) != 0
 		 && *(char**)(dl[i].addr) != (char*)do_exit
 		){
-			/*
+
 			InitLog("in another module: %s\n",name);
-			*/
 			already++;
 			continue;
 		}
@@ -345,9 +346,8 @@ int dl_libraryX(const char *libname,DLMap *dlmap,const char *mode){
 		}
 		if( addr == 0 ){
 			unknown++;
-			/*
+
 			InitLog("## unknown [%s] %s\n",libpath,name);
-			*/
 			if( LOG_VERBOSE && lDYLIB() && !lISCHILD() ){
 			fprintf(stderr,"## unknown [%s] %s\n",libpath,name);
 			}
