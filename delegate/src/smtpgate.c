@@ -830,14 +830,7 @@ static void put_trace(Connection *Conn,Gateway *Gw,FILE *log,FILE *ts,PCStr(reci
 	else
 	ClientIF_name(Conn,FromC,AVStr(clif));
 	lfprintf(log,ts,
-		/* v9.9.12 fix-140821e, folding long field
 		"Received: from %s by %s (DeleGate/%s) for %s (%s); %s\r\n",
-		 */
-"Received: from %s\r\n\
-	by %s (DeleGate/%s)\r\n\
-	for <%s>\r\n\
-	(%s);\r\n\
-	%s\r\n",
 		Client_Host,clif,DELEGATE_ver(),recipients,Recipient,stime);
 }
 
@@ -2391,6 +2384,7 @@ const char *QPsplitLine(int QP,PVStr(line),int *nextch){
 	return 0;
 }
 
+void  decodeMIME(FILE*fs,FILE*tc,FILE*cache,int filter,int codeconv,int enHTML);
 static int find_usertext(FILE *tc,FILE *mfp,int soff,FILE *log,PCStr(p1))
 {	CStr(line,128);
 	int match;
@@ -2407,14 +2401,33 @@ static int find_usertext(FILE *tc,FILE *mfp,int soff,FILE *log,PCStr(p1))
 		}
 	}
 	if( match == 0 ){
+		IStr(ctype,512);
 		IStr(cte,128);
 		IStr(pending,2*sizeof(line)); /* split line */
 		const char *last;
 		const char *next;
 		int nextch;
+		FILE *tmp = 0;
 
 		fgetsHeaderField(mfp,"Content-Transfer-Encoding",
 			AVStr(cte),sizeof(cte));
+
+		fgetsHeaderField(mfp,"Content-Type",
+			AVStr(ctype),sizeof(ctype));
+
+		/* v10.0.0 new-140531a, applying the filter to decoded text/plain */
+		if( strstr(ctype,"multipart/") || strcasestr(cte,"base64") ){
+			int off = ftell(mfp);
+			tmp = TMPFILE("findUserText");
+			decodeMIME(mfp,tmp,NULL,0x2FF,0,0);
+			fflush(tmp);
+			sv1log("## decoded %d/%d [%sd][%s]\n",
+				file_size(fileno(tmp)),file_size(fileno(mfp)),
+				ctype,cte);
+			fseek(tmp,0,0);
+			fseek(mfp,soff,0);
+			mfp = tmp;
+		}
 		if( strcasestr(cte,"quoted-printable") ){
 			QP = 1;
 		}

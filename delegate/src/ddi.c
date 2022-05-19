@@ -275,10 +275,6 @@ void CCV_clear(){ CodeConv_x = 0; }
 
 void getGlobalCCX(CCXP ccx,int siz);
 void reset_filters();
-int MarkNewConn(FL_PAR,Connection *Conn){
-	Conn->cx_magic = 0;
-	return 0;
-}
 void ConnInit(Connection *Conn)
 {
 	SessionThread st = Conn->dg_sthread;
@@ -433,6 +429,7 @@ void clear_DGreq(Connection *Conn)
 
 	DO_DELEGATE    = 0;
 	IsMounted      = 0;
+	MountCookie    = 0;
 	IsVhost        = 0;
 
 	CacheFlags     = 0;

@@ -140,6 +140,10 @@ void cgi_makeEnv(PCStr(conninfo),PCStr(req),PCStr(head),PCStr(vurl),PCStr(vpath)
 
 	randenv = 0;
 	for( ei = 0; es = environ[ei]; ei++ ){
+		if( strncmp(es,"CONTAINER_SCRIPT_NAME=",22) == 0){
+			sv1log("---CGI ENV %s\n",es);
+			scripturl = es + 22;
+		}else
 		if( strncmp(es,"RANDENV=",8) == 0 )
 			randenv = es;
 		else
@@ -168,6 +172,14 @@ void cgi_makeEnv(PCStr(conninfo),PCStr(req),PCStr(head),PCStr(vurl),PCStr(vpath)
 	if( getFV(head,"Content-Type",tmp) == 0 )
 		strcpy(tmp,"text/html");
 	SVaddEnvf(Evp,"CONTENT_TYPE=%s",tmp);
+
+	/* LAST_MODIFIED v10.0.0 new-140525b */
+	if( getFV(head,"Last-Modified",tmp) == 0 ){
+		int mtime;
+		mtime = File_mtime(datapath);
+		StrftimeGMT(AVStr(tmp),sizeof(tmp),TIMEFORM_RFC822,mtime,0);
+	}
+	SVaddEnvf(Evp,"LAST_MODIFIED=%s",tmp);
 
 	/* GATEWAY_INTERFACE */
 	SVaddEnvf(Evp,"GATEWAY_INTERFACE=CGI/%s",MY_CGIVER);
@@ -219,6 +231,7 @@ void cgi_makeEnv(PCStr(conninfo),PCStr(req),PCStr(head),PCStr(vurl),PCStr(vpath)
 
 	/* SCRIPT_NAME */
 	SVaddEnvf(Evp,"SCRIPT_NAME=%s",scripturl);
+	sv1log("--CGI SCRIPT_NAME=%s\n",scripturl);
 
 	/* SERVER_NAME */
 	/* SERVER_PORT */
@@ -326,6 +339,9 @@ static void setcharcode(Connection *Conn,PCStr(field),PVStr(value)){
 	}
 }
 
+char *scan_ls_l(PCStr(lsl),PVStr(mode),int *linkp,PVStr(owner),PVStr(group),FileSize *sizep,PVStr(date),PVStr(name),PVStr(sname));
+int GmtOff();
+
 static int cgi_response(Connection *Conn,PCStr(req),PVStr(ihead),FILE *in,FILE *out,FILE **xout,int *stcodep)
 {	CStr(ohead,0x10000);
 	refQStr(hp,ohead); /**/
@@ -429,6 +445,23 @@ static int cgi_response(Connection *Conn,PCStr(req),PVStr(ihead),FILE *in,FILE *
 			setcharcode(Conn,field,AVStr(value));
 			xcharset = HTTP_outCharset(Conn);
 			continue;
+		}
+
+		if( strcaseeq(field,"X-File-Status") ){ /* v10.0.0 new-140525a */
+			FileSize size;
+			IStr(date,256);
+			int idate;
+			IStr(name,256);
+			IStr(sname,256);
+			IStr(mtime,256);
+
+			scan_ls_l(value,VStrNULL,NULL,VStrNULL,VStrNULL,
+				&size,AVStr(date),AVStr(name),AVStr(sname));
+			idate = LsDateClock(date,time(0));
+			idate -= GmtOff();
+			StrftimeGMT(AVStr(mtime),sizeof(mtime),TIMEFORM_RFC822,idate,0);
+			sprintf(line,"Last-Modified: %s",mtime);
+			/* Etag from size+mtime ? */
 		}
 
 		sprintf(hp,"%s\r\n",line);

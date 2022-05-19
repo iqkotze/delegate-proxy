@@ -4,15 +4,20 @@ ${formv.fmt.Sendmail?${include:sendmail.dhtml}${exit}}
 ${formv.fmt.Getpass?${include:getpass.dhtml}${exit}}
 ${formv.fmt.Sendpass?${include:sendpass.dhtml}${exit}}
 
+<!-- ############ arthead.dhtml ###################### -->
 ${printmode?
+ <font face="Times New Roman">
  <I>${art.Newsgroups} - &lt;${art.Message_ID}&gt;</I><HR>
+ </font>
 :
  ${putmenu?
    <small>
    ${hide.href?:
     <INPUT type=submit name=ViewerControl value="Viewer" style="font-size:small">
     <INPUT type=submit name=Source value="Source" style="font-size:small">
+    <!--
     <INPUT type=submit name=fmt value="Reply" style="font-size:small">
+    -->
     <INPUT type=submit name=fmt value="Forward" style="font-size:small">
    }
    ${art.xreflist} ${art.References?[Reference${=:}${art.lastref}]}
@@ -22,16 +27,27 @@ ${printmode?
  }
 }
 ${putmenu?
-  <BR><B><BIG>${art.Subject}</BIG></B><BR>
+  <BR><B><BIG>${art.NewSubj}</BIG></B><BR>
   ${art.Summary?-- ${art.Summary} --<P>}
-  <DIV align=right>
-  ${art.Date}
-  <I>${hide.href?${art.From}:<A HREF="mailto:${arturl.From}">${art.From}</A>}
-  </I><BR>
-  <I> ${art.Organization} </I>
-  </DIV>
+  <table border=0>
+   <tr valign=top>
+    <td width=200 align=right>
+     <nobr><font face="courier new">${art.Date}</font>&nbsp;&nbsp;</nobr>
+    </td>
+    <td>
+     &nbsp;
+    </td>
+    <td width=600 align=left>
+     <font face="Times New Roman">
+      <i>${hide.href?${art.From}:<a href="mailto:${arturl.From}">${art.From}</A>}</i>
+      <br><i>${art.Organization}</i>
+     </font>
+    </td>
+   </tr>
+  </table>
   <HR>
 }
-${art.IsHTML?:<PRE><font face="courier new">}
-${art.body}
-${art.IsHTML?:</font></PRE>}
+<!-- ############ MESSAGE BODY BEGIN ################# -->
+${art.IsHTML?:<PRE><font face="courier new">}${art.body}${art.IsHTML?:</font></PRE>}
+<!-- ############ MESSAGE BODY END ################### -->
+

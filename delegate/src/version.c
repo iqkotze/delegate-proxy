@@ -18,9 +18,9 @@ OR IMPLIED WARRANTIES.
 #include "log.h"
 
 #define NAME	"DeleGate"
-#define VERSION	"9.9.13"
-#define DATE	"October 31, 2014"
-#define DSTATUS	"STABLE"
+#define VERSION	"10.0.0-pre1"
+#define DATE	"August 18, 2014"
+#define DSTATUS	"DEVELOPMENT"
 #define AUTHOR	"Yutaka Sato"
 #define A_ORG	"National Institute of Advanced Industrial Science and Technology"
 #define A_EMAIL	"ysato AT delegate DOT org"

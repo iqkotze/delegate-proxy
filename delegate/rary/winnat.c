@@ -1,4 +1,4 @@
-const char *SIGN_winnat_c="{FILESIGN=winssl.c:20141026143034+0900:79d37d663ff55542:Author@DeleGate.ORG:XP/jmWJNZNdK53DRkSI4IYKk+GaBarYZRe2ZDKhW0rg8nmmIqFLOWhmYrYh+Mwl2Ov+DtQBT/6yL3mgD+ISxRuVefz/J9TiI8tUWtfKleSYTC//0XliQX5kKqKxhXWAxG0jyaNX4Kvs3TMe7CYH+sUUJgJBJY4ecuVq3R2pq6PU=}";
+const char *SIGN_winnat_c="{FILESIGN=winssl.c:20140713054334+0900:79d37d663ff55542:Author@DeleGate.ORG:jFbpAFFUcwFn5lhlNtwBb+A+Eo3w6yoaUmUKoieIieR7mjz24BCfbxcKrWBsrq73ZbXBDwbKK7Cu93yiwnA6QzJ2nsfo6sKgavAvLA3TrKDDPye/cUbf0NjCXEt2tUYViWCLwsdvOvyG6mETptaooQcaKB/5zn7cifRPKrKjrZ4=}";
 
 /*////////////////////////////////////////////////////////////////////////
 Copyright (c) 2008 National Institute of Advanced Industrial Science and Technology (AIST)

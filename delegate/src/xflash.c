@@ -17,7 +17,7 @@ Description:
 History:
 	110115	created
 //////////////////////////////////////////////////////////////////////#*/
-/* '"DiGEST-OFF"' */
+/* '"DIGEST-OFF"' */
 
 #include <errno.h>
 #include <ctype.h>
@@ -130,7 +130,7 @@ static Ev evs[128] = {
 };
 
         
-/* FrOM-HERE 
+/* FROM-HERE 
 ##########################################################################
     CAUTION: re-distributing the copy of this file is not permitted.
 ##########################################################################

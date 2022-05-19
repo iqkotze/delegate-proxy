@@ -525,7 +525,6 @@ void logTERMINATION(PCStr(what)){
 	StrftimeLocal(AVStr(edate),sizeof(edate),"%y%m%d%H%z",time(0),0);
 	sv0log("--TERMINATION by %s %s (%s) %s on %s\n",
 		"SIGTERM",edate,sdate,DELEGATE_ver(),uname);
-	sv0log("%s=%s\n",P_EXEC_PATH,EXEC_PATH); /* v9.9.12 140825b */
 }
 
 static void sigIGN(int sig){
@@ -2040,21 +2039,6 @@ const char *scan_arg1(Connection *Conn,PCStr(ext_base),PCStr(arg))
 			break;
 
 		case 'P': /* server port */
-			if( *DELEGATE_DGROOT == 0 ){
-				/*
-			 	 * v9.9.13 fix-141028c, making LOGFILE must
-			 	 * be suppressed until ${DGROOT} is set.
-				 * This case happens if -P is specified in
-				 * the default conf.  It should be cared
-				 * more generally in log.c:open_logtmpfile().
-			 	 */
-			}else
-			if( strstr(DELEGATE_DGROOT,"${") != 0 ){
-				/* v9.9.13 fix-141031b, not substituted yet,
-				 * seems occur when invoked by Windows GUI
-				 * under the above condition (141028c).
-				 */
-			}else
 			svlog("PORT> %s\n",arg);
 
 			/* this code seems to be introduced at 4.0.4 maybe for
@@ -3185,10 +3169,6 @@ static int loadQuietly(PCStr(conf)){
 			if( isinList(com,"-vQ") ){
 				LOG_type4 |= L_QUIET;
 			}
-			if( isinList(com,"-vq") ){
-				LOG_type4 |= L_QUIET;
-				otype4 |= L_QUIET;
-			}
 		}
 		fclose(fp);
 	}
@@ -3217,50 +3197,6 @@ static void loadCommonConf(Connection *Conn){
 		loadConfFile(Conn,"common",conf);
 	}
 }
-/*
- * v9.9.13 new-141023a, DGROOT should be set as fast as possible.
- * Among cofig. files, only the default config. file can set DGROOT
- * because other config. file can be relative to the DGROOT.
- */
-static int getDefaultConf(PCStr(conf)){
-	FILE *fp;
-	IStr(buf,1024);
-	IStr(arg,256);
-	IStr(val,256);
-	const char *vp;
-	int gotroot = 0;
-
-	if( fp = fopen(conf,"r") ){
-		while( Fgets(AVStr(buf),sizeof(buf),fp) != NULL ){
-			wordScan(buf,arg);
-			if( arg[0] == '-' ){
-			  switch( arg[1] ){
-			    case 'f':
-			      switch( arg[2] ){
-				case 'v': LOG_type |= L_CONSOLE; break;
-			      }
-			      LOG_type |= L_FG;
-			  }
-			  continue;
-			}
-			if( vp = strchr(arg,'=') ){
-				valuescanX(vp+1,AVStr(val),sizeof(val));
-			}
-			if( strneq(arg,"DGROOT=",7) ){
-				if( lQUIET() || loadQuietly(conf) ){
-				}else
-				if( lFG() ){
-		fprintf(stderr,"#### in default conf: DGROOT='%s'\n",val);
-				}
-				DELEGATE_DGROOT = stralloc(val);
-				gotroot = 1;
-			}
-		}
-		fclose(fp);
-	}
-	return gotroot;
-}
-void scan_DGPATH(PCStr(path));
 void setEXEC_PATH();
 void loadDefaultConf(Connection *Conn,int ac,const char *av[]){
 	/*
@@ -3284,17 +3220,6 @@ void loadDefaultConf(Connection *Conn,int ac,const char *av[]){
 		fprintf(stderr,"#### loading default conf: %s\n",conf);
 		load_script(NULL,NULL,conf);
 		*/
-		if( getDefaultConf(conf) ){ /* v9.9.13 mod-141023  */
-			/*
-			 * v9.9.13 mod-141023a, DGPATH must set before
-			 * loadConfFile() is called because it and its
-			 * decendant might include config. file by
-			 * +=relative.
-			 * And it must be after EXECDIR is set because
-			 * DGPATH is including ${EXECDIR}.
-			 */
-			scan_DGPATH(DELEGATE_DGPATH);
-		}
 		loadConfFile(Conn,"default",conf);
 	}
 
@@ -3794,6 +3719,7 @@ void ScanGlobal(Connection *Conn,PCStr(proto))
 
 	scanEnv(Conn,P_FILETYPE,(scanPFUNCP)scan_FILETYPE);
 	scanEnv(Conn,P_HTTPCONF,scan_HTTPCONF);
+	scanEnv(Conn,P_HTSTATS,scan_HTSTATS);
 	if( HTTP_ftpXferlog ){
 		set_PROTOLOG(Conn,proto);
 		LOG_openall();
@@ -3951,6 +3877,7 @@ void ScanFileDefs(Connection *Conn)
 	*/
 	scanEnv(Conn,P_CACHE,scan_CACHE);
 	if( env = getEnv(P_COUNTER)  )	scan_COUNTER(Conn,env);
+	if( env = getEnv(P_COUNTERDIR))	scan_COUNTERDIR(Conn,env);
 
 	if( scannedGlobal )
 	/* Resolvy must be used after it is initialized,
@@ -6385,6 +6312,7 @@ int fromInetd();
 void new_param_file(PCStr(path));
 FILE *new_shared();
 void reopenLogFile();
+void scan_DGPATH(PCStr(path));
 void editconf1(int *acp,const char **avp[],FILE *in,FILE *out);
 int DELEGATE_subfunc(Connection*Conn,int ac,const char *av[],PCStr(func),int _Fopt,int type);
 int defineAdminSTLS(Connection *Conn);
@@ -8171,7 +8099,6 @@ void putSTART(PCStr(what),int frominetd)
 
 	sv0log("--INITIALIZATION %s-%s: %s on %s--%s%s\n",
 		what,sdate,DELEGATE_ver(),uname,inetd,rsh);
-	sv0log("%s=%s\n",P_EXEC_PATH,EXEC_PATH); /* v9.9.12 140825b */
 
 	if( isFullpath(EXEC_PATH) ){
 		CStr(eb,1024);
@@ -8276,10 +8203,6 @@ void setEXEC_PATH()
 	if( env = getEnv(P_EXEC_PATH) )
 		strcpy(EXEC_PATH,env);
 	else
-	if( isWindows() ){ /* v9.9.12 fix-140825a, exec path on Win. */
-		const char *myExePath();
-		strcpy(EXEC_PATH,myExePath());
-	}else
 	if( EXEC_PATH[0] == 0 && main_argv )
 		EXT_fullpathCOM(main_argv[0],"r",AVStr(EXEC_PATH));
 	else	EXT_fullpathCOM(EXEC_PATH,"r",AVStr(EXEC_PATH));
@@ -10507,12 +10430,6 @@ void mainX(int ac,const char *av[])
 			else
 			if( arg[2] == 'V' )
 				LOG_type2 |= L_NO_VSNPRINTF;
-		}
-		if( *arg == '-' && arg[1] == 'f' ){
-			LOG_type |= L_FG;
-			if( arg[2] == 'v' ){
-				LOG_type |= L_CONSOLE;
-			}
 		}
 		if( *arg == '-' && arg[1] == 'v' && arg[2] == 'C' ){
 			LOG_type2 |= L_CRYPT;

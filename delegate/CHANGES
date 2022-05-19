@@ -2,72 +2,10 @@
 -- SEE ./README FOR MORE CONCISE RELEASE NOTES --
 -- SEE http://www.delegate.org/delegate/updates/ FOR THE LATEST CHANGES --
 
-9.9.13 fix-141031b delegated.c: DGROOT is set but not eval. (141028c)
-9.9.13 fix-141028c delegated.c: suppress making LOGFILE until DGROOT is set.
-9.9.13 fix-141028b smtp.c: SEGV in sendmail() for NOTIFY by fprintf(NULL,...)
-9.9.13 new-141023a conf.c: added DGCONF=${EXEDIR}/../etc/${EXENAME}.conf
-10.0.0 new-141005b nntpgw.c: folding long lines
-10.0.0 new-141005a nntpgw.c: introduced MHGWCONF=show:all,buttons,source,ngroup,markup,fromaddr,org,time,gmt,citehead,sign
-10.0.0 rel-140928d 10.0.0-pre4 internal release --------------
-9.9.12 rel-140928c 9.9.12 release --------------
-9.9.12 mod-140928a htfilter.[hc]: extracted from httpd.c and http.h
-10.0.0 new-140927e commands.c: introduced "-Ftruncate file size"
-9.9.12 new-140927b httpd.c: hyper linking uppercase only NAME with "?NAME"
-10.0.0 mod-140927a httplog.c: default PROTOLOG to ":%X %D" from "%C %D"
-9.9.12 new-140926b any2fdif.c: ignoring lines starting with # in making digest
-10.0.0 new-140922b {service,http}.c: introduced CHOKE to choke robots by delay
-10.0.0 fix-140922a delegated.c: fixed continuous "get{host|peer}name(0) failed, errno=88 (non-socket)" (140914a)
-10.0.0 new-140919b maxima.[hc],*.c: gathered MAXIMA and status info.
-10.0.0 fix-140914a delegated.c: putting MainConn on the stack of the service thread on Windows
-9.9.12 fix-140913d: dgsign.c: stopped VStr overflow on signing binary file
-9.9.12 fix-140913c: dgsign.c: finding '{'XXXSIGN=...} split by buffer
-10.0.0 new-140912c: -fb option to negate -f option
-9.9.12 fix-140912a access.c: clearing Conn. for testing permission (140713d)
-10.0.0 new-140902b caps.c: introduced CAPSKEY for anonymous host
-10.0.0 fix-140901a {htccx,httphead}.c: VStr overflow by long Cookie with encoded expire and path (140820e)
-10.0.0 new-140830b gates/*: bulding Gates.o from object codes in source distribution
-10.0.0 new-140829l rfc822.c: extracting address and comment part from email address
-10.0.0 new-140829i smtpgate.c: introduced SMTPGATE Max-Mbox-Name:N
-10.0.0 new-140829c smtpgate.c: reject mail with To: "xxx" <xxx@domain> by OPTION:rgm
-10.0.0 rel-140828j 10.0.0-pre2 internal release --------------
-9.9.12 rel-140828i 9.9.12-pre2 release --------------
-9.9.12 mod-140828h {DG9note,DGXnote}.html: merged two notes
-9.9.12 fix-140828g master.c: fixed REJECT=proto not to forbid any access to MOUNTed destination
-10.0.0 mod-140828f access.c: disabled Ident. protocol by default (enabled by -EId)
-10.0.0 new-140828e cgi.c: REMITTABLE=+,-ssi to forbid all of SHTML
-10.0.0 new-140828d cgi.c: REMITTABLE=+,-cgi to forbid all of CGI
-10.0.0 new-140828c conf.c: added REMITTABLE=+,cgi,ssi by default for HTTP
-10.0.0 new-140828b service.c: service_permittetX() to check accessible service
-9.9.12 fix-140827c mimehead.c: recover encoding env. when a chacter is poped
-9.9.12 new-140826f any2fdif.c: included modifications in 10.0.0 to 9.9.12
-9.9.12 fix-140826e mimehead.c: realized UNGETC not by round-robin but stack
-9.9.12 fix-140826c mimehead.c: don't split multi-bytes char. into 2 e-words
-9.9.12 fix-140826b mimehead.c: MIME header decoding for output line to be folded (140606b)
-9.9.12 new-140825c httpx.c: delayed stack error log after stack shrinked
-9.9.12 new-140825b conf.c: logging EXEC_PATH at invocation and showing in -Fver
-9.9.12 fix-140825a delegated.c: getting path of executable by relative name and without "." in PATH as a service on Windows
-9.9.12 mod-140824d netsh.c: using Cygwin user's HOME when run as a service
-9.9.12 mod-140824c windows.c: forwarding Cygwin user's HOME to service
-9.9.12 new-140823h netsh.c: fallback to c:/cygwin/bin/bash.exe on CYGWIN
-9.9.12 new-140823e http.c: don't regard server side reset of CONNECT as non-HTTPS
-9.9.12 mod-140823d {inets,rescache}.c: reduced trials of detecting inactive NIS for default RESOLV
-10.0.0 mod-140822d dgauth.c: new format of NonceKey into "noncekeyX"
-9.9.12 fix-140821e smtpgate.c: folding long Received:
-9.9.12 fix-140820g httpx.c: set Host for SSI-include from http://Host
-10.0.0 new-140820f {http,access}.c: introduced RELAY=ssi[connMap]
-10.0.0 new-140820e ssi.c: return Set-Cookie form SSI#incldue in HTTP-EQUIV
-10.0.0 mod-140820b conf.c: the default is changed to LOGDIR='log[date+/y%y/m%m/%d]'
-10.0.0 new-140820a Manual.htm: merged Maunaul.htm for DG9 and DGX
-9.9.12 new-140819b http.c: return HTTP response 404 if ?part is not found
-10.0.0 new-140819a CHANGES: shared CHANGELOG between 9.9 and 10.0
-9.9.12 new-140818j httpx.c: return SSI#incldue error and record into LOGFILE
-10.0.0 rel-140817o 10.0.0-pre1 internal release --------------
 9.9.12 rel-140817n 9.9.12-pre1 release --------------
 9.9.12 ref-140817m syncronized between 9.9.12-pre1 and 10.0.0-pre1
 9.9.12 new-140817l ssi.c: intrdouced <!--#echo var=STACK_DEPTH -->
 9.9.12 new-140817i filter.c: introduced -tee-y option like -t but with year prefix
-10.0.0 fix-140817f any2fdif.c: suppressed indexing a link in LINKS duplicatedly
-10.0.0 fix-140817e any2fdif.c: fixed full-url in LINKS
 9.9.12 fix-140815a cgi.c: stop inheritance of TMPFILE buffer for SHTML from CGI
 9.9.12 fix-140814e url.c: corrected making #label be absolute with <BASE> tag (result of new-140727m)
 9.9.12 fix-140814c httpx.c: coped with SSI loop in virtual URL (if loop in MOUNT with moved exists)(result of fix-140810e)
@@ -90,23 +28,12 @@
 9.9.11 fix-140808b ssi.c: convert URLs in included HTML to full-url to be reverse MOUNTed
 9.9.11 mod-140807j httpd.c: link "[ALL]" to "base.html?.whole#label"
 9.9.11 rel-140807i 9.9.11-pre2 release --------------
-10.0.0 new-140807h filetype.c: introduced ".stxt" equal to ".txt"
 9.9.11 fix-140807b {bcounter,cache}.c: removed "VStr overflow" with COUNTER enabled
-10.0.0 new-140806b {ssi,httphead}.c: returning HTTP header as Set-Cookie in HTTP-EQUIV in HTML
-10.0.0 new-140806a {httpx,httphead}.c: forwarding HTTP header as Cookie to URLget() for SSI incldue
-10.0.0 new-140804d setup: build ftp://ftp2.delegate.org and ftp://www2.delegate.org
 9.9.11 fix-140803i dgsign.c: fixed -Fimp to work (broken in v9.9.7-pre24)
 9.9.11 fix-140731c {ssi,httphead}.c: SSI virtual url mapping as virtual host
 9.9.11 new-140730d httpd.c: inherit <META> tag for each part
-10.0.0 new-140730b nntpgw.c: jumping to article by ?JumpToArticle=group:anum
-10.0.0 new-140730a nntpgw.c: coped with access by POST
-10.0.0 new-140729d nntpgw.c: hyper link with style
-10.0.0 new-140729c nntpgw.c: jumping to reference via INPUT/submit as ?JumpToReference=MessageID
-10.0.0 new-140728k any2fdif.c: introduced "-y include" option
 9.9.11 new-140728j httpd.c: introduced ".whole" part as Manual.htm?.whole
 9.9.11 rel-140727r 9.9.11-pre1 release --------------
-10.0.0 new-140727m {url,html}.c: fullify even #label by URICONV=+ URICONV=fullall:+
-10.0.0 new-140727g {url,html}.c: make URL relative if applicable in reverse URL rewriting with URICONV=+ URICONV=relative:+ (might be the default in v10)
 9.9.11 fix-140727f ssi.c: suppressed rewriting to full-url for local resouces included by SSI
 9.9.11 fix-140727a httpd.c: fixed MOUNT="/vpath/* cgi:/rpath/*" for CGI with/without /extra/path like script.cgi/extra/path?query (broken in 8.6.0 030522)
 9.9.11 fix-140726a {http,httphead}.c: partializing URL in HTML response included by SSI
@@ -116,46 +43,21 @@
 9.9.11 fix-140724f http.c: fixed rewriting MOUNTed URL around the input buffer boundary
 9.9.11 mod-140724e Manual.htm: made Manual more readable with CSS
 9.9.11 new-140723d binary-distribution: added linux2.6_32-dgX_Y_Z
-10.0.0 new-140723b httphead.c: introduced "nocache" MountOption
-10.0.0 new-140722g {httphead,ssi}.c: introduced "setcookie=name:value" MountOption 
-10.0.0 new-140722f {mount,httphead}.c: introduced "hascookie=name[:value]"
-10.0.0 mod-140722e mount.c: expanded flags to Int64 from int
 9.9.11 fix-140722c ftp.c: shown size of uploaded data to local-file larger than 4GB in response message and LOGFILE
 9.9.11 fix-140722b ftp.c: putting PROTOLOG(xferlog) for upload (STOR) to local-file
-10.0.0 fix-140722a ntod.c: fixed matching failure with xx.xx.xx.xx/mask in netdom
 9.9.10 rel-140721f 9.9.10 release --------------
 9.9.10 fix-140721d httpx.c: really fixed fix-140720b
 9.9.10 mod-140721a delegated.c: added thru-CONNECT for google.com, gogle.co.jp, and facebook.com
 9.9.10 rel-140720e 9.9.10-pre3 release --------------
 9.9.10 mod-140720d http.c: really included mod-140716d and mod-140716e
 9.9.10 fix-140720b httpx.c: forwarding and logging original User-Agent (not DeleGate/SERVER_VER) for SHTML
-10.0.0 new-140719a commands.c: created -Ftail-f -- simple tail -f for binary file
-10.0.0 mod-140718c gendom.c: aded .afrinic, .arin, .apnic, .jpnic, .lacnic virtual tld
-10.0.0 fix-140716i {log,windows}.c: made readlink() returns the character length
 9.9.10 rel-140716h 9.9.10-pre2 release --------------
 9.9.10 mod-140716e http.c: longer HTPCONF=tout-pack-intvl:10.0 in SSLtunnel (<- 3.0)
 9.9.10 mod-140716d http.c: disabled tentative "non half-duplex" detection & rejection over SSLtunnel (re-enabled by HTTPCONF=halfdup)
-10.0.0 new-140716a socks.c: connecting to SOCKS via HTTP-proxy
 9.9.10 fix-140715c socks.c: SEGV with SERVER=socks plus FORWARD= with CONNECT=s
 9.9.10 fix-140715b service.c: could not relay non-HTTP (HTTPS) by PROXY or FORWARD (9.9.8-pre21)
 9.9.10 mod-140714a caps.c: changed the RSA key-pair for RSA-signed-CAPSKEY
-10.0.0 mod-140710f filetype.c: moved from src/ to rary/
-10.0.0 mod-140710e windows.c: don't create symlink if the target file does not exist
-10.0.0 mod-140710d windows.c: extend ".lnk" automatically in symlink() and readlink()
-10.0.0 mod-140710c windows.c: made readlink not to return ShortPath
-10.0.0 mod-140710b windows.c: made readlink to return path separated by "/" (for shell)
-10.0.0 mod-140710a windows.c: creating symlink of relative path from current directory
-10.0.0 rel-140708c 10.0.0-pre1a release in FreyaSX 0.99.17 --------------
-10.0.0 new-140709a commands.c: introduced "-Fsymlink old new"
-10.0.0 fix-140708b SXc.{h,c},findex.cc: invocation from non-Command-Prompt terminal
-10.0.0 new-140708a makevc.sh: building FreyaSX on Windows
-10.0.0 new-140705a gendom.c: representing RIPE whois result to "netname.country.ripe"
-10.0.0 new-140704f httpd.c: disabling mypro.xyz with HTTPCONF="mypro.xyz:stop"
-10.0.0 new-140704d {conf,httpd}.c: "mypro.xyz" as the alternative of "-.-"
 9.9.10 fix-140704a dl.c: added DYLIB=cyg%s-0.9.8.dll for yysh client on Cygwin with STLS=fsv or -ys
-10.0.0 mod-140703a any2fdif.c: coped with hops limitation with multiple "-r URL"
-10.0.0 fix-140702d any2fdif.c: don't index duplicatedly but rescan links under different context
-10.0.0 fix-140702b any2fdif.c: escaped "VStr overflow" in HTML entity encoding
 9.9.10 rel-140701b 9.9.10-pre1 release --------------
 9.9.10 mod-140630c dl.c: added lib{ssl,crypto}.so.10 for CentOS6.5
 9.9.10 fix-140630a X.c: setting SHELL by /etc/passwd when invoked by cron (or inetd or so)
@@ -166,18 +68,6 @@
 9.9.10 mod-140625e netsh.c: inherit no opened resources (as socket) to shell
 9.9.10 fix-140625d netsh.c: dgforkpty did not work on Windows (since 9.9.7-pre23)
 9.9.10 fix-140625c Makefile,link-libs.sh: building on Cygwin (on D: drive)
-10.0.0 mod-140621c fsearchcgi.cc: counter size in the file name as "byurl-1024K"
-10.0.0 fix-140621b fsearchcgi.cc: counter did not work when CRC32(url) is minus value
-10.0.0 fix-140621a DescRecord.cc: uninit. description str. was put when title is long
-10.0.0 new-140620c rfc2html.c: hyper linking of references to other RFCs
-10.0.0 new-140620a {rfc2html,any2fdif}.c: META-revised to represent the date of document
-10.0.0 new-140619i rfc2html.c: using META-author tag to represent author
-10.0.0 new-140619h rfc2html.c: using Abstract part as META-description tag
-10.0.0 new-140619b rfc2html.c: [prev][next] link skipping nonexistent RFCs
-10.0.0 new-140619a fsearchcgi.cc: let sort=date imply sort=url-reverse
-10.0.0 new-140618c rfc2html.c: created RFC text to HTML converter
-10.0.0 mod-140617e SX.h: reduced diff by "using namespace std; */
-10.0.0 new-140616j fsearchcgi.cc: FreyaSX hit/vote counter by URL (_shared/byurl)
 9.9.9 rel-140616b 9.9.9 release --------------
 9.9.9 fix-140615h mime.c: SEGV on NNTP POST without CHARCODE (140605c)
 9.9.9 fix-140615e dgauth.c: don't FATAL error by AUTHORIZER="-dgauth{user:pass}" and don't erase CRYPT=pass:xxxx
@@ -186,8 +76,6 @@
 9.9.9 new-140613a {ssleay32,libeay32}.dll: bandled OpenSSL-0.9.8za into win32-dg.zip
 9.9.9 fix-140610h windows.c: don't create new console on CYGWIN (if isatty(0)!=0)
 9.9.9 rel-140609i 9.9.9-pre2 release
-10.0.0 new-140609h {pop,cfi}.c: thru CFI filter for LIST and UIDL
-10.0.0 new-140609e filter.c: -Fconnect -ql option to wait reponse for line command
 9.9.9 fix-140609d cfi.c: fixed duplicated ".CRLF" for pipelined responses
 9.9.9 fix-140609c cfi.c: don't put generated header for BODY only filter
 9.9.9 fix-140609b cfi.c: erased "VStr overflow" on NNTP BODY filtering by CFI
@@ -201,56 +89,13 @@
 9.9.9 fix-140605d mimehead.c: removed dust generated into MIMEencoded-word
 9.9.9 mod-140605c mime.c: char. code conv. for multipart head. with CHARCODE=Chset:tosv
 9.9.9 fix-140605b {cfi,rfc822}.c: coped with Output/Content-Type to make header larger
-10.0.0 fix-140604d mkmake.c: freezed by large "make -s srcfiles" with small PIPE
-10.0.0 fix-140604b any2fdif.c: strip duplicated (old) "[xxx]" in Subject
-10.0.0 fix-140604a {nntpgw,smtpgate}.c: strip multiple "[xxx]" in Subject
-10.0.0 mod-140603c nntpgw.c: show the last page in round-up range (for refresh)
 9.9.9 fix-140603b {cfi,rfc822}.c: enlarged acceptable MIME header (128K <- 64K)<t-okuda>
 9.9.9 fix-140603a ftp.c: make relative path only if under cur. dir <Nagakura>
 9.9.9 mod-140602f sslway.c: made SSLv2_* optional by OPT(0) (for OpenSSL/1.X) <Albert>
 9.9.9 new-140602e dl.c: added lib*.so.1.0.0 for OpenSSL nowadays
-10.0.0 mod-140602c nntpgw.c: put Cc in a single line (for vin ;-)
-10.0.0 fix-140602a findex.cc: coped with invocation from cron without FDIF argument
-10.0.0 fix-140601s fsearchcgi.cc: duplicated key when pfx is not empty
-10.0.0 new-140601r fsearchcgi.cc: introduced hidden_key=Key
-10.0.0 new-140531d bcounter.c: introduced COUNTERDIR=dirSpec
-10.0.0 new-140531a smtpgate.c: applying text-filtering to decoded text/plain part
 9.9.12 fix-140530f ssi.c: guessing the Content-Type of <!--#include --> of local file
-10.0.0 new-140530d httpd.c: putting generation date in list of directory as httpd
 9.9.9 fix-140529c src/Makefile,embed.c: exluded "AppleDouble encoded Macintosh file" of which name begins with "._" from builtin-data
-10.0.0 fix-140527i fsearchcgi.cc: substitution of "$cgibase" in template
-10.0.0 new-140527f any2fdif.c: <noindex>text</noindex> to skip indexing the text
-10.0.0 mod-140527e any2fdif.c: ignore secondary <TITLE> not to index it
-10.0.0 new-140526l history.dhtml: introduced guide mode
-10.0.0 fix-140526k htmlgen.c: expanded HTML generator buffer (16K <- 2K)
-10.0.0 mod-140526g delegate.h: expanded response header (2K <- 256) for Cookie
-10.0.0 new-140526f htstats.c: coped with filtering by URL
-10.0.0 fix-140526e htstats.c: coped with huge history file > 4GB
-10.0.0 new-140526c htstats.c: saving/restoring panel configuraiton into Cookie
-10.0.0 new-140526b htstats.c: binary search of a history file by date
-10.0.0 new-140526a htstats.c: cueing among divided history files by specified date
-10.0.0 new-140525c ssi.c: using LAST_MODIFIED env., if defined, for Last-Modified response
-10.0.0 new-140525b cgi.c: introduced LAST_MODIFIED CGI environment
-10.0.0 new-140525a cgi.c: translating CGI X-File-Status:lsFormat to Last-Modfied header
-10.0.0 new-140524l any2fdif.c: index any relative URL too
-10.0.0 new-140524k any2fdif.c: index links upto 16K bytes (<- 2048)
-10.0.0 new-140524j any2fdif.c: index links for FORM ACTION and IMG SRC too
-10.0.0 mod-140524h ssi.c: return Last-Modified of *.shtml file by default
-10.0.0 mod-140524g any2fdif.c: make index with URL of after 301/302 redirection for the -r URL
-10.0.0 fix-140524c service.c: uninitialized Connection caused many errors in -Fany2fdif
-10.0.0 fix-140524b any2fdif.c: suppressed "VStr overflow" with -Fany2fdif -r (for Links buffer)
-10.0.0 fix-140524a any2fdif.c: SEGV in isspace() for values negative or larger than 0xFF (Ubunts)
-10.0.0 mod-140523i nntpgw.c: response to /news-group/$ with Moved To the latest article
-10.0.0 mod-140523h artbuttons.dhtml: bound the newest button to "/news-group/$"
-10.0.0 new-140523e httphead.c: enabled decoding MIME encoded ISO-8859-1 in header
-10.0.0 fix-140523b mime.c: fixed char. code conv. for text part out of multi-part
-10.0.0 new-140522f htstats.c,history.dhtml: make AUTHORIZER for history viewer mandatory
 9.9.9 mod-140522a caps.c: longer CAPSKEY expiration (1 -> 4 weeks)
-10.0.0 new-140521b htstats.c: stats local "data:" interpreter at /-/stats/-/data:
-10.0.0 mod-140520e robots.txt.c: added "Disallow: /-/admin/" to default /robots.txt
-10.0.0 mod-140520d robots.txt.c: added "Disallow: /-/stats/" to default /robots.txt
-10.0.0 new-140519e htstats.c,history.dhtml: automatic Refresh of history
-10.0.0 new-140519d htstats.c,history.dhtml: history (PROTOLOG of HTTP) viewer
 9.9.9 rel-140519- 9.9.9-pre1 release
 9.9.9 new-140518m inets.c: auto. detect and exclude inactive NIS from RESOLV
 9.9.9 mod-140518e http.c: introduced HTTPCONF=max-ssl-turns:100 (was 6+max-cka*2)
@@ -259,12 +104,7 @@
 9.9.9 new-140518b {http,nbio}.c: introduced -Esp to peek SSL packets over SSL-tunnel
 9.9.9 mod-140518a {http,http}.c: disabled tentative non-SSL blocking over SSL-tunnel (enabled by -Esb)
 9.9.9 fix-140515b httphead.c: returning Moved To "http://-.-/dir" as a proxy
-10.0.0 new-140515a {htstats,httpd}.c: http://-.-/-/stats/ history or bookmark ... visualized PROTOLOG
 9.9.9 new-140514a dgauth.c: error log of non-writable CRYPT file
-10.0.0 new-140513d nntpgw.c: using the Content-Type of text part in multipart mssg.
-10.0.0 fix-140513c mime.c: fixed relaying only text/plain part of MIME
-10.0.0 fix-140513b JIS.c: detecting ISO-8859-1 and conversion to UTF-8
-10.0.0 mod-140513a nntpgw.c,arthead.dhtml: modified the article header of NNTP/HTTP gw.
 
 9.9.8 mod-140512b arthead.dhtml: <FONT face="courier new"> for NNTP/HTTP gw. article
 9.9.8 fix-140512a {unix,_-system,__system}.c: compilation on Solaris11 (gcc 4.8.2)

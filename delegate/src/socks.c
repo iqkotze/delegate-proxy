@@ -49,9 +49,12 @@ int connectToSox(Connection *Conn,PCStr(wh),PCStr(proto),PCStr(host),int port);
 int forwardit(Connection *Conn,int fromC,int relay_input);
 int DELEGATE_forwardX(Connection *Conn,PCStr(proto),PCStr(dsthost),int dstport,PCStr(srchost),const char **rproto,AuthInfo **rauth,const char **rhost,int *rport,const char **rpath);
 
+int isHTTP(PCStr(proto));
+int SSLtunnelNego(Connection *Conn,PCStr(host),int port,int sock);
 int openServer(Connection *Conn,PCStr(wh),PCStr(proto),PCStr(host),int port){
 	int sock;
 
+	sock = -1;
 	if( strneq(proto,"socks",5) ){
 		int fw,dofw;
 		IStr(clnt,128);
@@ -74,6 +77,17 @@ int openServer(Connection *Conn,PCStr(wh),PCStr(proto),PCStr(host),int port){
 			set_realserver(Conn,proto,host,port);
 			dofw = forwardit(Conn,-1,0);
 			sock = ToS;
+
+			if( toProxy ){ /* v10.0.0 new-140716a, SOCKS via HTTP-proxy */
+			    sv1log("#### via %s://%s:%d to %s://%s:%d\n",
+				GatewayProto,GatewayHost,GatewayPort,
+				DST_PROTO,DST_HOST,DST_PORT);
+			  if( isHTTP(GatewayProto) ){
+			    if( (ServerFlags & PF_VIA_CONNECT) == 0 ){
+				SSLtunnelNego(Conn,DST_HOST,DST_PORT,sock);
+			    }
+			  }
+			}
 			Conn->sv = sv;
 			Conn->sv_dflt = sv_dflt;
 

@@ -812,6 +812,7 @@ int mkmake(int ac,const char *av[])
 			printf("%s",files);
 			if( strstr(files,"Makefile") == 0 ){
 				printf("*** No Makefile ?\n");
+				printf("*** files=%s\n",files);
 				exit(-1);
 			}
 
@@ -2346,11 +2347,17 @@ void EXECVP(const char *path,const char *av[])
 
 int msystem(int erralso,char res[],int size,const char *command)
 {	int rcc,ecc;
+	/*
 	FILE *out,*errout;
 	int outpipe[2];
 	int outfd,errfd;
+	*/
+	FILE *pout;
+	int ofd;
+	int efd;
 	int rcode;
 
+	/*
 	pipe(outpipe);
 	errout = tmpfile();
 
@@ -2359,8 +2366,21 @@ int msystem(int erralso,char res[],int size,const char *command)
 	if( erralso ){
 		errfd = dup(2);
 		dup2(fileno(errout),2);
+		dup2(fileno(pout),2);
 	}
+	*/
+
+	ofd = dup(1);
+	efd = dup(2);
+	pout = tmpfile();
+	dup2(fileno(pout),1);
+	if( erralso ){
+		dup2(fileno(pout),2);
+	}
+
 	rcode = system(command);
+
+	/*
 	dup2(outfd,1);
 	close(outfd);
 	if( erralso ){
@@ -2372,11 +2392,20 @@ int msystem(int erralso,char res[],int size,const char *command)
 	out = fdopen(outpipe[0],"r");
 	rcc = fread(res,1,size,out);
 	fclose(out);
+	*/
+	fseek(pout,0,0);
+	rcc = fread(res,1,size-1,pout);
+	res[rcc] = 0;
+	fclose(pout);
+	dup2(ofd,1); close(ofd);
+	dup2(efd,2); close(efd);
 
+	/*
 	fseek(errout,0,0);
 	ecc = fread(res+rcc,1,size,errout);
 	fclose(errout);
 	res[rcc+ecc] = 0;
+	*/
 	return rcode;
 }
 

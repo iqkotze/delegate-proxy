@@ -1,11 +1,16 @@
-<HR>
-Forwarding the message
 ${Sendmail?
-  <FONT color=green>is finished successfully</FONT>.
+  <table width=100% bgcolor="#f0f0ff"><tr><td>
+    &nbsp;The article was sent you <font color=green>successfully</font>.
+    &nbsp;[<a href="${num.anum1}">Return</a>]
+  </td></tr></table>
 :
-  <FONT color=red>FAILED</FONT> (${error.reason})
+  <table width=100% bgcolor=pink><tr><td>
+    &nbsp;Forwarding the message
+    <FONT color=red>FAILED</FONT> (${error.reason})
+    &nbsp;[<a href="?fmt=Forward&${formv2ustr.excluding.fmt,passw}">Retry</a>]
+    &nbsp;[<a href="${num.anum1}">Return</a>]
+  </td></tr></table>
 }
-<HR>
 
 ${putmenu?
   <BR><B><BIG>${art.Subject}</BIG></B><BR>

@@ -43,7 +43,6 @@ History:
 #include "credhy.h"
 #include "dglib.h"
 #include "log.h"
-#include "url.h"
 
 int HTMLtoTEXT(FILE *ain,FILE *aout,int toHtml);
 int PdfToText(FILE *pdff,FILE *txtf);
@@ -52,7 +51,7 @@ int sed_compile(SedEnv *se,PCStr(command));
 void sed_execute1(SedEnv *se,PCStr(in),PVStr(out),int err);
 int relay_file(FILE *in,FILE *out,int sizemax,int timeout,int timemax);
 int VA_url_permitted(VAddr *vaddr,AuthInfo *auth,PCStr(url));
-FILE * VA_URLget(DGC*ctx,VAddr *vaddr,PCStr(url),int reload,FILE *out);
+FILE * VA_URLget(VAddr *vaddr,AuthInfo *auth,PCStr(url),int reload,FILE *out);
 
 int scanAttrs(PCStr(src),int an,PCStr(nam1),PVStr(val1),int vsiz1,PCStr(nam2),PVStr(val2),int vsiz2);
 static void scanUrls(FILE *flist,int optr,PCStr(strip),PCStr(pre),PCStr(conv),FILE *out,FILE *descf);
@@ -156,7 +155,7 @@ typedef struct {
 	int	opt_u;
 	int	opt_a;
 	int	opt_h; /* max hops */
-	int	opt_urltype; /* URL types to be scanned */
+	int	opt_urltype;
 	int	printIfText;
 	int	NumAny;
 	int	NumUrl;
@@ -263,7 +262,6 @@ static struct {
 	{"htm",   T_HTML},
 	{"html",  T_HTML},
 	{"shtml", T_HTML},
-	{"dhtml", T_HTML},
 	{"txt",   T_TEXT},
 	{"cgi",   T_HTTP},
 	{"asp",   T_HTTP},
@@ -595,7 +593,7 @@ typedef struct {
 	FILE   *descf;
 } Opts;
 static int optxN;
-static const char *optxv[32];
+static const char *optxv[16];
 static const char *optx; /* URLs to be excluded */
 static const char *optX; /* symbolic link or link to another site */
 
@@ -653,6 +651,9 @@ static void scandir(PCStr(url),int optr,PCStr(strip),PCStr(pre),PCStr(conv),FILE
 typedef struct {
 	char   *u_url;
 	int	u_crc;
+/*
+	int	u_done;
+*/
  unsigned char	u_done;
  unsigned short	u_hops;
 	int	u_referer;
@@ -1126,9 +1127,7 @@ int HTML_scanLinks(FILE *in,int optr,PCStr(abase),AUFunc aufunc,void *ctx)
 			}
 			if( strchr(url,'?') ){
 				if( (opt_urltype & UT_QUERY) != 0 ){
-					/*
 					fprintf(stderr,"-- index script too: %s\n",url);
-					*/
 				}else
 				continue;
 			}
@@ -1221,30 +1220,6 @@ void xany2fdif(int ix,PCStr(pre),PCStr(strip),PCStr(url),PCStr(xconv),FILE *in,F
 	}
 	Itype = sItype;
 }
-
-void clear_DGreq(DGC*ctx);
-void HTTP_setReferer(DGC*ctx,PCStr(proto),PCStr(host),int port,PCStr(req),Referer *referer,PVStr(refbuf));
-
-void setReferer(DGC*ctx,PCStr(url)){
-	IStr(base,1024);
-	IStr(proto,128);
-	IStr(login,256);
-	IStr(upath,1024);
-	IStr(host,256);
-	int port;
-	Referer referer;
-	IStr(req,2*1024);
-	IStr(refbuf,2*1024);
-
-	strcpy(base,url);
-	normalizeURL(AVStr(base),sizeof(base));
-	decomp_absurl(base,AVStr(proto),AVStr(login),AVStr(upath),sizeof(upath));
-	port = scan_hostport1pX(proto,login,AVStr(host),sizeof(host));
-
-	bzero(&referer,sizeof(Referer));
-	sprintf(req,"GET %s HTTP/1.0\r\n",url);
-	HTTP_setReferer(ctx,proto,host,port,req,&referer,AVStr(refbuf));
-}
 static void scanUrls(FILE *flist,int optr,PCStr(strip),PCStr(pre),PCStr(conv),FILE *out,FILE *descf)
 {	CStr(url,1024);
 	const char *dp;
@@ -1257,20 +1232,16 @@ static void scanUrls(FILE *flist,int optr,PCStr(strip),PCStr(pre),PCStr(conv),FI
 	const char *referer;
 	const char *gotURL;
 	int uix; /* index in Urls[] of current url */
-	DGC *ctx = MainConn();
 
-	/* letting each URL in "filst" be a basedir for other URLs in
-	 * the same "flist" too
-	 */
 	file2basev(flist,elnumof(baseUrlv),baseUrlv,
 		AVStr(baseUrlb),sizeof(baseUrlb));
 
 	for(;;){
 		referer = "";
+		/*
+		fgot = getnextlink(AVStr(url),sizeof(url),&referer);
+		*/
 		fgot = getnextlink(AVStr(url),sizeof(url),&referer,&uix);
-
-		clear_DGreq(ctx);
-		setReferer(ctx,referer);
 
 		if( fgot == NULL ){
 		fgot = fgets(url,sizeof(url),flist);
@@ -1315,7 +1286,7 @@ static void scanUrls(FILE *flist,int optr,PCStr(strip),PCStr(pre),PCStr(conv),FI
 				}
 			}else
 			if( strstr(url,optx) ){
-				setdoneUrl(uix,url,DONE_EXCLUDES);
+					setdoneUrl(uix,url,DONE_EXCLUDES);
 				continue;
 			}
 		}
@@ -1345,6 +1316,9 @@ static void scanUrls(FILE *flist,int optr,PCStr(strip),PCStr(pre),PCStr(conv),FI
 		{
 			static int N;
 			Lap(1,0,"%4d %s\n",++N,url);
+			/*
+			Lap(1,0,"%s\n",url);
+			*/
 		}
 
 		in = NULL;
@@ -1355,7 +1329,10 @@ static void scanUrls(FILE *flist,int optr,PCStr(strip),PCStr(pre),PCStr(conv),FI
 			oatime = 0;
 
 			normalizeURL(AVStr(url),sizeof(url));
-			in = VA_URLget(ctx,whoAmI,url,0,NULL);
+			/*
+			in = URLget(url,0,NULL);
+			*/
+			in = VA_URLget(whoAmI,NULL,url,0,NULL);
 			if( (gotURL = getURLgetURL()) && !streq(url,gotURL) ){ /* mod-140524g */
 				/* set redirected and normalized url for xany2fdif() bellow */
 				IStr(xurl,2*1024);
@@ -2101,7 +2078,7 @@ static void makeDesc(DescRecord *Desc,int fsize,int mtime,PCStr(digest))
 #define SKIP_PGPSIG		0x04
 #define SKIP_PGPSIG_BEGIN	0x07
 #define SKIP_PGPSIG_END		0x0F
-static int skipLine(int itype,PCStr(line))
+static int skipLine(PCStr(line))
 {	const char *dp;
 	char ch;
 	const char *lp;
@@ -2156,7 +2133,6 @@ static int skipLine(int itype,PCStr(line))
 	 || line[0] == '|'
 	 || strncmp(line," >",2) == 0
 	 || strncmp(line," |",2) == 0
-	 || line[0] == '#' && itype == T_MAIL /* v9.9.12 new-140926b */
 	)
 		return 1;
 
@@ -2200,7 +2176,7 @@ int makeDigest(PVStr(digest),int size,FILE *in){
 				*(char*)ip = ' ';
 		}
 
-		skip = skipLine(T_MAIL,(char*)inb);
+		skip = skipLine((char*)inb);
 		if( oskip == SKIP_PGPSIG_BEGIN ){
 			if( skip == SKIP_PGPSIG_END ){
 				oskip = 0;
@@ -2990,7 +2966,7 @@ int any2fdif(PCStr(pre),PCStr(strip),PCStr(apath),int mi,PCStr(sub),PCStr(conv),
 				skiphead = 0;
 		}else
 		if( skiphead == 0 && dp < dx ){
-			skip = skipLine(itype,inb);
+			skip = skipLine(inb);
 			skiphead = skip & 2;
 
 			if( oskip == SKIP_PGPSIG_BEGIN ){

@@ -35,7 +35,8 @@ CKSUM =		-@"$(MKMAKE)" -cksum
 		$(CKSUM) $*.c
 
 
-SRCS = any2fdif.c
+SRCS = any2fdif.c \
+	rfc2html.c
 
 all:	$(LIBFILE) any2fdif
 lib:	$(LIBFILE)

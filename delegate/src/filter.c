@@ -3837,6 +3837,7 @@ int connect_main(int ac,const char *av[],Connection *Conn)
 	int porth,portl;
 	int sock;
 	int qh = 0; /* send input as HTTP request(s) */
+	int ql = 0; /* wait server's response line by line from client */
 
 	host[0] = 0;
 	port = 0;
@@ -3846,6 +3847,11 @@ int connect_main(int ac,const char *av[],Connection *Conn)
 		arg = av[ai];
 		if( strncmp(arg,"-F",2) == 0 )
 			continue;
+		if( strncmp(arg,"-ql",3) == 0 ){
+			ql = atoi(arg+3);
+			if( ql == 0 )
+				ql = 1000;
+		}else
 		if( strncmp(arg,"-qh",3) == 0 ){
 			qh = atoi(arg+3) + 1;
 		}else
@@ -3889,6 +3895,52 @@ int connect_main(int ac,const char *av[],Connection *Conn)
 			rcc = RecvPeek(sock,buf,sizeof(buf));
 			fprintf(stderr,"--- From Server ... %d\n",rcc);
 		}
+	}
+	if( ql ){ /* v10.0.0 new-140609e */
+		FILE *fc,*ts,*fs,*tc;
+		IStr(line,256);
+		int resp1st = 1;
+		int respcont = 0;
+		fc = fdopen(0,"r");
+		ts = fdopen(sock,"w");
+		fs = fdopen(sock,"r");
+		tc = fdopen(1,"w");
+		for(;;){
+			for(;;){
+				if( READYCC(fs) <= 0 ){
+					int timeout;
+
+					fflush(tc);
+					if( resp1st ){
+						timeout = ql;
+					}else{
+						timeout = ql / 10 + 1;
+					}
+					if( fPollIn(fs,timeout) <= 0 ){
+						break;
+					}
+				}
+				if( fgets(line,sizeof(line),fs) == 0 )
+					break;
+				fputs(line,tc);
+				if( resp1st ){
+					fprintf(stderr,"--got from server: %s",
+						line);
+					resp1st = 0;
+				}
+			}
+			if( fgets(line,sizeof(line),fc) == 0 )
+				break;
+			fprintf(stderr,"--got from client: %s",line);
+			if( fputs(line,ts) == EOF )
+				break;
+			fflush(ts);
+			resp1st = 1;
+		}
+		fcloseFILE(fc);
+		fcloseFILE(ts);
+		fcloseFILE(fs);
+		fcloseFILE(tc);
 	}
 	if( qh ){
 		FILE *fc,*ts;

@@ -3596,7 +3596,6 @@ int getFileSIGN(PCStr(file),PVStr(sign)){
 
 char *fgetsE(PVStr(str),int siz,FILE *fp){
 	int ch;
-	int pch = EOF;
 	refQStr(sp,str);
 	const char *sx;
 
@@ -3637,29 +3636,6 @@ char *fgetsE(PVStr(str),int siz,FILE *fp){
 	ch = 0;
 	for( sp = str; sp < sx; ){
 		ch = getc(fp);
-
-		if( ch == '{' )
-		/* v9.9.12 fix-140913c, not to split {FILESIGN=...} on boundary */
-		if( pch == 0x00 || (pch & 0x80) ) /* in binary without NL ended */
-		{
-			int MAXSIGNSIZE = 512; /* 256 or so is enough ? */
-			if( siz-(sp-str) < MAXSIGNSIZE ){ 
-				ungetc(ch,fp);
-				break;
-			}
-		}
-		if( pch == '}' )
-		/* v9.9.12 fix-140913d, not to be filled with binary after end */
-		{
-			if( ch != '\n'
-			 && ch != '"' /* for "{NOSIGN:...}" */
-			){
-				ungetc(ch,fp);
-				break;
-			}
-		}
-		pch = ch;
-
 		if( ch == EOF )
 			break;
 		if( ch=='`' || ch=='~' || ch=='$' || ch=='#' || ch=='?' ){

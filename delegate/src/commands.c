@@ -144,6 +144,8 @@ mainFunc lsof_main;
 mainFunc getpass_main;
 mainFunc forkpty_main;
 mainFunc seltest_main;
+mainFunc symlink_main;
+mainFunc tail_f_main;
 
 typedef struct {
 	int	 f_type;
@@ -270,6 +272,8 @@ static SubFunc subfuncs[] = {
 {MS,0,0,"",	"getpass", getpass_main,"getpass"},
 {MS,0,0,"",	"forkpty", forkpty_main,"forkpty"},
 {MS,0,0,"",	"seltest", seltest_main,"select test"},
+{MS,0,0,"",	"symlink", symlink_main,"symbolic link"},
+{MS,0,0,"",	"tail-f",  tail_f_main, "binay tail -f"},
 0
 };
 
@@ -619,6 +623,68 @@ int htget_main(int ac,const char *av[])
 	}
 	URLget(av[1],1,stdout);
 	return 0;
+}
+int File_islink(PCStr(path));
+int symlink_main(int ac,const char *av[]){
+	const char *opath;
+	const char *npath;
+	IStr(rpath,256);
+	const char *op;
+	int rcode;
+	int rcc;
+
+	if( ac <= 1 ){
+		fprintf(stderr,"Usage: symlink oldpath newpath\r\n");
+		return 0;
+	}
+	opath = av[1];
+	npath = av[2];
+	if( ac == 2 ){
+		if( isWindows() ){
+		}else
+		if( !File_islink(opath) ){
+			fprintf(stderr,"Error: not a symlink: %s\r\n",opath);
+			return -1;
+		}
+		if( 0 <= (rcc = readlink(opath,(char*)rpath,sizeof(rpath))) ){
+			setVStrEnd(rpath,rcc);
+			printf("%s\r\n",rpath);
+			return 0;
+		}else{
+			fprintf(stderr,"Error: cannot read symlink: '%s'\n",
+				opath);
+			return -1;
+		}
+	}
+	if( isWindows() && !File_is(opath) ){
+		fprintf(stderr,"Failed: target file does not exist: %s\n",opath);
+		return -1;
+	}
+	rcode = symlink(opath,npath);
+	if( rcode != 0 ){
+		fprintf(stderr,"Failed: symlink %s %s\r\n",opath,npath);
+	}
+	return rcode;
+}
+int tail_f_main(int ac,const char *av[]){
+	IStr(buff,0x10000);
+	int rcc;
+	FILE *in = stdin;
+	FILE *out = stdout;
+	int ifd;
+	int ofd;
+
+	ifd = fileno(in);
+	ofd = fileno(out);
+	for(;;){
+		rcc = read(ifd,buff,sizeof(buff));
+		if( rcc <= 0 ){
+			sleep(1);
+			continue;
+		}
+		write(ofd,buff,rcc);
+	}
+	exit(0);
 }
 int system_main(int ac,const char *av[])
 {	const char *nav[256]; /**/

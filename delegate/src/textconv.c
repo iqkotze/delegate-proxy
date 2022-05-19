@@ -578,6 +578,7 @@ FileSize CCV_relay_texts(Connection *Conn,FILE *ins[],FILE *out,FILE *dup)
 	rcc = CCV_relay_textsX(Conn,ins,out,dup,&wcc);
 	return rcc;
 }
+int CCX_disabled(CCXP);
 FileSize CCV_relay_textsX(Connection *Conn,FILE *ins[],FILE *out,FILE *dup,FileSize *wcc)
 {	const char *rs;
 	CStr(line,4096);
@@ -597,6 +598,10 @@ FileSize CCV_relay_textsX(Connection *Conn,FILE *ins[],FILE *out,FILE *dup,FileS
 	}
 	if( CCXactive(CCX_TOCL) ){
 		do_conv = 1;
+		if( CCX_disabled(CCX_TOCL) ){
+			sv1log("--CCX-- CCV_relay_text: CCX disabled\n");
+			do_ccx = 0;
+		}else
 		do_ccx = 1;
 	}else{
 		do_conv = CTX_check_codeconvSP(Conn,1);
@@ -683,6 +688,11 @@ FileSize CCV_relay_textsX(Connection *Conn,FILE *ins[],FILE *out,FILE *dup,FileS
 		if( do_conv )
 			*wcc = ototal;
 		else	*wcc = totalc;
+	}
+	if( do_ccx ){
+		IStr(stats,256);
+		CCXstats(CCX_TOCL,AVStr(stats));
+		sv1log("--CCX-- CCV_relay_text: %s\n",stats);
 	}
 	return  totalc;
 }

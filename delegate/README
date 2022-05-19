@@ -1,12 +1,15 @@
 ------------------------------------------------------------------------------
- DeleGate/9.9 RELEASE NOTE
+ DeleGate/10.0 RELEASE NOTE
 
- Date: October 28, 2014
+ Date: August 18, 2014
  Author: Yutaka Sato
  <URL:http://www.delegate.org/delegate/updates/>
 ------------------------------------------------------------------------------
 
-DeleGate/9.9 (STABLE / MAINTENANCE)
+DeleGate/10.0 (DEVELOPMENT)
+10.0.0 History viewer (at http://DeleGate/-/stats/)
+
+DeleGate/9.9 (STABLE)
 9.9.0 CAPSKEY to enable suppressed capabilities, HTMUX for tunneling over HTTP
 9.9.1 mintor fixes (m17n-lib,ipfw,FTP,Win95,HP-UX,SWF-MOUNT/HTTP,NTHT/Win32)
 9.9.2 fixes for resolver, FTPS, sftp/FTP, HTTP, SSI, "_-prefix.host" extension
@@ -19,8 +22,6 @@ DeleGate/9.9 (STABLE / MAINTENANCE)
 9.9.9 smooth SSLtunnel, being with OpenSSL1.X
 9.9.10 revival of yysh, fix for HTTP proxy chaining
 9.9.11 fixes for MOUNT (HTTP reverse proxy), SSI and CGI as origin HTTP server
-9.9.12 fixes for REJECT, MIME-header encoded-word, improved SSI, yysh on Win.
-9.9.13 trivial fixes, opened source code for Windows
 
 DeleGate/9.8 (DEVELOPMENT)
 9.8.0 introduced generalized CLUSTERing of servers, SSL Server Name Indication

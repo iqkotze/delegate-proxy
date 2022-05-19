@@ -257,6 +257,16 @@ FileSize file_sizeX(int fd)
 		return stat.st_size;
 	else	return -1;
 }
+FileSize Fsizeo(FILE *fp){
+	FileSize coff;
+	FileSize size;
+
+	coff = Ftello(fp);
+	Fseeko(fp,0,2);
+	size = Ftello(fp);
+	Fseeko(fp,coff,0);
+	return size;
+}
 int file_nlink(int fd)
 {	FileStat stat;
 

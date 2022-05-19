@@ -952,6 +952,8 @@ sv1log("CFI/MSGS ---- %s",msgstat);
 		if( nostat )
 			statline[0] = 0;
 		else	fgets(statline,sizeof(statline),in);
+if( statline[0] )
+sv1log("CFI/MSGS ---+ %s",statline);
 
 		if( strcmp(type,"head") == 0 ){
 			Uhead = RFC822_readHeaderU(in,1);
@@ -966,6 +968,16 @@ sv1log("CFI/MSGS ---- %s",msgstat);
 			Uhead = UTalloc(SB_CONN,MAX_MIMEHEAD,1);
 			setVStrEnd(Uhead.ut_addr,0);
 			body = 1;
+		}else
+		if( strcmp(type,"list") == 0 ){
+			/* v10.0.0 new-140609h for POP LIST,UIDL */
+			/* currently, no filter, just skip */
+			/* to be filtered with Content-Type: resp/LIST ? */
+			fputs(statline,out);
+			relayRESPBODY(in,out,AVStr(endline),sizeof(endline));
+			fputs(endline,out);
+			fflush(out);
+			continue;
 		}else{
 sv1log("CFI/MSG ---- unknown type: %s\n",type);
 			exit(1);

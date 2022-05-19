@@ -65,6 +65,7 @@ const char *TIMEFORM_RFC1   = "%P%d %B %Y";
 const char *TIMEFORM_RFC2   = "%P%B %d, %Y";
 const char *TIMEFORM_RFC3   = "%P%B %d %Y";
 const char *TIMEFORM_RFC4   = "%d/%m/%y";
+const char *TIMEFORM_RFC5   = "%B %d, %Y";
 
 /*
  * inputs external representation of year and returns its internal value
@@ -1029,6 +1030,7 @@ int scanNNTPtime(PCStr(stime))
 	if( 0 <= (itime = scanftime(stime,TIMEFORM_RFC2))   ) return itime;
 	if( 0 <= (itime = scanftime(stime,TIMEFORM_RFC3))   ) return itime;
 	if( 0 <= (itime = scanftime(stime,TIMEFORM_RFC4))   ) return itime;
+	if( 0 <= (itime = scanftime(stime,TIMEFORM_RFC5))   ) return itime;
 	return -1;
 }
 int scanUNIXDATE(PCStr(stime))

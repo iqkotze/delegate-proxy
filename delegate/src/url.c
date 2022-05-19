@@ -50,6 +50,8 @@ int GOPHER_ON_HTTP = 1;
 
 extern int URICONV_ANY;
 extern int URICONV_FULL;
+extern int URICONV_FULLLABEL; /* v10.0.0 new-140727m */
+extern int URICONV_RELATIVE;  /* v10.0.0 new-140727g */
 extern int URICONV_MOUNT;
 extern int URICONV_NORMAL;
 extern int URICONV_PARTIAL;
@@ -442,6 +444,21 @@ static const char *isURLinXMLattr(Referer *Ctx,PCStr(tag),PCStr(str))
 	}
 	return 0;
 }
+
+/* v10.0.0 fix-140725i, it is not necessary to confirm that
+ * current tag context is cleared at the end of tag by '>',
+ * because it is cleared at the end of nextTagAttrX() if tag == NULL.
+ *
+int clearCurTag(Referer *Base,int where){
+	if( Base != 0 && Base->r_tagctx.r_curtag[0] ){
+		sv1log("--nextTag clear curtag-%d [%s]\n",
+			where,Base->r_tagctx.r_curtag);
+		Base->r_tagctx.r_curtag[0] = 0;
+		return 1;
+	}
+	return 0;
+}
+ */
 
 int HTML_attrTobeConv(PCStr(attr),PCStr(tag),int *uconvp);
 const char *html_nextTagAttrX(void *vBase,PCStr(html),PCStr(ctype),PVStr(rem),const char **tagp,const char **attrp,int *convmaskp)
@@ -2717,6 +2734,12 @@ int url_partializeS(Referer *referer,PCStr(line),PVStr(xline))
 	int umask;
 	int qch;
 
+	const char *basepath = 0; /* v10.0.0 new-140727g */
+	int baselen;
+	if( basepath = referer->r_sv.u_base ){
+		baselen = strlen(basepath);
+	}
+
 	myproto = referer->r_my.u_proto;
 	myhost = referer->r_my.u_host;
 	myport = referer->r_my.u_port;
@@ -2754,6 +2777,14 @@ int url_partializeS(Referer *referer,PCStr(line),PVStr(xline))
 				if( strcaseeq(proto,myproto) )
 				if( hostcmp_lexical(host,myhost,1) == 0 ){
 					sp += nurl - np;
+					if( (umask & URICONV_RELATIVE)
+					 && path
+					 && basepath != 0
+					 && strneq(path,basepath,baselen)
+					){
+						/* v10.0.0 new-140727g */
+						path += baselen;
+					}else
 					setVStrPtrInc(xp,'/');
 					if( path )
 						strcpy(xp,path);

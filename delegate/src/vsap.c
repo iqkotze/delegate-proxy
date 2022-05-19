@@ -1,4 +1,4 @@
-const char *SIGN_vsap_c="{FILESIGN=vsap.c:20141031194212+0900:4c7e06c48ecf966b:Author@DeleGate.ORG:GOpID8DfhbiIeIanckLKa1cursJF9sTBVXkf7jSm/d8UFeSoALejPvwcVPDgK/Axsoptc1FngFeJhIQllxzD2a+nq09TiS1T4yxG4WDhvy+Fa7rRHnwAx11lH3BlDFe+3StRI1FeSlqc8Xf+sl7f17U8izoVQyRyiLKjTqVtXkk=}";
+const char *SIGN_vsap_c="{FILESIGN=vsap.c:20140818123722+0900:04085285168dba48:Author@DeleGate.ORG:cNw9PEcdRvWtBlRqFSviQKyGFeZZGKCcoiXCyCjJ9vBZrUemYrd/D6yVWAZcDxrHtHkR/1xlMGF8w9NFlvZTvN8eTDX3xV2B+yD5om19gDtgnXU9TZ8C/fHFNzBmw44sLXhK1bsxmrVmWUVEFra5JKKqgi7pvWSF79lY8aQfDZo=}";
 
 /*////////////////////////////////////////////////////////////////////////
 Copyright (c) 1997-2000 Yutaka Sato and ETL,AIST,MITI
@@ -226,14 +226,6 @@ static VsapServEnv *vsapServEnv;
 #define SockID		vsapServEnv->ve_SockID
 #define bind_exlock	vsapServEnv->ve_bind_exlock
 #define bind_nlisten	vsapServEnv->ve_bind_nlisten
-
-
-int AcceptViaHTTP(Connection *Conn,int ba,int sock,int timeout,int priority,PCStr(rport),PVStr(sockname),PVStr(peername));
-int open_vsap(Connection *Conn,int method);
-#define resp_OK VSAP_respOK
-int resp_OK(PCStr(resp));
-#ifndef OPT_S /*{*/
-
 void minit_vsapsv()
 {
 	if( vsapServEnv == 0 ){
@@ -905,7 +897,6 @@ EXIT:
 	fclose(authout);
 	return 0;
 }
-#endif /*} OPT_S */
 
 
 /*
@@ -937,9 +928,6 @@ static VsapClntEnv *vsapClntEnv;
 #define serverX		vsapClntEnv->ve_serverX
 #define Socknames	vsapClntEnv->ve_Socknames
 #define Peernames	vsapClntEnv->ve_Peernames
-
-
-#ifndef OPT_S /*{*/
 void minit_vsapcl(){
 	if( vsapClntEnv == 0 )
 		vsapClntEnv = NewStruct(VsapClntEnv);
@@ -1004,7 +992,7 @@ int ViaVSAPassociator(int sock)
 	return 0;
 }
 
-int resp_OK(PCStr(resp))
+static int resp_OK(PCStr(resp))
 {	CStr(scode,128);
 
 	if( strncmp(resp,VER,sizeof(VER)-1) == 0 )
@@ -1016,7 +1004,7 @@ int resp_OK(PCStr(resp))
 
 int connectViaUpper(Connection *Conn,PCStr(where),PCStr(proto),PCStr(host),int port);
 int connect2server(Connection *Conn,PCStr(proto),PCStr(host),int port);
-int open_vsap(Connection *Conn,int method)
+static int open_vsap(Connection *Conn,int method)
 {	int rsock;
 	int ri;
 	const char *host;
@@ -1117,6 +1105,7 @@ int VSAPgetpeername(DGC*Conn,int rsock,PVStr(peername))
 }
 
 int ConnectViaHTTP(Connection *Conn,int sock,int timeout,PVStr(sockname),PVStr(peername));
+int AcceptViaHTTP(Connection *Conn,int ba,int sock,int timeout,int priority,PCStr(rport),PVStr(sockname),PVStr(peername));
 
 int CTX_VSAPconnect(Connection *Conn,PVStr(sockname),PVStr(peername))
 {	CStr(resp,1024);
@@ -1168,7 +1157,6 @@ EXIT:
 	return rsock;
 }
 
-#endif /*} OPT_S */
 
 /* '"DIGEST-OFF"' */
 

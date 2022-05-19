@@ -555,11 +555,9 @@ void dumpsockets(FILE *out,PCStr(wh)){
 int testLogin(PCStr(user),PCStr(pass)){
 	return -1;
 }
-#ifndef _MSC_VER
 const char *myExePath(){
 	return "";
 }
-#endif
 int isWindows95(){ return 0; }
 #endif /*}*/
 

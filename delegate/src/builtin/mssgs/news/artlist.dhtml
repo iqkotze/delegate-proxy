@@ -27,16 +27,18 @@ ${formv.fmt.Print?
  ${art.Msgid?
   <TITLE>Article &lt;${art.Msgid}&gt;</TITLE>
   <BODY>
+  <font face="courier new">
   Article ${num.anum1? ${_grp.print}:${num.anum1}} <B>&lt;${art.Msgid}&gt;</B>
+  </font>
  :
   ${num.anum1<num.anum2?
     <TITLE>Articles ${_grp.print}/${num.anum1}-${num.anum2} (${art.SDate})</TITLE>
 
     <BODY>
-    <FONT face="Times New Roman">
+    <font face="courier new">
     Articles <B>${_grp.print}</B>/<B>${num.anum1}</B>-<B>${num.anum2}</B>
     of [${num.min}-${num.max}] on the server <I>${serv.hostport}</I>
-    </FONT>
+    </font>
   :
     <TITLE>Article ${_grp.print}/${num.anum1} (${art.SDate}) ${art.SSubj}</TITLE>
 
@@ -48,8 +50,10 @@ Newsgroups: ${_grp.name}">
 
     <BODY>
     ${putmenu?
+      <font face="courier new">
       <small>Article <B>${_grp.print}</B>/<B>${num.anum1}</B>
       of [${num.min}-${num.max}] on the server <I>${serv.hostport}</I></small>
+      </font>
     }
   }
  }

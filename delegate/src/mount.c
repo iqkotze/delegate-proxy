@@ -59,6 +59,7 @@ int matchAUTH(DGC*Conn,int hlid);
 int CTX_matchPATHs(DGC*Conn,int hlid,PCStr(path));
 int CTX_matchPATH1(DGC*Conn,int hlid,PCStr(path),PCStr(user));
 int CTX_withSSL(DGC*Conn);
+int CTX_hasCookie(DGC*Conn,PCStr(cookiepat));
 const char *CTX_dst_proto(DGC*Conn);
 const char *CTX_clif_proto(DGC*Conn);
 const char *CTX_CLNT_PROTO(DGC*Conn);
@@ -130,7 +131,11 @@ const char *OPT_RSERV    = _OPT_RSERV;
 #define C_FILEIS	   0x10000 /* fileis[:reg,dir] */
 #define C_WITH_SSL	   0x20000
 #define C_UDST		0x00400000 /* destination host in the request URL */
+#define C_HAS_COOKIE  0x0100000000LL /* v10.0.0 new-140722f has Cookie */
+#define C_ALL         0x010043FFFFLL
+/*
 #define C_ALL		  0x43FFFF
+*/
 /*
 #define C_ALL		   0x3FFFF
 */
@@ -232,21 +237,23 @@ typedef struct {
 #define c_int	c_val.c_INT
 #define c_rex	c_val.c_REX
 
+#define NUM_CONDLIST 22
+
 typedef struct {
 	int	 u_serno;
 	int	 u_compiled;
 	int	 u_disabled;
-	int	 u_flags;
+	Int64	 u_flags; /* v10.0.0 mod-140722e Int64 <- int */
 	double	 u_priority;
 	int	 u_dirmatch;
 
-	int	 u_conds;
-	int	 u_conds_neg; /* negated with "!" prefix */
+	Int64	 u_conds;
+	Int64	 u_conds_neg; /* negated with "!" prefix */
 	int	 u_conds_value;
   const	char	*u_conds_param;
 	char	 u_conds_param_md5[16];
 
-	Cond1	 u_condList[21]; /**/
+	Cond1	 u_condList[NUM_CONDLIST]; /**/
 	Url	 Src;
 	Url	 Dst;
 	int	 u_xcond;
@@ -317,6 +324,10 @@ typedef struct {
 #define N_WHERE		20
 #define u_where		u_condList[N_WHERE].c_int
 
+#define S_HAS_COOKIE	21
+#define u_hascookie	u_condList[S_HAS_COOKIE].c_str
+
+/* NUM_CONDLIST */
 
 typedef struct {
 	int	 me_do_sort;
@@ -420,7 +431,7 @@ static int enumopt(int lidx,PCStr(name),PCStr(val))
 static struct {
 	int	 o_direction; /* forced direction overriding -f,-b context */
   const	char	*o_name;
-	int	 o_flags;
+	Int64	 o_flags;
 	int	 o_value;
 	int	 o_listx;
 	char	 o_enum;
@@ -454,6 +465,8 @@ static struct {
 
 	{0,  "withssl",	C_WITH_SSL,	0,0,N_WITH_SSL	}, /* SSL */
 	{0,  "srcproto",	}, /* client protocol */
+	{0,  "hascookie",C_HAS_COOKIE,	S_HAS_COOKIE	},
+	{0,  "setcookie" },
 
 	{0,  "onerror",	U_ON_ERROR,	S_ON_ERROR	}, /* onerror[={listOfErrorCodes}] */
 	{0,  "moved",	U_MOVED_TO,	0,0,N_MOVED_TO	},
@@ -494,6 +507,7 @@ static struct {
 	{0,  "expire",		},
 	{0,  "cache",		},
 	{0,  "expires",		},/* Expires: field is added into HTTP header */
+	{0,  "nocache",		},/* adding Pragma: no-cache to HTTP header */
 
 	/* routing by MOUNT ? */
 	{0,  "master",		},
@@ -1982,6 +1996,12 @@ static int evalCondX(MountArgs *moa,int direction,Mtab *mt,PCStr(clif),PCStr(dst
 		if( req = CTX_reqstr(ctx) ){
 			if( frex_match((struct fa_stat*)mt->u_reqpat,req) == 0 )
 				return 0;
+		}
+	}
+	if( mt->u_hascookie ){
+		if( CTX_hasCookie(ctx,mt->u_hascookie) ){
+		}else{
+			return 0;
 		}
 	}
 

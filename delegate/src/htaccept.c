@@ -1,4 +1,4 @@
-const char *SIGN_htaccept_c="{FILESIGN=htaccept.c:20141031194213+0900:4b407e4f6e9729aa:Author@DeleGate.ORG:qsSCAlYiRwcCRYUEcFvLX5NuoskS4UQBF+x1OSKb5yAwcWMcBWYYbOhd/sl5hDHSI5reWjA4nah5j/ieNxs//tGC1BEm2DXP7rjg3ewNopKQWodVa1+EzJYowU/+Zc3ubD/ORMjO6t3O7sEqlizVLDRtoI5SQ1HrhugovaOVdas=}";
+const char *SIGN_htaccept_c="{FILESIGN=htaccept.c:20140818123722+0900:6ac6332e8fc0d7c0:Author@DeleGate.ORG:oMIiQ26+TUT2xBpxYwry7+vYNDFZp2qkJdYnwOf96dYas5/TroK42AotIbeUf0BxP1TwxuNgC0x1ZGEayX2V0cvqv1IjEREiw4ahk2qwf7NPIyTLe0wVAkwf6DKYzYwU83TQyYjXtTrPOqXFs8ZtKZGCfA37CmkavlafSTX9Hnw=}";
 
 /*///////////////////////////////////////////////////////////////////////
 Copyright (c) 2002-2008 National Institute of Advanced Industrial Science and Technology (AIST)
@@ -75,10 +75,6 @@ extern int S_ADDRNOTAVAIL;
 int startHTMUX_SV(DGCTX Conn,PCStr(sxver),FILE *tc,PCStr(req),PCStr(head));
 int startHTMUX_CL(DGCTX Conn,int sock,PCStr(rport));
 
-extern char OutboundHTMUX[];
-#define getFV2(str,fld,buf) getFieldValue2(str,fld,AVStr(buf),sizeof(buf))
-
-#ifndef OPT_S /*{*/
 typedef struct {
 	int	bp_host[4]; /* IPv4 / IPv6 */
 	int	bp_port;
@@ -335,6 +331,8 @@ static int forwardHTMUX(Connection *Conn,int psock,PCStr(req),PCStr(head),PCStr(
 	return 1;
 }
 
+extern char OutboundHTMUX[];
+#define getFV2(str,fld,buf) getFieldValue2(str,fld,AVStr(buf),sizeof(buf))
 int HTTP_ACCEPT(Connection *Conn,PCStr(req),PCStr(head),FILE *fc,FILE *tc)
 {	CStr(local,MaxHostNameLen);
 	CStr(remote,MaxHostNameLen);
@@ -552,8 +550,6 @@ EXIT:
 	return rrcc;
 	return rcc;
 }
-
-#endif /*} OPT_S */
 
 /* '"DIGEST-OFF"' */
         

@@ -25,8 +25,10 @@ History:
 #include "param.h"
 #include "file.h"
 #include "ccenv.h"
+#include <ctype.h>
 
 const char *MYSELF                 = "-.-";
+const char *MYPROXY                = "mypro.xyz";
 const char *CLIENT_HOST            = "clnt.-";
 const char *CLIENTIF_HOST          = "clif.-";
 const char *ORIGDST_HOST           = "odst.-";
@@ -52,11 +54,7 @@ const char *DELEGATE_LOGCENTER     = "www.delegate.org:8000";
 const char *DELEGATE_DGPATH        = "+:.:${HOME}/delegate:${EXECDIR}:${ETCDIR}";
 
 const char *DELEGATE_DGROOT        = "";
-/*
 const char *DELEGATE_CONF          = "${EXECDIR}/${EXECNAME}.conf";
-v9.9.13 new-141023a
-*/
-const char *DELEGATE_CONF          = "${EXECDIR}/${EXECNAME}.conf;${EXECDIR}/../etc/${EXECNAME}.conf";
 const char *DGCOMMON_CONF          = "${DGROOT}/common.conf";
 const char *DELEGATE_VARDIR        = "${DGROOT?&:/var/spool/delegate}";
 #if _MSC_VER
@@ -339,12 +337,69 @@ const char *MY_HOSTPORT()
 {
 	return MYSELF;
 }
+
+/* v10.0.0 new-140704d created */
+extern int HTTP_mypro_xyz;
+int isMYPROXY(PCStr(host),PVStr(nexthop),PVStr(dsthost)){
+	const char *hp;
+	refQStr(np,nexthop);
+	refQStr(dp,nexthop);
+	int hops;
+
+	if( (hp = strtailstr(host,MYPROXY)) == 0 ){
+		return 0;
+	}
+	if( hp == host ){
+		if( nexthop ) setVStrEnd(nexthop,0);
+		return 1;
+	}
+	if( hp[-1] != '.' ){
+		return 0;
+	}
+	if( nexthop == 0 ){
+		return 2;
+	}
+	strcpy(nexthop,host);
+	if( np = strtailstr(nexthop,MYPROXY) ){
+		setVStrEnd(np,0);
+		np--;
+		if( nexthop <= np && *np == '.' ){
+			setVStrEnd(np,0);
+			np--;
+		}
+		for( dp = np; nexthop < dp; dp-- ){
+			if( !isdigit(*dp) || !isdigit(dp[-1]) ){
+				break;
+			}
+		}
+		hops = atoi(dp);
+		if( hops <= 0 ){ /* reserved */
+			if( nexthop ) setVStrEnd(nexthop,0);
+			return 3;
+		}else
+		if( hops == 1 ){
+			if( nexthop ) setVStrEnd(nexthop,0);
+			return 4;
+		}else{
+			sprintf(dp,"%d.%s",hops-1,MYPROXY);
+			return 5;
+		}
+	}
+	return 6;
+}
+
 int isMYSELF(PCStr(host))
 {
 	if( streq(host,MYSELF) )
 		return 1;
 	if( streq(host,"-") )
 		return 1;
+
+	if( (HTTP_mypro_xyz & MYPROXY_THRU) == 0 ){
+		if( isMYPROXY(host,VStrNULL,VStrNULL) ){
+			return 1;
+		}
+	}
 	return 0;
 }
 
@@ -1144,7 +1199,6 @@ const char *myconf(PVStr(conf)){
 }
 void put_myconf(FILE *out){
 	CStr(conf,512);
-	fprintf(out,"%s=%s\r\n",P_EXEC_PATH,EXEC_PATH);
 	myconf(AVStr(conf));
 	fprintf(out,"%s\r\n",conf);
 }

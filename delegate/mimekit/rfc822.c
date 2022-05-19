@@ -357,6 +357,17 @@ int RFC821_skipheader(FILE *afp,FILE *out,PCStr(field))
 	}
 	return rcode;
 }
+int RFC822_skipheader(FILE *fs,FILE *tc,PVStr(line),int size){
+	while( fgets(line,size,fs) != NULL ){
+		if( tc != NULL ){
+			fputs(line,tc);
+		}
+		if( isEOH(line) ){
+			return 1;
+		}
+	}
+	return 0;
+}
 int RFC821_skipbody(FILE *afp,FILE *out,xPVStr(line),int size)
 {	CStr(linebuf,1024);
 	int rcc;
@@ -696,6 +707,15 @@ int replaceContentType(PVStr(head),PCStr(type))
 		sprintf(head,"Content-Type: %s\r\n%s",type,tp);
 		free((char*)tp);
 		return 0;
+	}
+	if( strncaseeq(type,"multipart/",10) ){
+	}else{ /* fix-140513 */
+		IStr(val,1024);
+		extractParam(AVStr(head),"Content-Type","boundary",
+			AVStr(val),sizeof(val),1);
+		extractParam(AVStr(head),"Content-Type","type",
+			AVStr(val),sizeof(val),1);
+		ctp = findFieldValue(head,"Content-Type");
 	}
 	if( (cst = strpbrk(ctp,";\r\n")) == 0 )
 		return -1;

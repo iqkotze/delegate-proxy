@@ -96,6 +96,7 @@ int CCXsize(){ return sizeof(CCX); }
 #define CCF_IN_ANSI	0x100 /* input might be ANSI */
 #define CCF_ESC_K	0x200 /* insert SP before ESC-[-K (MacOSX Terminal) */
 #define CCF_YUC		0x400 /* non-Japanese to YUC */
+#define CCF_THRU	0x800 /* simply copy input to output without conv. */
 
 #define CCI_BINARY	0x01 /* input seems binary */
 
@@ -124,6 +125,15 @@ int isKnownCharset(PCStr(name)){
 		if( strcaseeq(charsets[ci].cs_name,name) )
 			return ci;
 	}
+	return 0;
+}
+int isNoconvCharset(PCStr(name)){
+	if( strcaseeq(name,"big5") )   return 1;
+	if( strcaseeq(name,"gb2312") ) return 1;
+	if( strcaseeq(name,"koi8-r") ) return 1;
+	/*
+	if( strcaseeq(name,"windows-1252") ) return 1;
+	*/
 	return 0;
 }
 
@@ -578,50 +588,6 @@ static int is_EUC_JP(PCStr(euc))
 	return 1;
 }
 
-/* v9.9.12 140826c, getting code length of a multi bytes character */
-int JIS7_bytes(int ch1,int ch2){
-	if( IS_JIS7(ch1,ch2) ){
-		return 2;
-	}
-	return 0;
-}
-int SJIS_bytes(int ch1,int ch2){
-	int in_sjis = 1;
-	if( IS_SJIS_1B(ch1) ){
-		return 1;
-	}
-	if( IS_SJIS_2B(ch1,ch2,in_sjis) ){
-		return 2;
-	}
-	return 0;
-}
-int EUCJ_bytes(int ch1,int ch2,int ch3){
-	if( ch1 == 0x8F ){
-		if( IS_EUC(ch2,ch3) ){
-			return 3;
-		}
-	}
-	if( IS_EUC(ch1,ch2) ){
-		return 2;
-	}
-	return 0;
-}
-static unsigned int fromUTF8(unsigned char *us,int *lengp,char **spp);
-int UTF8_bytes(int ch1,int ch2,int ch3){
-	unsigned char us[6];
-	unsigned int ucs;
-	int len = 0;
-
-	us[0] = ch1;
-	us[1] = ch2;
-	us[2] = ch3;
-	us[3] = 0;
-	us[4] = 0;
-	us[5] = 0;
-	ucs = fromUTF8(us,&len,NULL);
-	return len;
-}
-
 int CCXnonJP(CCX *ccx){
 	return ccx->cc_nonJP;
 }
@@ -652,13 +618,23 @@ const char *CCXgotincharcode(CCX *ccx){
 int CCXstats(CCX *ccx,PVStr(buf)){
 	refQStr(bp,buf);
 
+	strcpy(bp,"in");
+	bp += strlen(bp);
 	if( ccx->cc_incc1 ){
 		const char *cs;
 		if( cs = csx2name(ccx->cc_incc1) ){
 			sprintf(bp,"(%s)",cs);
 			bp += strlen(bp);
 		}
+		else{
+			sprintf(bp,"(unknown)");
+			bp += strlen(bp);
+		}
+	}else{
+		sprintf(bp,"(undef)");
+		bp += strlen(bp);
 	}
+	setVStrPtrInc(bp,'{');
 	if( ccx->cc_instat & CCI_BINARY ){
 		sprintf(bp,"(BIN)");
 		bp += strlen(bp);
@@ -695,6 +671,19 @@ int CCXstats(CCX *ccx,PVStr(buf)){
 		sprintf(bp,"NONJP[%d/%d]",ccx->cc_nonJP,ccx->cc_nonjp8);
 		bp += strlen(bp);
 	}
+	setVStrPtrInc(bp,'}');
+
+	strcpy(bp," out");
+	bp += strlen(bp);
+	if( ccx->cc_OUT ){
+		const char *ocode = "unknown";
+		CCXoutcharset(ccx,&ocode);
+		sprintf(bp,"(%s)",ocode);
+		bp += strlen(bp);
+	}else{
+		sprintf(bp,"(undef)");
+		bp += strlen(bp);
+	}
 	setVStrEnd(bp,0);
 	return bp - buf;
 }
@@ -709,6 +698,34 @@ void CCXcounts(CCX *ccx)
 	fprintf(stderr,"SJIS[%d/%d]",ccx->cc_SJIS,ccx->cc_sjis);
 	fprintf(stderr,"EUCJP[%d/%d]\n",ccx->cc_EUCJP,ccx->cc_euc);
 */
+}
+
+/*
+ * return true if conversions is done using the CCX
+ */
+int CCX_converted(CCX *ccx){
+	if( ccx->cc_flags & CCF_THRU ){
+		syslog_ERROR("--CCX-- converted:NO (CCF_THRU)\n");
+		return 0;
+	}
+	if( ccx->cc_OUT == CC_THRU ){
+		syslog_ERROR("--CCX-- converted:NO (CC_THRU)\n");
+		return 0;
+	}
+	if( ccx->cc_OUT == CC_GUESSSET ){
+		syslog_ERROR("--CCX-- converted:NO (Guessing)\n");
+		return 0;
+	}
+	if( ccx->cc_incc1 ){
+		const char *cs = CCXgotincharcode(ccx);
+		syslog_ERROR("--CCX-- converted:YES (cs=%s(%d) sw=%d)\n",
+			cs? cs : ccx->cc_incc1 == CC_EURO8 ? "EURO8" : "unknown",
+			ccx->cc_incc1,ccx->cc_nonASCII);
+		return 1;
+	}else{
+		syslog_ERROR("--CCX-- converted:NO (not detected non-ASCII)\n");
+		return 0;
+	}
 }
 
 /* distinguish SJIS from EUC */
@@ -1285,6 +1302,21 @@ int CCXcharsetcmp(PCStr(cs1),PCStr(cs2))
 	return Cs1 - Cs2;
 }
 static char incode[64]; /**/
+int CCX_disabled(CCX *ccx){
+	return ccx->cc_flags & CCF_THRU;
+}
+int CCX_disable(CCX *ccx,int disable){
+	int oflags;
+
+	if( disable < 0 ){
+		return ccx->cc_flags & CCF_THRU;
+	}
+	oflags = ccx->cc_flags;
+	if( disable )
+		ccx->cc_flags |= CCF_THRU;
+	else	ccx->cc_flags &= ~CCF_THRU;
+	return oflags;
+}
 void CCX_resetincode(CCX *ccx){
 	int ii;
 	ccx->cc_in = 0;
@@ -1628,6 +1660,7 @@ static int isUTF8_HANKAKU(int ch1,int ch2,int ch3){
 #define isEUCJP(ccx,ib,px,pn,pl)       isEUCJPX(ccx,8,0,ib,px,pn,pl)
 #define isEUCJPline(ccx,ib,px,pn,pl)   isEUCJPX(ccx,128,IS_WORDS,ib,px,pn,pl)
 #define isUTF8line(ccx,ib,px,pn,pl)    isUTF8X(ccx,128,IS_WORDS,ib,px,pn,pl)
+#define isEURO8(ccx,ch1)               isEURO8X(ccx,ch1)
 
 static int isSJISX(CCX *ccx,int jlen,int flag,int insjis,unsigned PCStr(cinb),int pix,int pin,int pilen){
 	int ci;
@@ -1783,6 +1816,12 @@ static int EUCgtSJIS(CCX *ccx,unsigned PCStr(cinb),int pix,int pin,int pilen){
 			return 0;
 		if( maybein(CC_EUCJP) )
 			return 3;
+	}
+	return 0;
+}
+static int isEURO8X(CCX *ccx,int ch1){
+	if( ch1 & 0x80 ){
+		return 1;
 	}
 	return 0;
 }
@@ -2111,6 +2150,11 @@ int CCXexec(CCX *ccx,PCStr(scinb),int ilen,PVStr(sout),int osiz)
 		pix++;
 		ch2 = CH2;
 
+		if( ccx->cc_flags & CCF_THRU ){
+			*op++ = ch1;
+			continue;
+		}
+
 		if( ccx->cc_flags & CCF_YUC ){
 			/* 9.9.1 if is in EUC-JP */
 			if( isYUC(ccx,ch1,cinb,pix-1,pin,pilen,&ucs1) ){
@@ -2134,8 +2178,11 @@ int CCXexec(CCX *ccx,PCStr(scinb),int ilen,PVStr(sout),int osiz)
 			}
 		}
 		if( ccx->cc_instat & CCI_BINARY ){
+			if( ccx->cc_EURO8 ){
+			}else{
 			*op++ = ch1;
 			continue;
+			}
 		}
 		if( ch1 == '\n' ){
 			ccx->cc_linecc = 0;
@@ -2521,6 +2568,8 @@ int CCXexec(CCX *ccx,PCStr(scinb),int ilen,PVStr(sout),int osiz)
 			isUTF8tmp = 0;
 			ccx->cc_UTF8 = 0;
 		}
+		if( ccx->cc_OUT == CC_THRU ){
+		}else
 		if( ccx->cc_SJIS || ccx->cc_EUCJP )
 		if( (ch1&0xF0) == 0xE0 && (ch2 & 0x80) ){
 			int ucs,len;
@@ -2645,6 +2694,8 @@ getpid(),pix,ch1,ch2,CH3,CH4,CH5);
 			continue;
 		}
 
+		if( ccx->cc_OUT == CC_THRU ){
+		}else
 		if( isNotInNONJP(ccx) )
 		/*
 		if( !ccx->cc_SJIS && !ccx->cc_EUCJP || isUTF8tmp )
@@ -3202,6 +3253,9 @@ CCXlog("{C} 3bytes EUCJP %X %X %X\n",ch1,ch2,ch3);
 			insjis = inNonASCII(ccx,CC_SJIS);
 			if( !insjis && ccx->cc_nonASCII == 0 )
 				insjis = is_SJIS(ccx,cinb,pix-1,pin,pilen);
+
+			if( ccx->cc_OUT == CC_THRU ){
+			}else
 			if( !insjis )
 			if( !ccx->cc_UTF8 && !ccx->cc_EUCJP && !ccx->cc_EURO8
 			 || ccx->cc_linecc == 0
@@ -3382,6 +3436,22 @@ if( isNotInNONJP(ccx) && CCXwithJP(ccx) ){
 			}
 			ccx->cc_nonjp8++;
 		}else{
+			if( ccx->cc_OUT == CC_THRU ){
+			}else
+			if( ccx->cc_indef == CC_UTF8 ){
+			}else
+			if( isEURO8(ccx,ch1) ){
+				if( ccx->cc_OUT == CC_UTF8 ){ /* fix-140513b */
+					int ucs;
+					setccin(ccx,CC_EURO8);
+					if( ucs = ANSItoUCS(ch1) ){
+						op += toUTF8(ucs,op);
+					}else{
+					op += toUTF8(ch1,op);
+					}
+					continue;
+				}
+			}
 		*op++ = ch1;
 		}
 	}

@@ -33,6 +33,7 @@ History:
 #include "dglib.h"
 
 extern const char *MYSELF;	/* -.- */
+extern const char *MYPROXY;	/* mypro.xyz */
 
 extern const char *DELEGATE_CONFIG;
 extern const char *DELEGATE_CONF;
@@ -318,7 +319,6 @@ typedef struct _ConnDepth {	/* v9.9.12 Connection chain on the stack */
 	int	cd_curdepth;	/* current depth of URLget() for SSI include */
 	int	cd_peekdepth;	/* maximum depth reached */
 	int	cd_overflow;	/* depth when overflow is prevented */
-	int	cd_putlog;	/* delayed log after stack shrinked */
 } ConnDepth_00;
 #define connDepth ConnDepth_00
 #define ConnDepth Conn->co_depth
@@ -502,7 +502,7 @@ typedef struct DGCtx {
 	char	ht_stat;
 	char	ht_statx;
 	MStr(	ht_genETag,64);
-	MStr(	ht_addRespHeaders,256);
+	MStr(	ht_addRespHeaders,2*1024); /* mod-140526g 2K <- 256 */
 	MStr(	ht_flags,128);
 	MStr(	ht_qmd5,16);
 	MStr(	ht_rmd5,16);
@@ -510,6 +510,7 @@ typedef struct DGCtx {
 
   const char   *mo_options;	/* MOUNTed, its options */
   const char   *mo_optionsX;	/* MountOptions to be passed to URLget() */
+	int	mo_hasCookie;	/* result of hascookie MountOption */
 	Port	mo_master;	/* MASTER just for current MOUNT point */
 	Port	mo_proxy;	/* PROXY just for current MOUNT point */
 	MStr(	mo_authorizer,128);
@@ -586,8 +587,8 @@ struct namvals *html_namvals;	/* HTML stack for name=value pairs */
 	MStr(	cm_method,32); /* obsolete */
 
 	connDepth co_depth;	/* v9.9.12 fix-140814c, depth of Connection */
-} Connection_01;
-#define Connection Connection_01
+} Connection_00;
+#define Connection Connection_00
 
 #define CMAPmethod	Conn->cm_method
 
@@ -958,6 +959,9 @@ extern int BORN_SPECIALIST; /* communicates with a real client */
 extern const char *getMountOptions(FL_PAR,Connection *Conn);
 extern const char *setMountOptions(FL_PAR,Connection *Conn,PCStr(opts));
 #define MountOptions	getMountOptions(FL_ARG,Conn)
+#define MountCookie	Conn->mo_hasCookie
+#define MO_HASCOOKIE	1 /* has Cookie matching hascookie=condition */
+#define MO_HASNOTCOOKIE	2 /* no Cookie matching hascookie=condition */
 #define MO_MasterHost	Conn->mo_master.p_host
 /**/
 #define MO_MasterPort	Conn->mo_master.p_port

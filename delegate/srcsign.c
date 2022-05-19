@@ -1,10 +1,10 @@
 const char *DELEGATE_srcsign(){
 return
-"\n{SRCSIGN=9.9.13:20141031194217+0900:6fdc87e522763a5e:\
+"\n{SRCSIGN=10.0.0-pre1:20140818123724+0900:8cf4803f262325e3:\
 Author@DeleGate.ORG:\
-hPtX79eyOAnj9pjzcHNLBa2+1uhqjZszJ1UM7y4wXOikCGaUA4aQmK+kuq0QC/hng7lskzc9\r\n\
-aIjEgOpDo5KF1odrli0RsQJI8nkGIWAW3uYxIFD70pwSAGNteRViGCmbIdO95QJfTjgTfKhp\r\n\
-TQV3AYSDfyHF4li8dewmsd+oRrA=\r\n\
+Irk8NgKM4Gi21Sp5z3lAj5521Sd6rQzJzbApMZ+7DcYK2PmUJi/BerOEecADm+nUSwPLBU+N\r\n\
+kF8FTaYNRW06XitZbIv0fSOC7PT1BznEMrFSMCq96gHznS4F7+/eJww3iBGtXaxACwQ8A2yt\r\n\
+vaelZ0LxajUU3qd0IKETH/GxkXQ=\r\n\
 }\n"+10;
 }
 const char *DELEGATE_SrcSign(){

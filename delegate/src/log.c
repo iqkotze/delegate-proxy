@@ -601,6 +601,10 @@ int StrSubstDateX(PVStr(str),PVStr(cur))
 {
 	return substDate(AVStr(str),AVStr(cur),time(0),START_TIME);
 }
+int StrSubstDateXX(PVStr(str),PVStr(cur),int now)
+{
+	return substDate(AVStr(str),AVStr(cur),now,START_TIME);
+}
 
 /*
  * assuming that log file name is valid at least in the same minute.
@@ -675,6 +679,7 @@ static FILE *agefile(FILE *ofp,PCStr(file),PCStr(current),PCStr(mode),PCStr(tmpd
 	int was_active;
 	int lockfd = -1;
 	FILE *nfp;
+	int rcc;
 
 	was_active = LOGFILE_ACTIVE(ofp);
 
@@ -686,7 +691,11 @@ static FILE *agefile(FILE *ofp,PCStr(file),PCStr(current),PCStr(mode),PCStr(tmpd
 			path_escchar(AVStr(lcurrent));
 			current = lcurrent;
 		}
+		/*
 		if( readlink(current,rcurrent,sizeof(rcurrent)) == 0 ){
+		*/
+		if( 0 < (rcc = readlink(current,rcurrent,sizeof(rcurrent))) ){
+			setVStrEnd(rcurrent,rcc);
 			if( File_cmp(file,rcurrent) == 0 )
 				return ofp;
 			unlink(current);

@@ -63,6 +63,7 @@ typedef struct {
 	MStr(	h_header,4096);
 	MStr(	h_incctype,128); /* HTTP Content-Type of included data */
 
+	int	h_mtime;	/* modified time of the current SSI file */
 	const char *h_basefile; /* abs. path of the current SSI file */
 	MStr(	h_pushbase,256); /* pushbase/popbase ... should be upath */
 	MStr(	h_pushcwd,256); /* pushbase/popbase */
@@ -464,6 +465,12 @@ void SSI_config(DGC*ctx,const char *ev[],PCStr(tag),PCStr(type),PCStr(fmt),FILE 
 			else
 			if( strcaseeq(fmt,"vbase") ){ /* v9.9.11 new-140809f */
 				set_VBASE(ctx,val,AVStr(mssg->h_vbase));
+			}
+			else
+			if( strcaseeq(fmt,"scriptname") ){ /* v10.0.0 */
+				IStr(env,256);
+				sprintf(env,"CONTAINER_SCRIPT_NAME=%s",val);
+				putenv(stralloc(env));
 			}
 		}
 	}
@@ -1181,6 +1188,20 @@ tag,opts,file,mssg->t_tagp);
 			FStrncpy(mssg->h_incctype,ct);
 		}
 
+		/* v10.0.0, shoud copy into META HTTP-EQUIVE
+		 * with reverse mount of "path"
+		 */
+		/*
+		if( fp != NULL && 0 < ftell(fp) ){
+			IStr(ck,1024);
+			int off = ftell(fp);
+			fseek(fp,0,0);
+			truncVStr(ck);
+			fgetsHeaderField(fp,"Set-Cookie",AVStr(ck),sizeof(ck));
+			fseek(fp,off,0);
+		}
+		*/
+
 		if( ftell(htfp) != xoff ){
 			/* On Solaris2, the offset is moved mysteriously,
 			 * in wait(0) for fork()ed responseFilter()
@@ -1238,6 +1259,13 @@ tag,opts,file,mssg->t_tagp);
 			fflush(tmp);
 			fseek(tmp,0,0);
 			fp = tmp;
+		}
+		if( mopts ){ /* v10.0.0 new-140806b, HTTP header to be returned */
+			int MO_getHttpEquiv(DGC*ctx,PCStr(mopts),PVStr(equiv));
+			IStr(equiv,URLSZ);
+			if( MO_getHttpEquiv(ctx,mopts,AVStr(equiv)) ){
+				fputs(equiv,body);
+			}
 		}
 
 		if(strcasestr(mssg->h_incctype,"text/plain")){
@@ -1625,6 +1653,7 @@ const char *DELEGATE_ver();
 #define FPRINTF	mssg->h_hleng += Fprintf
 static void put_shtmlhead(DGC*ctx,Mssg *mssg,FILE *tc,FILE *infp,int cleng){
 	CStr(line,1024);
+	IStr(mtime,128);
 	FileSize oleng;
 	const char *icharset = "";
 	const char *ocharset = "";
@@ -1726,6 +1755,31 @@ fprintf(tc,"Server: DeleGate/%s\r\n",DELEGATE_ver());
 	if( 0 < cleng ){
 		FPRINTF(tc,"Content-Length: %d\r\n",cleng);
 	}
+
+	/* v10.0.0 new-140524h */
+	if( getFieldValue2(mssg->h_header,"Last-Modified",AVStr(mtime),sizeof(mtime)) ){
+		sv1log("## SSI Last-Modified: %s (specified)\n",mtime);
+	}else{
+		StrftimeGMT(AVStr(mtime),sizeof(mtime),TIMEFORM_RFC822,mssg->h_mtime,0);
+		sv1log("## SSI Last-Modified: %s (generated)\n",mtime);
+		FPRINTF(tc,"Last-Modified: %s\r\n",mtime);
+	}
+
+	/* v10.0.0 new-140722g */ {
+		int CTX_setCookie(DGC*ctx,PVStr(cookie));
+		IStr(cookie,URLSZ);
+		if( CTX_setCookie(ctx,AVStr(cookie)) ){
+			FPRINTF(tc,"Set-Cookie: %s\r\n",cookie);
+		}
+	}
+	/* v10.0.0 new-140723b */ {
+		int getMountCacheControl(DGC*ctx,int direction,PVStr(head));
+		IStr(head,URLSZ);
+		if( getMountCacheControl(ctx,0x00,AVStr(head)) ){
+			FPRINTF(tc,"%s",head);
+		}
+	}
+
 	FPRINTF(tc,"%s",mssg->h_header);
 	FPRINTF(tc,"\r\n");
 	mssg->h_headput = 1;
@@ -1819,6 +1873,7 @@ int exec_metassi(DGC*ctx,PCStr(path),const char *av[],const char *ev[],FILE *fc,
 	CCXP ccx = ctx ? CCXtoCL(ctx) : 0;
 	int withccx = ctx ? 0 : -1;
 	const char *cp;
+	const char *env;
 	IStr(savbase,256);
 
 	sv1log("## eval META & SSI\n");
@@ -1844,6 +1899,19 @@ int exec_metassi(DGC*ctx,PCStr(path),const char *av[],const char *ev[],FILE *fc,
 	mssg.h_contype[0] = 0;
 	mssg.h_header[0] = 0;
 	mssg.h_incctype[0] = 0;
+
+	if( env = getv(ev,"LAST_MODIFIED") ){
+		/* v10.0.0 new-140525c, LastMod in CGI response */
+		mssg.h_mtime = scanHTTPtime(env);
+		sv1log("## SSI mtime given in [LAST_MODIFIED: %s]\n",env);
+	}else{	/* v10.0.0 mod-140524h, return the modfied time of SHTML by default */
+		IStr(mtime1,128);
+		IStr(mtime2,128);
+		StrftimeLocal(AVStr(mtime1),sizeof(mtime1),"%Y%m%d-%H%M%S",file_mtime(fileno(htfp)),0);
+		StrftimeLocal(AVStr(mtime2),sizeof(mtime1),"%Y%m%d-%H%M%S",File_mtime(path),0);
+		sv1log("## SSI mtime=[%s][%s] path=%s\n",mtime1,mtime2,path);
+		mssg.h_mtime = File_mtime(path);
+	}
 
 	mssg.h_basefile = path;
 	mssg.h_pushbase[0] = 0;

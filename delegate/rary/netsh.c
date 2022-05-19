@@ -49,7 +49,6 @@ int NoHangWait();
 void msleep(int ms);
 int Kill(int pid,int sig);
 int connectA(PCStr(host),int port,int timeout);
-int fileIsdir(PCStr(path));
 
 /* close on exec file-descriptors, filter env. var. to be inherited */
 int closeFds(Int64 inheritfds);
@@ -871,7 +870,7 @@ static int relayDispKbd(Netsh *Nsh,int todisp,int fromkey){
 			fpc++;
 		}
 		if( fpc == 0 ){
-			syslog_ERROR("--Nsh both closed\n");
+			sv1log("--Nsh both closed\n");
 			break;
 		}
 		rdy = fpollinsX(10,fpc,fiv,rdv);
@@ -881,7 +880,7 @@ static int relayDispKbd(Netsh *Nsh,int todisp,int fromkey){
 		if( fpc == 1 ){
 			rdy = fpollinsX(300,fpc,fiv,rdv);
 			if( rdy == 0 ){
-				syslog_ERROR("--Nsh timeout (%d %d)\n",deos,keos);
+				sv1log("--Nsh timeout (%d %d)\n",deos,keos);
 				break;
 			}
 		}
@@ -892,7 +891,7 @@ static int relayDispKbd(Netsh *Nsh,int todisp,int fromkey){
 			}
 		}
 		if( rdy < 0 ){
-			syslog_ERROR("--Nsh DispKbd poll=%d e%d\n",rdy,errno);
+			sv1log("--Nsh DispKbd poll=%d e%d\n",rdy,errno);
 			break;
 		}
 		for( fpi = 0; fpi < fpc; fpi++ ){
@@ -902,13 +901,13 @@ static int relayDispKbd(Netsh *Nsh,int todisp,int fromkey){
 			fout = fov[fpi];
 			if( fin == kif ){
 				if( fromKbd1(Nsh,fin,fout) == EOF ){
-					syslog_ERROR("--Nsh Kbd EOS\n");
+					sv1log("--Nsh Kbd EOS\n");
 					keos = 1;
 					Nsh->ns_shutting |= 1;
 				}
 			}else{
 				if( toDisp1(Nsh,fiv[fpi],fov[fpi]) == EOF ){
-					syslog_ERROR("--Nsh Disp EOS\n");
+					sv1log("--Nsh Disp EOS\n");
 					deos = 1;
 					Nsh->ns_shutting |= 2;
 				}
@@ -1230,29 +1229,6 @@ static int setHOME(PCStr(home)){
 	int rcode;
 	IStr(cwd,256);
 	IStr(env,256);
-	IStr(path,256);
-
-	if( getenv("HOME") != 0 ){
-		/* HOME is already set maybe explicitly by YYCONF=HOME: */
-	}else
-	if( isWindows() && (home==0||*home==0) && getenv("SVPROTO") ){
-		/* 9.9.12 new-140824d, running as a service */
-		const char *svhome = getenv("SVHOME");
-		const char *windrive = getenv("HOMEDRIVE");
-		const char *winhome = getenv("HOMEPATH");
-
-		if( svhome && fileIsdir(svhome) ){
-			/* maybe from CYGWIN */
-			home = svhome;
-		}else
-		if( windrive && winhome ){
-			/* from Windows */
-			sprintf(path,"%s%s",windrive,winhome);
-			if( fileIsdir(path) ){
-				home = path;
-			}
-		}
-	}
 
 	ret = getcwd(cwd,sizeof(cwd));
 	if( home && *home ){
@@ -1493,12 +1469,6 @@ int dgforkpty_main(int ac,char *av[]){
 		execve(av[2],&av[3],environ);
 		fprintf(stderr,"[%d] %s ERROR:exec(%s) e%d\n",
 			getpid(),av[0],av[2],errno);
-		if( isCYGWIN() ){ /* v9.9.12 new-140823h */
-			const char *path = "c:/cygwin/bin/sh.exe";
-			fprintf(stderr,"-- retrying with SHELL=%s\r\n",path);
-			fflush(stderr);
-			execve(path,&av[3],environ);
-		}
 		_exit(-3);
 		return -3;
 	}else{

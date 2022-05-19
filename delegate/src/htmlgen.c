@@ -350,6 +350,9 @@ int getBuiltinDataX(Connection *Conn,PCStr(what),PCStr(aurl),PVStr(buf),int size
 			strcpy(rurl,murl);
 			return rcc;
 		}
+		else{
+			sv1log("#### Fall-back to the builtin-data: %s\n",aurl);
+		}
 	}
 
 	rcc = 0;
@@ -1075,8 +1078,12 @@ static int cond1(Connection *Conn,PCStr(curl),FILE *outfp,PCStr(conds),iFUNCP fu
 static int eval1(Connection *Conn,PCStr(curl),FILE *outfp,PCStr(item),iFUNCP func,const void *arg,int *exitlevp)
 {	const char *dp;
 	CStr(conds,4096);
+	/*
 	CStr(trues,4096);
 	CStr(falses,4096);
+	*/
+	IStr(trues,16*1024); /* fix-140526k expanded for history.dhtml */
+	IStr(falses,16*1024);
 
 	/*
 	if( dp = strchr(item,'?') ){

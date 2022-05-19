@@ -355,4 +355,7 @@ int gethostint_nboV4(PCStr(host)){ return -1; } /* for winmo.c */
 int getpass1(FILE *in,FILE *out,PVStr(pass),PCStr(xpass),PCStr(echoch)){
         return 0;
 }
+int callFuncAsUser(PCStr(user),PCStr(pass),vFUNCP func,void *arg){
+	return -1;
+}
 #endif

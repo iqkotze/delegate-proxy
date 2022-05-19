@@ -1088,9 +1088,16 @@ void service_pop1(Connection *Conn,PCStr(user),PVStr(nextUSER))
 		}
 
 		if( body && *resp == '+' )
-		if( (body & RESPFLAGS) == (WITH_BODY|IN_RFC822) ) 
 		if( filter_withCFI(Conn,XF_FTOCL) )
+		if( (body & RESPFLAGS) == (WITH_BODY|IN_RFC822) ) 
 			putMESSAGEline(tc,"mime",com);
+		else
+		if( body == (WITH_BODY|NULL_BODY_IFARG) ){
+			if( arg[0] == 0 ){
+				/* v10.0.0 new-140609h for LIST,UIDL */
+				putMESSAGEline(tc,"list",com);
+			}
+		}
 
 		if( fputs(resp,tc) == EOF )
 			goto EXIT;

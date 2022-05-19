@@ -6,7 +6,7 @@
 <TR><TD bgcolor=#C0C0FF><H2>
 <IMG ALT="Admin" SRC="${icon.frogAdmin.gif}" ALIGN=MIDDLE>
 ${formv.com.comment?Comment to the poster of:Shadowing} the Article
-<A HREF=${num.anum1}?Refresh>${_grp.print}:${num.anum1}</A>
+<INPUT type=submit name=JumpToArticle value=${_grp.print}:${num.anum1}>
 </H2></TD></TR>
 
 </TABLE width=100% border=0>

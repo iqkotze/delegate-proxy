@@ -66,12 +66,6 @@ void minit_script()
 
 static scanListFunc inspath(PCStr(path1))
 {
-	int pi;
-	for( pi = 0; pi < pathx; pi++ ){
-		if( streq(pathv[pi],path1) ){
-			return 0;
-		}
-	}
 	if( elnumof(pathv) <= pathx ){
 		return -1;
 	}
@@ -186,11 +180,6 @@ void CTX_eval_script(DGC*Conn,FILE *sfp,PCStr(name),PCStr(base),PCStr(url),PCStr
 	int nline;
 	int active;
 	int ign = 0;
-
-	if( lFG() && !lQUIET() ){ /* with -f and without -vq */
-		sprintf(argb,"#### loading conf: %s -> %s",base?base:"",url);
-		fprintf(stderr,"%s\n",argb);
-	}
 
 	if( name ){
 		sprintf(argb,"%s",name);

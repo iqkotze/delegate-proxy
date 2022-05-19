@@ -1085,6 +1085,10 @@ int relayBODYpart(FILE *src,FILE *dst,const char *boundaries[],int extract,PVStr
 	return rcode;
 }
 
+int isNoconvCharset(PCStr(name));
+int RFC822_skipheader(FILE *fs,FILE *tc,PVStr(line),int size);
+static int TEXTONLYwasPut = 0x00;
+
 static int decodeBODYpart(MimeConv *Mcv,FILE *fs,FILE *tc,FILE *cache,PCStr(ctype),const char *boundaries[],int filter,PCStr(encoding),PCStr(decodeto),int do_enHTML,PVStr(endline))
 {	int rcode,leng;
 	defQStr(tmpa); /*alloc*/
@@ -1160,6 +1164,10 @@ static int decodeBODYpart(MimeConv *Mcv,FILE *fs,FILE *tc,FILE *cache,PCStr(ctyp
 	/*
 	if( DECODE(C_BODY_CTE) && encoding != NULL && decodeto != NULL ){
 	*/
+   if( TEXTONLY(filter) && (TEXTONLYwasPut & 0x02) ){
+	/* don't do any conversion for the body to be discarded  */
+	/* if( dst == NULLFP() ) */
+   }else{
 	if( DECODE(C_BODY_CTE) || TEXTONLY(filter) )
 	if( encoding != NULL && decodeto != NULL ){
 		DEBUG("decode: %s -> %s\n",encoding,decodeto);
@@ -1177,6 +1185,7 @@ static int decodeBODYpart(MimeConv *Mcv,FILE *fs,FILE *tc,FILE *cache,PCStr(ctyp
 		encode_entitiesX(tmpa,AVStr(tmpb),tsiz);
 		strcpy(tmpa,tmpb);
 	}
+   }
 	free((char*)tmpb);
 EXIT:
 	maskBody(AVStr(tmpa));
@@ -1266,6 +1275,7 @@ int decodeMIMEpart(const char *boundaries[],FILE*fs,FILE*tc,FILE*cache,int filte
 	int do_conv,plain2html;
 	const char *xcharset;
 	FILE *ntc;
+	FILE *otc = NULL;
 	int ismainpart;
 	MimeConv Mcvb,*Mcv = &Mcvb;
 
@@ -1294,6 +1304,10 @@ int decodeMIMEpart(const char *boundaries[],FILE*fs,FILE*tc,FILE*cache,int filte
 	if( ichset[0] != 0 && do_conv && xcharset ){
 		Mcv->c_icode = ichset;
 		Mcv->c_ocode = xcharset;
+		if( isNoconvCharset(ichset) ){
+			Mcv->c_ocode = "thru";
+			syslog_ERROR("--CCX Mcv[%s][%s]\n",ichset,"thru");
+		}
 		if( m17n_known_code(ichset) ){
 			Mcv->c_m17n = m17n_ccx_new(ichset,xcharset,0,0);
 		}
@@ -1356,15 +1370,21 @@ int decodeMIMEpart(const char *boundaries[],FILE*fs,FILE*tc,FILE*cache,int filte
 
 		ofilter = filter;
 		if( TEXTONLY(filter) ){
+			/* fix-140513c postpone putting header
 			replaceContentType(FVStr(head[hi]),"text/plain");
+			*/
 			filter |= O_MULTIPART;
+			/*
 			mask = O_HEAD | O_DELIM;
+			*/
 		}
 
 		if( strncaseeq(ctype,"multipart/alternative",21) ){
 			if( ALT_FIRST(filter) ) filter |= O_FIRSTALT;
 			if( ALT_UNFOLD(filter) ) filter |= O_PLAINALT;
 		}
+		if( TEXTONLY(filter) ){ /* fix-140513c postpone header */
+		}else
 		if( HEAD_ALSO(filter) )
 		if( UNFOLDMP(filter) ){
 			/* skip the alt. header */
@@ -1387,6 +1407,10 @@ int decodeMIMEpart(const char *boundaries[],FILE*fs,FILE*tc,FILE*cache,int filte
 			}
 		}
 
+		if( TEXTONLY(filter) ){ /* fix-140513c to save the text mssg. */
+			otc = tc;
+			mtc = TMPFILE("TEXTONLYmssg");
+		}else
 		if( BODY_ALSO(filter) ){
 			mtc = tc;
 		}else{
@@ -1398,6 +1422,22 @@ int decodeMIMEpart(const char *boundaries[],FILE*fs,FILE*tc,FILE*cache,int filte
 		rcode = scan_multipart(boundaries,AVStr(endline),sizeof(endline),
 				decodeMIMEpart,fs,mtc,cache,filter,enHTML);
 		filter = ofilter;
+		if( TEXTONLY(filter) ){ /* fix-140513c flash body with header */
+			const char *rcode;
+			IStr(cty,1024);
+			IStr(fnam,1024);
+			IStr(line,1024);
+
+			fflush(mtc);
+			fseek(mtc,0,0);
+			rcode = fgetsHeaderField(mtc,"Content-Type",AVStr(cty),sizeof(cty));
+			replaceFieldValue(FVStr(head[hi]),"Content-Type",cty);
+			RFC822_skipheader(mtc,NULL,AVStr(line),sizeof(line));
+			fputs(head[hi],tc);
+			copyfile1(mtc,tc);
+			fclose(mtc);
+			tc = otc;
+		}
 		goto EXIT;
 	}
 
@@ -1442,7 +1482,11 @@ int decodeMIMEpart(const char *boundaries[],FILE*fs,FILE*tc,FILE*cache,int filte
 		if( !substr(ctype,C_PGPSIGN) )
 			fputsCRLF(head[hi],tc);
 	}else
+	if( TEXTONLY(filter) && (TEXTONLYwasPut & 0x01) ){
+	}else{
 	fputs(head[hi],tc);
+		TEXTONLYwasPut |= 0x01;
+	     }
 	}
 
 	/* EOR is included in the header buffer, thus a EOR immediately
@@ -1452,7 +1496,11 @@ int decodeMIMEpart(const char *boundaries[],FILE*fs,FILE*tc,FILE*cache,int filte
 		return MP_EOR;
 
 	endline[0] = 0;
+	/*
 	if( TEXTONLY(filter)
+	*/
+	if( TEXTONLY(filter) && (TEXTONLYwasPut & 0x02)
+	 || TEXTONLY(filter)
 	 && MULTIPART(filter)
 	 && strncasecmp(ctype,"text/plain",10) != 0 ){
 		DEBUG("## TEXTONLY skip non text/plain: %s\n",ctype);
@@ -1461,6 +1509,10 @@ int decodeMIMEpart(const char *boundaries[],FILE*fs,FILE*tc,FILE*cache,int filte
 				encoding,decodeto,do_enHTML,AVStr(endline));
 	}else
 	if( BODY_ALSO(filter) ){
+	    if( TEXTONLY(filter) && TEXTONLYwasPut & 0x02 ){
+		rcode = decodeBODYpart(Mcv,fs,NULLFP(),cache,ctype,boundaries,
+			filter,encoding,decodeto,do_enHTML,AVStr(endline));
+	    }else{
 		if( putPRE ) fprintf(tc,"<PRE>\n");
 /*
 		if( TEXTONLY(filter) && strncaseeq(ctype,"text/html",9) ){
@@ -1484,7 +1536,10 @@ int decodeMIMEpart(const char *boundaries[],FILE*fs,FILE*tc,FILE*cache,int filte
 		else
 		rcode = decodeBODYpart(Mcv,fs,tc,cache,ctype,boundaries,
 			filter,encoding,decodeto,do_enHTML,AVStr(endline));
+		TEXTONLYwasPut |= 0x02;
+
 		if( putPRE ) fprintf(tc,"</PRE>\n");
+            }
 	}else{
 		if( fseek(fs,0,0) == -1 ){
 			DEBUG("skip body from stream input.\n");
@@ -1867,6 +1922,7 @@ void decodeMIME(FILE*fs,FILE*tc,FILE*cache, int filter,int codeconv,int enHTML)
 
 	ssc = codeconv_set(codeconv,NULL,-1);
 	boundaries[0] = 0;
+	TEXTONLYwasPut = 0x00;
 	decodeMIMEpart(boundaries,fs,tc,cache,filter,enHTML);
 	codeconv_set(ssc,NULL,-1);
 }

@@ -1,0 +1,22 @@
+<html>
+<head>
+<title>DG Statistics Viewer</title>
+</head>
+<body>
+<h3><a href=http://www.delegate.org>DeleGate</a> Statistics Viewer</h3>
+
+<form action="history.dhtml" method="POST">
+<input type=submit name=act value="History" style="font-size:18px;background-color:#f0f0f0">
+The history viewer of HTTP-DeleGate which is (should become) a <I>shared bookmark</I>
+among users of a proxy HTTP-DeleGate as well
+as a tool for the administrator.
+</form>
+
+<p>
+<ul>
+<li><a href="/-/">Information</a>
+<li><a href="/-/admin/">Administration</a>
+</ul>
+
+</body>
+</html>

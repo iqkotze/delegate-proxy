@@ -1097,7 +1097,7 @@ int relaysxX(RelayCtrl *relayCtrl,int timeout,int sdc,int sdv[][2],int sdx[],int
 	Start = Now;
 	for( fi = 0; fi < sdc; fi++ ){
 /*
-syslog_ERROR("#### NODELAY\n");
+sv1log("#### NODELAY\n");
 set_nodelay(sdv[fi][1],1);
 */
 		fds[fi] = sdv[fi][0];

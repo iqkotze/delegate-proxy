@@ -1,5 +1,5 @@
 /*////////////////////////////////////////////////////////////////////////
-Copyright (c) 2006 National Institute of Advanced Industrial Science and Technology (AIST)
+Copyright (c) 2006-2014 National Institute of Advanced Industrial Science and Technology (AIST)
 AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443
 
 Permission to use this material for noncommercial and/or evaluation
@@ -17,6 +17,7 @@ Author:		Yutaka Sato <ysato@delegate.org>
 Description:
 History:
 	20060506 extracted from cache.c
+	201405XX COUNTER file as a single file
 //////////////////////////////////////////////////////////////////////#*/
 
 #include "file.h" /* 9.9.7 should be included first with -DSTAT64 */
@@ -158,6 +159,37 @@ void scan_COUNTER(DGC*ctx,PCStr(spec)){
 		}
 	}
 }
+
+const char *DELEGATE_COUNTERDIR = "${ADMDIR}/counts[date+/year%y/week%W]";
+int StrSubstDateXX(PVStr(str),PVStr(cur),int now);
+
+static int getCounterPath(int flags,PVStr(base)){ /* new-140531d aged counter */
+	IStr(link,1024);
+	CStr(spec,1024);
+
+	if( flags & CNT_REFERER )
+		sprintf(spec,"%s/referer",DELEGATE_COUNTERDIR);
+	else
+	if( flags & CNT_ERROR )
+		sprintf(spec,"%s/errors",DELEGATE_COUNTERDIR);
+	else	sprintf(spec,"%s/access",DELEGATE_COUNTERDIR);
+	strcpy(base,spec);
+	StrSubstDateXX(AVStr(base),AVStr(link),time(0)); /* [date+%w] */
+	Substfile(base);
+	Substfile(link);
+	/*
+	no good to live together with 9.X
+	if( !streq(getSymlink(link)) ){
+		unlink(link);
+		makeSymlink(base,link);
+	}
+	*/
+	return 0;
+}
+
+void scan_COUNTERDIR(DGC*ctx,PCStr(spec)){
+	DELEGATE_COUNTERDIR = stralloc(spec);
+}
 #define COUNTER	((mo_COUNTER&CNT_MOUNTOPT)?mo_COUNTER:gl_COUNTER)
 
 static int LastRequestSerno = -1;
@@ -295,6 +327,7 @@ FILE *readCounter(DGC*ctx,int flags,PCStr(proto),PCStr(host),int port,PCStr(upat
 	if( (COUNTER & CNT_ALL & flags) == 0 )
 		return NULL;
 
+	/*
 	if( flags & CNT_REFERER )
 		strcpy(base,"${ADMDIR}/counts/referer");
 	else
@@ -302,6 +335,8 @@ FILE *readCounter(DGC*ctx,int flags,PCStr(proto),PCStr(host),int port,PCStr(upat
 		strcpy(base,"${ADMDIR}/counts/errors");
 	else	strcpy(base,"${ADMDIR}/counts/access");
 	Substfile(base);
+	*/
+	getCounterPath(flags,AVStr(base));
 
 	if( CTX_cache_pathX(ctx,base,proto,host,port,upath,BVStr(cpath))==0 ){
 		return NULL;

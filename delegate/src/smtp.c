@@ -2847,12 +2847,10 @@ int sendmail1X(Connection *Conn,PCStr(to),PCStr(from),FILE *afp,FILE *log)
 	if( SMTP_post(host,port,myver(),to,from,afp,AVStr(resp),sizeof(resp)) != 0 ){
 		return 0;
 	}
-    if( log != NULL ){ /* v9.9.13 fix-141028b */
 	if( resp[0] == 0 ){
 		fprintf(log,"Failed connection to mail exchanger of '%s'",host);
 	}
 	fflush(log);
-    }
 	/*
 	if( SMTP_post(host,port,myver(),to,from,afp,VStrNULL,0) != 0 )
 		return;

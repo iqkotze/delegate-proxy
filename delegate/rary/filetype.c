@@ -20,7 +20,7 @@ History:
 	950707	extracted from ftpgw.c
 //////////////////////////////////////////////////////////////////////#*/
 #include "ystring.h"
-#include "dglib.h"
+#include "dglib.h" /* just for unused DGC */
 
 typedef struct {
   const	char	*f_suffix;
@@ -50,6 +50,7 @@ void minit_filetype()
 
 static const char *dflt_filetypes[] = {
 	".txt    :0 :TXT :text       :text/plain",
+	".stxt   :0 :TXT :text       :text/plain",
 	".c      :0 :TXT :text       :text/plain",
 	".css    :0 :TXT :text       :text/css",
 	".curl   :0 :TXT :text       :text/vnd.curl",

@@ -1,4 +1,4 @@
-const char *SIGN_stls_c="{FILESIGN=stls.c:20141031194212+0900:c6729bac30a08bc2:Author@DeleGate.ORG:zL8qY/LkxK3wGcJJOjTO2HcpBuoSuBnBA1eN7LgRteSr3CaMBNOfKXl8tmDiFSknRiASDAqkiNtcr2UEI6opZLxNQ02vYzA4wJKsY5vxKxH2c+YZ+6opoGvvKMISzxdy8AoEFgCkBGzGy0XUtLT6Zhc8vN4wuXwUn5Z97jhm+TU=}";
+const char *SIGN_stls_c="{FILESIGN=stls.c:20140818123722+0900:7ccf30ab0ead7cbf:Author@DeleGate.ORG:grfrIlJRQ9EW3mHEK7gbLDr07QvJHaOvrma/Cwv7ACwIy2gD0rkLlaCWU9JN2gMPb9hFEfA5CBEchfwcXDJBZ1SliZ44LuF/SoMZUBWr75bmX6BrJ6yPz3PUxZDieOyBgt9fDE3KcT+RLFAB5ha2S/K8bG7N8GdtVXEgtD64Ivw=}";
 
 /*////////////////////////////////////////////////////////////////////////
 Copyright (c) 2004-2008 National Institute of Advanced Industrial Science and Technology (AIST)
@@ -44,18 +44,6 @@ static int STLS_wait_setSV = 0;
 
 extern int SSLready;
 extern int SSLstart;
-
-void setCFI_IDENT(Connection *Conn,int cid[2],int sv);
-void getCFI_IDENT(Connection *Conn,int cid[2],int sv);
-int SSLtunnelNego(Connection *Conn,PCStr(host),int port,int sock);
-int beManInTheMiddle(Connection *Conn,FILE *tcp,FILE *fcp);
-int insertTLS_CL(Connection *Conn,int client,int server);
-#define moved	STLS_moved
-int moved(Connection *Conn,FILE *tc,int fd,PCStr(host),int port);
-extern int TIMEOUT_STLS;
-
-#ifndef OPT_S /*{*/
-
 int TIMEOUT_STLS = 10*1000;
 
 double STLS_fsvim_wait(double ws){
@@ -414,6 +402,9 @@ int pushSTLS_FSV(Connection *Conn,PCStr(proto)){
 int withSTLS_SV(Connection *Conn){
 	return ServerFlags & PF_STLS_ON;
 }
+int SSLtunnelNego(Connection *Conn,PCStr(host),int port,int sock);
+static void setCFI_IDENT(Connection *Conn,int cid[2],int sv);
+static void getCFI_IDENT(Connection *Conn,int cid[2],int sv);
 
 static int nonSSL_SV(Connection *Conn){
 	double Start;
@@ -699,14 +690,14 @@ int insertTLS_SV(Connection *Conn,int client,int server){
 int HTTP_auth2ident(Connection *Conn,PCStr(auth),AuthInfo *ident,int decomp);
 int getServ(Connection *Conn);
 
-void setCFI_IDENT(Connection *Conn,int cid[2],int sv){
+static void setCFI_IDENT(Connection *Conn,int cid[2],int sv){
 	CStr(env,1024);
 
 	IGNRETZ pipe(cid);
 	sprintf(env,"CFI_IDENT=%d",cid[1]);
 	putenv(stralloc(env));
 }
-void getCFI_IDENT(Connection *Conn,int cid[2],int sv){
+static void getCFI_IDENT(Connection *Conn,int cid[2],int sv){
 	double St = Time();
 	IStr(ids,1024);
 	IStr(ident,128);
@@ -716,7 +707,6 @@ void getCFI_IDENT(Connection *Conn,int cid[2],int sv){
 	putenv("CFI_IDENT=-1");
 	/*
 	if( PollIn(cid[0],1000) ){
-	}
 	9.9.4
 	*/
 	errno = 0;
@@ -737,8 +727,9 @@ void getCFI_IDENT(Connection *Conn,int cid[2],int sv){
 	close(cid[1]);
 }
 
+int beManInTheMiddle(Connection *Conn,FILE *tcp,FILE *fcp);
 int CTX_moved_url_to(DGC*ctx,PCStr(myhostport),PCStr(method),PVStr(url));
-int moved(Connection *Conn,FILE *tc,int fd,PCStr(host),int port){
+static int moved(Connection *Conn,FILE *tc,int fd,PCStr(host),int port){
 	CStr(hp,1024);
 	CStr(url,1024);
 	sprintf(hp,"%s:%d",host,port);
@@ -1453,8 +1444,6 @@ int defineAdminSTLS(Connection *Conn){
 	}
 	return 0;
 }
-
-#endif /*} OPT_S */
 
 /* '"DIGEST-OFF"' */
         

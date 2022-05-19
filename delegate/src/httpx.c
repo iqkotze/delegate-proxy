@@ -159,7 +159,6 @@ static FILE* StackTooDeep(Connection *Conn,PCStr(url),FILE* out,int rd){
 	IStr(stime,128);
 	IStr(ourl,URLSZ);
 	IStr(lkey,64);
-	IStr(emsg,2048);
 
 	if( ConnDepth.cd_prevConn == 0 ){
 		ConnDepth.cd_prevConn = Conn;
@@ -183,87 +182,23 @@ static FILE* StackTooDeep(Connection *Conn,PCStr(url),FILE* out,int rd){
 	}else{
 		HTTP_originalURLx(Conn,AVStr(ourl),sizeof(ourl));
 	}
-
-	sprintf(emsg,
-"## Stack too deep [KEY=%s] depth=%d+%d consume=%X peak=%X > max=%X {%s -> %s}",
+	daemonlog("F",
+"## Stack too deep [key=%s] depth=%d+%d consume=%X peak=%X > max=%X {%s -> %s}\n",
 		lkey,ConnDepth.cd_curdepth,rd,depth1siz,stackpeak,STACK_SIZE,
 		ourl,url);
-
-	/*
-	 * v9.9.12 new-140825c, daemonlog() can consume so much stack to cause
-	 * SEGV, thus it should be doen after stack is shrinked.
-	daemonlog("F","%s\n",emsg);
-	 */
-	strcpy(Conn->reject_reason,emsg);
-	ConnDepth.cd_putlog = 1;
-
-	if( isatty(fileno(stderr)) ){
-		fprintf(stderr,"%s\n",emsg);
-	}
-
 	ConnDepth.cd_overflow += 1;
-	fprintf(out,"HTTP/1.0 500 Internal Error KEY=%X\r\n",lkey);
+	fprintf(out,"HTTP/1.0 500 Stack too deep\r\n");
 	fprintf(out,"Content-Type: text/plain\r\n");
 	fprintf(out,"\r\n");
 	off = ftell(out);
 	StrfTimeLocal(AVStr(stime),sizeof(stime),"%m/%d-%H:%M:%S%.2s",Time());
-	if( GatewayFlags & GW_SSI_INCLUDE ){
-		fprintf(out,
-"(INTERNAL-ERROR-SEE-LOGFILE-AROUND-%s-WITH-KEY=%s)\n",stime,lkey);
-	}else{
-		fprintf(out,
-"## SSI incldue failure: see the ERRORLOG and LOGFILE\n## around %s with KEY=%s\n",
+	fprintf(out,
+"## Stack too deep. See the ERRORLOG and LOGFILE\n## around %s with [key=%s]\n",
 		stime,lkey);
-	}
 	fflush(out);
 	fseek(out,off,0);
 	return out;
 }
-/* v9.9.12 new-140818j */
-static int putError(Connection *Conn,PCStr(url),int code,PCStr(resp),FILE *out){
-	int off;
-	IStr(lkey,128);
-	IStr(stime,128);
-	IStr(emsg,2048);
-	const char *ua = "";
-
-	if( (GatewayFlags & (GW_SSI_INCLUDE|GW_GET_ERRRESP)) == 0 )
-		return 0;
-
-	if( GatewayFlags & GW_SSI_INCLUDE )
-		ua = "SSI-include";
-	else	ua = "DeleGate";
-
-	sprintf(lkey,"%X",time(0));
-	StrfTimeLocal(AVStr(stime),sizeof(stime),"%m/%d-%H:%M:%S%.2s",Time());
-
-	if( code == 401 || code == 403 ){
-		sprintf(emsg,
-"## %s failed with code=%d url=\"%s\" KEY=%s, add necessary RELAY=ssi, PERMIT, \
-MOUNT, or so if the access should be permitted ##",ua,code,url,lkey);
-	}else{
-		sprintf(emsg,
-"## %s failed with code=%d url=\"%s\" KEY=%s ##",ua,code,url,lkey);
-	}
-	daemonlog("E","%s\n",emsg);
-	if( isatty(fileno(stderr)) ){
-		fprintf(stderr,"%s\n",emsg);
-	}
-
-	fseek(out,0,0);
-	fprintf(out,"HTTP/1.0 %d Error KEY=%X\r\n",code,lkey);
-	fprintf(out,"Content-Type: text/plain\r\n");
-	fprintf(out,"\r\n");
-	off = ftell(out);
-	fprintf(out,
-"(INTERNAL-ERROR-SEE-LOGFILE-AROUND-%s-WITH-KEY=%s)",stime,lkey);
-	Ftruncate(out,0,1);
-	fseek(out,off,0);
-
-	return 1;
-}
-
-int isHTTP(PCStr(proto));
 int encDecrypt(PCStr(estr),PVStr(dconf),int dsize);
 FILE * CTX_URLgetX(Connection *OrigConn,int origctx,PCStr(url),int reload,FILE *out,int rd)
 {	Connection ConnBuf,*Conn = &ConnBuf;
@@ -274,9 +209,6 @@ FILE * CTX_URLgetX(Connection *OrigConn,int origctx,PCStr(url),int reload,FILE *
 	int io[2];
 	FILE *aout;
 	HttpResponse resx;
-	IStr(proto,128);
-	IStr(hostport,MaxHostNameLen);
-	IStr(upath,URLSZ);
 
 	if( URLgetURL )
 		free((char*)URLgetURL);
@@ -286,7 +218,6 @@ FILE * CTX_URLgetX(Connection *OrigConn,int origctx,PCStr(url),int reload,FILE *
 	if( out == NULL )
 		out = TMPFILE("CTX_URLget");
 
-	decomp_absurl(url,AVStr(proto),AVStr(hostport),AVStr(upath),sizeof(upath));
 	if( strheadstrX(url,"enc:",0) ){
 		CStr(dstr,64*1024);
 		int dlen;
@@ -412,6 +343,15 @@ FILE * CTX_URLgetX(Connection *OrigConn,int origctx,PCStr(url),int reload,FILE *
 	}else
 	rp = Sprintf(AVStr(req),"GET %s HTTP/1.0\r\n",url);
 
+	/* v10.0.0 new-140806a, forwarding header including Cookie */
+	if( OrigConn && origctx ){
+		int CTX_forwHead(Connection *Conn,PCStr(dsturl),PVStr(head),int size);
+		IStr(head,2048);
+		if( CTX_forwHead(OrigConn,url,AVStr(head),sizeof(head)) ){
+			rp = Sprintf(AVStr(rp),"%s",head);
+		}
+	}
+
 	/* v9.9.10 fix-140720b this is NG for forwarding and logging
 	 * the original User-Agent at least for SSI #include
 	rp = Sprintf(AVStr(rp),"User-Agent: DeleGate/%s\r\n",DELEGATE_ver());
@@ -449,15 +389,6 @@ FILE * CTX_URLgetX(Connection *OrigConn,int origctx,PCStr(url),int reload,FILE *
 		/* bypass access control for reqest for SSI #include file: */
 		IsMounted = 1;
 	}
-
-	if( isFullURL(url) && isHTTP(proto) /* v9.9.12 fix-140820g */
-	 && (GatewayFlags & GW_SSI_INCLUDE) /* might be unconditionally */
-	){
-		sv1log("##SSI insert Host: %s\n",hostport);
-		rp = Sprintf(AVStr(rp),"Host: %s\r\n",hostport);
-		/* full-url should be partialized stripping http:://hostport */
-		/* should do insert STLS=fsv for proto=https */
-	}else
 	if( CurEnv && OREQ_VHOST[0] ){
 		/* to make absolute-URL in response for SSI #include http: */
 		rp = Sprintf(AVStr(rp),"Host: %s\r\n",OREQ_VHOST);
@@ -480,9 +411,6 @@ FILE * CTX_URLgetX(Connection *OrigConn,int origctx,PCStr(url),int reload,FILE *
 		ConnDepth.cd_curdepth -= 1;
 		if( OrigConn->co_depth.cd_peekdepth < peekdepth ){
 			OrigConn->co_depth.cd_peekdepth = peekdepth;
-		}
-		if( ConnDepth.cd_putlog ){
-			daemonlog("F","%s\n",Conn->reject_reason);
 		}
 		OrigConn->co_depth.cd_overflow +=
 			ConnDepth.cd_overflow; /* v9.9.12 fix-140814c */
@@ -548,9 +476,6 @@ FILE * CTX_URLgetX(Connection *OrigConn,int origctx,PCStr(url),int reload,FILE *
 				fseek(out,0,0);
 				fgetc(out); /* set EOF to indicate error */
 				sv1log("error: %s",resp);
-				if( OrigConn && origctx ){
-					putError(OrigConn,url,code,resp,out);
-				}
 			}else{
 				while( fgets(resp,sizeof(resp),out) != NULL )
 					if( resp[0] == '\r' || resp[0] == '\n' )
@@ -574,11 +499,15 @@ FILE * URLget(PCStr(url),int reload,FILE *out)
 {
 	return CTX_URLget(NULL,0,url,reload,out);
 }
-FILE * VA_URLget(Connection *Conn,VAddr *vaddr,PCStr(url),int reload,FILE *out){
+FILE * VA_URLget(VAddr *vaddr,AuthInfo *auth,PCStr(url),int reload,FILE *out){
+	Connection ConnBuf,*Conn = &ConnBuf;
+
+	bzero(Conn,sizeof(Connection));
 	*Client_VAddr = *vaddr;
 	Conn->cl_sockHOST = *vaddr;
+	if( auth ){
+	}
 	ClientSock = CLNT_NO_SOCK;
-	GatewayFlags |= GW_GET_ERRRESP;
 	Conn->from_myself = 1;
 	return CTX_URLget(Conn,1,url,reload,out);
 }

@@ -91,12 +91,11 @@ LFILES =	Makefile mkmkmk.c \
 		gopher.c \
 		icp.c \
 		icap.c \
-		http.c httpx.c httplog.c httphead.c \
+		http.c httpx.c httplog.c htstats.c httphead.c \
 		httpd.c cgi.c ssi.c htaccept.c \
 		htccx.c \
 		htswitch.c \
 		htmlgen.c \
-		htfilter.c \
 		nntp.c nntplist.c nntpgw.c enews.c \
 		pop.c smtp.c telnet.c ftp.c xferlog.c X.c wais.c whois.c \
 		xflash.c \
@@ -107,7 +106,7 @@ LFILES =	Makefile mkmkmk.c \
 		sftp.c \
 		socks.c socks4.c sox.c \
 		cuseeme.c coupler.c vsap.c tcprelay.c udprelay.c \
-		ftpgw.c filetype.c \
+		ftpgw.c \
 		embed.c builtin.c \
 		dtot.c \
 		smtp_lib.c inets_lib.c
@@ -115,7 +114,9 @@ LFILES =	Makefile mkmkmk.c \
 #		WhatIsDeleGate NOTE\
 #		delegate_access \
 
-FILES =		$(LFILES) builtin randld
+BUILTINFILES = `find builtin -type f | grep -v '/\._'`
+
+FILES =		$(LFILES) randld $(BUILTINFILES)
 
 INC_DEPEND_COMMON = \
 		../include/config.h \
@@ -137,12 +138,6 @@ GENHDR =	../gen/dglib.h \
 		../gen/url.h \
 		../gen/mime.h \
 		../gen/htadmin.h
-
-OPT_S_OBJS =	opt_s_htaccept.o \
-		opt_s_sox.o \
-		opt_s_stls.o \
-		opt_s_vsap.o \
-		opt_s_caps.o \
 
 DOBJS =		builtin.o delegated.o commands.o croncom.o remote.o
 
@@ -184,12 +179,11 @@ LIBOBJS	=	version.o \
 		gopher.o \
 		icp.o \
 		icap.o \
-		http.o httpx.o httplog.o httphead.o \
+		http.o httpx.o httplog.o htstats.o httphead.o \
 		httpd.o cgi.o ssi.o htaccept.o \
 		htccx.o \
 		htswitch.o \
 		htmlgen.o \
-		htfilter.o \
 		nntp.o nntplist.o nntpgw.o enews.o \
 		pop.o smtp.o telnet.o ftp.o xferlog.o X.o wais.o whois.o \
 		xflash.o \
@@ -200,7 +194,7 @@ LIBOBJS	=	version.o \
 		sftp.o \
 		socks.o socks4.o sox.o \
 		cuseeme.o coupler.o vsap.o tcprelay.o udprelay.o \
-		ftpgw.o filetype.o
+		ftpgw.o
 
 LIBSRCS =	TELEPORT=../teleport \
 		FSX=../fsx \
@@ -210,14 +204,13 @@ LIBSRCS =	TELEPORT=../teleport \
 		CFI=../filters \
 		MD5=../pds/md5 \
 		REGEX=../pds/regex \
-		SUBST=../maker
+		SUBST=../maker \
+		BUILTIN=builtin
 
 MYLIBDIR =	../lib
 
 LIBNETYF =	$(MYLIBDIR)/libnety.a
 LIBDGF =	$(MYLIBDIR)/libdelegate.a
-LIBGATESF =	$(MYLIBDIR)/libgates.a
-LIBOPT_SF =	$(MYLIBDIR)/libopt_s.a
 RESOLVYF =	$(MYLIBDIR)/libresolvy.a
 LIBMKITF =	$(MYLIBDIR)/libmimekit.a
 TELEPORTF =	$(MYLIBDIR)/libteleport.a
@@ -236,7 +229,6 @@ MYLIBS0 =	$(RESOLVYF) \
 		$(LIBMD5F) \
 		$(LIBREGEXF) \
 		$(LIBRARYF) \
-		$(LIBGATESF) \
 		$(LIBCFIF) \
 		$(LIBFSX)
 
@@ -391,7 +383,7 @@ MAKEENV =	$(MAKEENV0) CFLAGS="$(XCFLAGS)"
 
 LIBSC0 =	$(RESLIB) $(LIBS) \
 		$(TELEPORTF) $(LIBMD5F) $(LIBCFIF) $(LIBRARYF) \
-		$(LIBGATESF) $(LIBMKIT) $(LIBFSX) $(NETLIB)
+		$(LIBMKIT) $(LIBFSX) $(NETLIB)
 
 #LIBSC =	$(LIBSC0) $(LIBC) $(LIBREGEXF) $(LIBSUBST)
 # fix-130627a added NETLIB after LIBSUBST for forkpty (Ubuntu)
@@ -458,37 +450,6 @@ caps.o:		Makefile.go $(SRC_DEPEND) caps.c ../gen/caps.h ../include/file.h ../inc
 			-DADMIN=\"$(ADMIN)\" \
 			-DLICENSEE=\"$(LICENSEE)\"
 		$(CKSUM) caps.c
-
-#### optional insecure ####
-opt_s_caps.c:	caps.c
-		cp -p caps.c opt_s_caps.c
-opt_s_caps.o:	Makefile.go $(SRC_DEPEND) opt_s_caps.c ../gen/caps.h ../include/file.h ../include/log.h
-		$(MKCPP)
-		$(CCCO) -DOPT_S
-
-opt_s_htaccept.c:	htaccept.c
-		cp -p htaccept.c opt_s_htaccept.c
-opt_s_htaccept.o:	$(SRC_LOG_DEPEND) ../include/url.h ../include/http.h opt_s_htaccept.c ../gen/htaccept.h
-		$(MKCPP)
-		$(CCCO) -DOPT_S
-
-opt_s_sox.c:	sox.c
-		cp -p sox.c opt_s_sox.c
-opt_s_sox.o:	$(SRC_LOG_DEPEND) ../include/credhy.h opt_s_sox.c ../gen/sox.h
-		$(MKCPP)
-		$(CCCO) -DOPT_S
-
-opt_s_stls.c:	stls.c
-		cp -p stls.c opt_s_stls.c
-opt_s_stls.o:	$(SRC_LOG_DEPEND) ../include/dglib.h opt_s_stls.c  ../gen/stls.h
-		$(MKCPP)
-		$(CCCO) -DOPT_S
-
-opt_s_vsap.c:	vsap.c
-		cp -p vsap.c opt_s_vsap.c
-opt_s_vsap.o:	$(SRC_LOG_DEPEND) opt_s_vsap.c ../gen/vsap.h
-		$(MKCPP)
-		$(CCCO) -DOPT_S
 
 param.o:	$(SRC_LOG_DEPEND) param.h param.c
 
@@ -564,14 +525,14 @@ embed.o:	Makefile embed.c
 			-DIMPSIZE=$(IMPSIZE)
 		$(CKSUM) embed.c
 
-$(EMBED):	embed.o version.o $(SRCSIGN).o $(LIBRARYF) $(LIBGATESF)
+$(EMBED):	embed.o version.o $(SRCSIGN).o $(LIBRARYF)
 		$(CCLD) embed.o version.o $(SRCSIGN).o \
-			$(LIBRARYF) $(LIBGATESF) $(LIBCFIF) $(LIBMKITF) $(LIBMD5F) \
+			$(LIBRARYF) $(LIBCFIF) $(LIBMKITF) $(LIBMD5F) \
 			$(NETLIB) $(LIBC) $(LIBSUBST) $(NETLIB)
 
 new:;		-@$(RM) _builtin.c
 
-_builtin.c:	$(XEMBED) $(SRCSIGN).c version.c
+_builtin.c:	$(XEMBED) $(SRCSIGN).c version.c $(LIBSRC_BUILTIN)
 		$(MKBUILTIN)
 
 builtin.o:	_builtin.c builtin.c
@@ -629,12 +590,12 @@ ftpgw.o:	$(SRC_LOG_DEPEND) ftpgw.c
 gacl.o:		$(SRC_DEPEND) gacl.c
 gopher.o:	$(SRC_LOG_DEPEND) gopher.c
 htmlgen.o:	$(SRC_LOG_DEPEND) ../include/url.h htmlgen.c
-htfilter.o:	$(SRC_LOG_DEPEND) htfilter.c
 htswitch.o:	$(SRC_DEPEND) ../include/htswitch.h htswitch.c
 htccx.o:	$(SRC_LOG_DEPEND) ../include/http.h htccx.c
 http.o:		$(SRC_LOG_DEPEND) filter.h ../include/url.h ../include/http.h http.c
 httpx.o:	$(SRC_LOG_DEPEND) filter.h ../include/http.h httpx.c
 httpd.o:	$(SRC_LOG_DEPEND) ../include/url.h ../include/http.h httpd.c
+htstats.o:	$(SRC_LOG_DEPEND) ../include/url.h ../include/http.h htstats.c
 httphead.o:	$(SRC_LOG_DEPEND) ../include/url.h ../include/http.h httphead.c
 htaccept.o:	$(SRC_LOG_DEPEND) ../include/url.h ../include/http.h htaccept.c ../gen/htaccept.h
 imap.o:		$(SRC_LOG_DEPEND) filter.h imap.c
@@ -774,10 +735,10 @@ $(LIBREGEXF):	$(LIB_DEPEND) $(LIBSRC_REGEX)
 		-cp -p ../pds/regex/libregex.a ../lib
 		-cp -p ../pds/regex/regex.h ../gen
 
-$(LIBSUBSTF):	$(LIB_DEPEND0) $(LIBSRC_SUBST) $(LIBOPT_SF) ../include/log.h
+$(LIBSUBSTF):	$(LIB_DEPEND0) $(LIBSRC_SUBST) ../include/log.h
 		$(MKAT) ../maker    libsubst.a    $(LMAKE) \
 			LDFLAGS="$(LDFLAGS)" \
-			LDLIBS="$(LIBSC0) $(LIBRARYF) $(LIBGATESF) $(LIBC)"
+			LDLIBS="$(LIBSC0) $(LIBRARYF) $(LIBC)"
 
 $(LIBSUBSTXF):	$(LIB_DEPEND0) $(LIBSRC_SUBSTX) $(LIBSUBSTF)
 		$(MKAT) ../maker    libsubstx.a \
@@ -788,15 +749,7 @@ fsx:		delegated$(EXE) $(LIBFSX)
 $(LIBFSX):	$(LIB_DEPEND) $(LIBSRC_FSX) ../include/vaddr.h
 		$(MKAT) ../fsx  libfsx.a $(LMAKE)
 
-Makefile.go:	Makefile.chk ../maker/Makefile $(MKMAKE)
+Makefile.go:	Makefile.chk ../maker/Makefile $(MKMAKE) $(LIBSRC_BUILTIN)
 		"$(MKMAKE)" -cksum $(LFILES)
 		"$(MKMAKE)" -mkmake "$(MAKE)" $@ "$(CC)" "$(CFLAGS)" "$(CFLAGSPLUS)" "$(LDFLAGS)" "$(RANLIB)" "$(NETLIB)" NETLIB "$(LIBSRCS)" "$(SSLLIB)" SSLLIB
-
-$(LIBGATESF):	Makefile ../gates/Makefile
-		$(MKAT) ../gates libgates.a $(LMAKE)
-
-$(LIBOPT_SF):	Makefile $(OPT_S_OBJS)
-		-$(RM) $@
-		$(ARC) $(OPT_S_OBJS)
-		-$(RANLIB) $@
 

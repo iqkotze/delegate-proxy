@@ -304,10 +304,15 @@ static int scanNameScreen(SymID *tab,NameScreen *nmap,PCStr(astr),PVStr(asym))
 #define C_MOUNTR	0x0002	/* URLs in response */
 #define C_MOUNTD	0x0004	/* -_- notation */
 #define C_MOUNT		0x0007
+#define C_FULLLABEL	0x0008	/* v10.0.0 new-140727m, fullify #label */
 #define C_NORMAL	0x0010
 #define C_PARTIAL	0x0020
 #define C_FULL		0x0040
+#define C_RELATIVE	0x0080	/* v10.0.0 new-140727g, make URL relative if applicable */
+#define C_ANY		0x00FF
+/*
 #define C_ANY		0x0077
+*/
 #define C_DEFAULTS	(C_MOUNT|C_NORMAL|C_PARTIAL)
 #define C_DEFAULTA	(C_MOUNT|C_NORMAL)
 #define C_REQ		0x0100	/* required */
@@ -325,9 +330,11 @@ int URICONV_MOUNTF =	C_MOUNTF;
 int URICONV_MOUNTR =	C_MOUNTR;
 int URICONV_MOUNTD =	C_MOUNTD;
 int URICONV_MOUNT =	C_MOUNT;
+int URICONV_FULLLABEL =	C_FULLLABEL;
 int URICONV_NORMAL =	C_NORMAL;
 int URICONV_PARTIAL =	C_PARTIAL;
 int URICONV_FULL =	C_FULL;
+int URICONV_RELATIVE =	C_RELATIVE;
 int URICONV_ANY	=	C_ANY;
 int TAGCONV_XML =	C_XML;
 int TAGCONV_SSI =	C_SSI;
@@ -351,9 +358,11 @@ static SymID convsym[NCONVS] = {
 	"mountR",	C_MOUNTR,
 	"mountD",	C_MOUNTD,
 	"mount",	C_MOUNT,
+	"fullall",	C_FULL|C_FULLLABEL,
 	"normal",	C_NORMAL,
 	"partial",	C_PARTIAL,
 	"full",		C_FULL,
+	"relative",	C_RELATIVE,
 	"killtag",	C_KILL,
 	"+",		C_DEFAULTS,
 

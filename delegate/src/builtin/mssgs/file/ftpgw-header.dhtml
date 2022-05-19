@@ -1,9 +1,21 @@
+<a name="head">
+<table bgcolor="#f0f0ff" width=100%>
+<tr>
+<td>
 ${isdir?
- <TITLE> FTP Directory ${anonymous?${site}:${site.hidepass}} ${path} </TITLE>
- <I> FtpDirectory </I>
+ <title>FTP Directory ${anonymous?${site}:${site.hidepass}} ${path}</title>
+ <i><font face="Times New Roman">FtpDirectory</font></i>
 :
- <TITLE> FTP File ${anonymous?${site}:${site.hidepass}} ${path} </TITLE>
- <I> FtpFile </I>
+ <title>FTP File ${anonymous?${site}:${site.hidepass}}${path}</title>
+ <i><font face="Times New Roman">FtpFile</font></i>
 }
-<B>${anonymous?${ancestor}:${ancestor.hidepass}}</B><HR>
-<PRE><font face="courier new">\
+<b>${anonymous?${ancestor}:${ancestor.hidepass}}</b>
+</td>
+<td arign=right>
+ <a href=#tail><small>tail</small></a>
+</td>
+</tr>
+</table>
+</a>
+
+<pre><font face="courier new">\

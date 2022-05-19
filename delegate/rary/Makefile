@@ -56,6 +56,7 @@ FILES =		Makefile SLL.c TLEX.c String.c ystring.c modfmt.c JIS.c codeconv.c \
 		setutimes.c file.c fstat.c pam.c libpam.c passwd.c syslog.c \
 		lock.c \
 		dglibs.c \
+		filetype.c \
 		forkspawn.c Thread.c randstack.c rawcopy.c \
 		hostaddr.c socks5.c \
 		cfilib.c \
@@ -81,6 +82,7 @@ OBJS =		SLL.o String.o ystring.o modfmt.o TLEX.o JIS.o codeconv.o \
 		setutimes.o file.o fstat.o pam.o libpam_dl.o passwd.o syslog.o \
 		lock.o \
 		dglibs.o \
+		filetype.o \
 		forkspawn.o Thread.o randstack.o rawcopy.o \
 		hostaddr.o socks5.o \
 		cfilib.o \

@@ -125,15 +125,12 @@ static struct {
 	{2,         "jp"},
 	{3,       "=.ae"},
 	{3,       "=.al"},
-	{3,       "=.ao"},
 	{3,       "=.ar"},
 	{3,       "gv.at"},
 	{3,       "=.at"},
 	{3,       "=.au"},
 	{3,      "oz.au"},
 	{3,       "=.ba"},
-	{3,       "=.bb"},
-	{3,       "=.bd"},
 	{3,       "=.be"},
 	{3,       "=.bh"},
 	{3,       "=.bo"},
@@ -151,7 +148,6 @@ static struct {
 	{3,       "qc.ca"},
 	{3,       "sk.ca"},
 	{3,       "=.ci"},
-	{3,       "=.ck"},
 	{3,       "=.cl"},
 	{3,       "=.co"},
 	{3,       "=.cn"},
@@ -174,12 +170,10 @@ static struct {
 	{3,       "=.ec"},
 	{3,       "=.ee"},
 	{3,       "=.eg"},
-	{3,       "=.er"},
 	{3,       "=.fj"},
 	{3,    "asso.fr"},
 	{3,    "gouv.fr"},
 	{3,      "tm.fr"},
-	{3,       "=.ga"},
 	{3,       "=.ge"},
 	{3,       "=.gh"},
 	{3,       "=.gn"},
@@ -187,10 +181,8 @@ static struct {
 	{3,       "=.gt"},
 	{3,       "=.gy"},
 	{3,       "=.hk"},
-	{3,       "=.hn"},
 	{3,       "=.hu"},
 	{3,       "=.id"},
-	{3,       "=.ie"},
 	{3,       "=.il"},
 	{3,       "=.in"},
 	{3,   "ernet.in"},
@@ -204,14 +196,9 @@ static struct {
 	{3,       "re.kr"},
 	{3,       "=.kw"},
 	{3,       "=.lb"},
-	{3,       "=.lk"},
 	{3,       "=.lv"},
 	{3,       "=.ma"},
-	{3,       "=.mg"},
 	{3,       "=.mm"},
-	{3,       "=.mo"},
-	{3,       "=.mw"},
-	{3,       "=.mz"},
 	{3,     "af.mil"},
 	{3,   "army.mil"},
 	{3,   "navy.mil"},
@@ -231,7 +218,6 @@ static struct {
 	{3,       "=.om"},
 	{3,       "=.pa"},
 	{3,       "=.pe"},
-	{3,       "=.pf"},
 	{3,       "=.pg"},
 	{3,       "=.pk"},
 	{3,       "=.pl"},
@@ -253,15 +239,12 @@ static struct {
 	{3,     "spb.su"},
 	{3,     "udm.ru"},
 	{3,   "tomsk.ru"},
-	{3,       "=.rw"},
 	{3,       "=.sa"},
-	{3,       "=.sb"},
 	{3,       "=.sg"},
 	{3,       "=.si"},
 	{3,       "=.sk"},
 	{3,       "=.sv"},
 	{3,       "=.sy"},
-	{3,       "=.tg"},
 	{3,       "=.th"},
 	{3,       "=.tr"},
 	{3,       "=.tt"},
@@ -314,7 +297,6 @@ static struct {
 	{3,       "wa.us"},
 	{3,       "wi.us"},
 	{3,       "=.uy"},
-	{3,       "=.uz"},
 	{3,       "=.ve"},
 	{3,       "=.vn"},
 	{3,       "=.ws"},
@@ -473,23 +455,9 @@ int generic_domain_email(PVStr(email)){
 }
 int gendom_main(int ac,const char *av[]){
 	IStr(gendom,MaxHostNameLen);
-	IStr(line,MaxHostNameLen);
-	IStr(rem,MaxHostNameLen);
 
-	if( ac < 2 ){
+	if( ac < 1 ){
 		fprintf(stderr,"Usage: %s host.domain\n",av[0]);
-		return -1;
-	}
-	if( streq(av[1],"-") ){
-		for(;;){
-			if( fgets(line,sizeof(line),stdin) == NULL ){
-				break;
-			}
-			Xsscanf(line,"%[-.:a-zA-Z0-9]%[^\377]",AVStr(gendom),AVStr(rem));
-			generic_domain_email(AVStr(gendom));
-			fprintf(stdout,"%s%s",gendom,rem);
-		}
-		return 0;
 	}
 	strcpy(gendom,av[1]);
 	generic_domain_email(AVStr(gendom));

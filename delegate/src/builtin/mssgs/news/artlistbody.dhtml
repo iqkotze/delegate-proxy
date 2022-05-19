@@ -10,7 +10,8 @@
   <FORM ACTION="../-search" METHOD=GET>
    <TD align=right valign=middle>
     <INPUT TYPE=text size=16 name=key>
-    <A HREF=../-search?key=${grp.print}><IMG ALIGN=MIDDLE BORDER=0 ALT="search" SRC="${icon.frogSearch.gif}"></A>
+    <INPUT TYPE=hidden size=16 name=hidden_key value="url%3A${grp.print}">
+    <A HREF=../-search?homeof=${grp.print}><IMG ALIGN=MIDDLE BORDER=0 ALT="search" SRC="${icon.frogSearch.gif}"></A>
    </TD>
   </FORM>
   }

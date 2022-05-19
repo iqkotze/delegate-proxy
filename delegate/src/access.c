@@ -622,7 +622,7 @@ int service_permitted0X(PCStr(clhost),int clport,PCStr(svproto),PCStr(svhost),in
 {	Connection ConnBuf, *Conn = &ConnBuf;
 	int ok;
 
-	ConnInitNew(Conn); /* v9.9.12 fix-140912a */
+	ConnInit(Conn);
 	if( clhost ){
 		strcpy(Client_Host,clhost);
 	}else{

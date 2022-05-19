@@ -135,6 +135,7 @@ typedef struct {
 #define B_EUC_JP	6
 #define B_SHIFT_JIS	7
 #define B_M17N		8
+#define B_ISO_8859_1	9
 
 static Charset BasicCharsets[] = {
 	{"",       "UNKNOWN"	},
@@ -171,6 +172,7 @@ static const char *DELSP_SEQUENCE[16] = {
  */
 char M_US_ASCII[]	= "US-ASCII";
 char M_ISO_8859_8[]	= "ISO-8859-8";
+char M_ISO_8859_1[]	= "ISO-8859-1";
 char M_ISO_2022_JP[]	= "ISO-2022-JP";
 char M_UTF_8[]		= "UTF-8";
 char M_EUC_JP[]		= "EUC-JP";
@@ -196,15 +198,10 @@ static MimeCharset Codes2[16] = {
 	{1, 0,   M_UTF_8,       B_UCS_2,     ENCODE_BASE64	},
 	{1, 0,   M_EUC_JP,      B_EUC_JP,    ENCODE_BASE64	},
 	{1, 0,   M_SHIFT_JIS,   B_SHIFT_JIS, ENCODE_BASE64	},
+	{1, 0,	 M_ISO_8859_1,	B_ISO_8859_1,ENCODE_QP		},
 	0
 };
 
-const char *known8BMBcode(PCStr(code)){ /* v9.9.12 fix-140826c */
-	if( strcaseeq(code,M_UTF_8)     ) return M_UTF_8;
-	if( strcaseeq(code,M_EUC_JP)    ) return M_EUC_JP;
-	if( strcaseeq(code,M_SHIFT_JIS) ) return M_SHIFT_JIS;
-	return 0;
-}
 int noSpaceAmongWordsCharset(PCStr(charset)){
 	if( strcaseeq(charset,M_ISO_2022_JP)
 	 || strcaseeq(charset,M_EUC_JP)
@@ -262,7 +259,6 @@ typedef struct {
 	int	c_ch;		/* character code value */
   const char*	c_mcharset;	/* MIME charset */
 	int	c_bcharset;	/* basic charset */
-  const char*	c_encoding;	/* MIME e-word encoding */
 } CHARx;
 static CHARx NULL_CHAR = { 0,  M_US_ASCII, B_US_ASCII };
 
@@ -409,20 +405,7 @@ static void NLfputc(int ch,FILE *out)
 
 static void EN_UNGETC(CHARx *CH,INOUT *io)
 {
-	/* v9.9.12 fix-140826e, UNGETC by push like round robin  */
-	RRBUFF *BP = &io->in_PUSHED;
-	int getx;
-
-	BP->b_getx -= 1;
-	if( BP->b_getx < 0 )
-		BP->b_getx = RRBUFF_SIZE - 1;
-	getx = BP->b_getx + 1;
-	if( RRBUFF_SIZE <= getx )
-		getx = 0;
-	BP->b_BUFF[getx] = *CH;
-	/*
 	PUT_RRBUFF(&io->in_PUSHED,CH);
-	*/
 }
 
 static CHARx *EN_FGETC(INOUT *io)
@@ -434,18 +417,12 @@ static CHARx *EN_FGETC(INOUT *io)
 	CHARx *CH;
 	RRBUFF *BP;
 
-	/* getting a slot for CH (and CH2, CH3, ...) by round robin */ 
 	BP = &io->in_BUFF;
 	CH = NEXT_RRBUFF(BP);
 
 	BP = &io->in_PUSHED;
 	if( GET_RRBUFF(BP,CH) ){
 		ch = CH->c_ch;
-		/* 9.9.12 fix-140827c, should recover environment on pop */
-		io->in_mcharset = CH->c_mcharset;
-		io->in_bcharset = CH->c_bcharset;
-		io->in_encoding = CH->c_encoding;
-		/* should recover io->in_column too ? */
 		goto EXIT;
 	}
 
@@ -510,7 +487,6 @@ exit:
 	CH->c_ch = ch;
 	CH->c_mcharset = io->in_mcharset;
 	CH->c_bcharset = io->in_bcharset;
-	CH->c_encoding = io->in_encoding;
 
 EXIT:
 	io->in_prevch = ch;
@@ -692,12 +668,6 @@ if( DELIMITER(ch) )
 static int encode_one(PCStr(encoding),PCStr(ins),int ilen,PVStr(outs),int osize)
 {	int len;
 
-	if( encoding == NULL ){
-		/* this must not happen, but should escape SEGV if happend */
-		fprintf(stderr,"##encode_one() got NULL encoding\n");
-		strncpy(outs,ins,ilen);
-		len = ilen;
-	}else
 	if( strcasecmp(encoding,ENCODE_QP) == 0 )
 		len = str_toqp(ins,ilen,AVStr(outs),osize);
 	else
@@ -840,46 +810,6 @@ break;
 			break;
 
 		setVStrElemInc(ins,inx,ch);
-		if( CH->c_mcharset ){
-			/* v9.9.12 fix-140826c, not to split multi bytes char. */
-			int JIS7_bytes(int ch1,int ch2);
-			int SJIS_bytes(int ch1,int ch2);
-			int EUCJ_bytes(int ch1,int ch2,int ch3);
-			int UTF8_bytes(int ch1,int ch2,int ch3);
-			CHARx *CH2,*CH3;
-			int ch2,ch3;
-			int len = 0;
-
-			CH2 = EN_FGETC(io); ch2 = CH2->c_ch;
-			CH3 = EN_FGETC(io); ch3 = CH3->c_ch;
-
-			if( CH->c_mcharset == M_ISO_2022_JP ){
-				len = JIS7_bytes(ch,ch2);
-			}else
-			if( CH->c_mcharset == M_SHIFT_JIS ){
-				len = SJIS_bytes(ch,ch2);
-			}else
-			if( CH->c_mcharset == M_EUC_JP ){
-				len = EUCJ_bytes(ch,ch2,ch3);
-			}else
-			if( CH->c_mcharset == M_UTF_8 ){
-				len = UTF8_bytes(ch,ch2,ch3);
-			}else{
-			}
-			if( 1 < len ){
-				setVStrElemInc(ins,inx,ch2);
-				nchar++;
-				if( 2 < len ){
-					setVStrElemInc(ins,inx,ch3);
-					nchar++;
-				}else{
-					EN_UNGETC(CH3,io);
-				}
-			}else{
-				EN_UNGETC(CH3,io);
-				EN_UNGETC(CH2,io);
-			}
-		}
 		setVStrEnd(ins,inx);
 	}
 	inx += strlen(&ins[inx]);
@@ -949,9 +879,6 @@ int MIME_headerEncode0X(MimeConv *Mcv,FILE *in,FILE *out)
 			if( strcaseeq(Mcv->c_icode,M_UTF_8) ){
 				io->in_charcode8B = M_UTF_8;
 			}else{
-				/* v9.9.12 fix-140826c, simplify comparation */
-				io->in_charcode8B = known8BMBcode(Mcv->c_icode);
-				if( io->in_charcode8B == 0 )
 				io->in_charcode8B = Mcv->c_icode;
 			}
 		}
@@ -1422,9 +1349,6 @@ DECODE:
 
 	if( io->CAT_EWORDS ) /* 9.9.9 new-140606b catenate e-words */
 	if( io->UNFOLD_LINE || io->out_column+strlen(dtext) < XDISPCOLS )
-	if( io->out_column == 0 ){
-		/* v9.9.12 fix-140826b, don't erase pending space for continuation */
-	}else
 	if( strcaseeq((char*)encoding,ENCODE_BASE64) ) /* imply without-ASCII */
 	if( noSpaceAmongWords(io->in_ewcharset,(char*)charset,dtext,ocset) )
 	{

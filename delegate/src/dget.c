@@ -1293,7 +1293,6 @@ syslog_ERROR("[NULL] empty response (%3.2fs) %s [%d] EOF=%d errno=%d\n",
 		fputs(resp,stdout);
 
 	for(;;){
-		fprintf(stderr,"dget-HTTP");
 		fprintf(stderr,">>> %s",resp);
 		if( !strneq(resp,"HTTP/1.1 100",12) ){
 			break;
@@ -1301,7 +1300,6 @@ syslog_ERROR("[NULL] empty response (%3.2fs) %s [%d] EOF=%d errno=%d\n",
 		while( fgets(resp,sizeof(resp),fs) != NULL ){
 fprintf(stderr,"SKIP>>> %s",resp);
 			if( *resp == '\r' || *resp == '\n' ){
-				fprintf(stderr,"dget-HTTP");
 				fprintf(stderr,">>> %s",resp);
 				break;
 			}
@@ -1445,7 +1443,6 @@ fprintf(stderr,"SKIP>>> %s",resp);
 				fflush(stdout);
 		}
 		if( !BeSilent )
-		fprintf(stderr,"dget-HTTP");
 		fprintf(stderr,">>>> Response: %lld/%lld\n",ci,leng);
 		/*
 		const char *buf;

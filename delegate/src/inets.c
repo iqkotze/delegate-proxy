@@ -4837,7 +4837,7 @@ int make_HOSTS(PVStr(hosts),PCStr(hostname),int cacheonly)
 }
 
 int TIMEOUT_RES_UP_WAIT = 10;
-const char *RES_UP_HOST = "WwW.DeleGate.ORG";
+const char *RES_UP_HOST = "wWW.DeleGate.ORG";
 const char *DELEGATE_getEnv(PCStr(name));
 /*
  * RES_WAIT=seconds[:hostname-or-address]
@@ -5070,23 +5070,15 @@ int RES_order_default(PVStr(dorder),PCStr(myname),struct hostent *me){
 			extern double RES_NIS_TIMEOUT;
 			double Start = Time();
 			struct hostent *hp;
-			int NIS_inactive(PCStr(ypdomain),int set);
 
-			if( NIS_inactive(ypdomain,0) ){ /* v9.9.12 new-140823d */
-				sv1log("... NIS seems inactive (cached)\n");
-				hp = NULL;
-				Start = Time() - RES_NIS_TIMEOUT - 1;
-			}else{
-				RES_orderPush("N",RES_ALONE);
-				hp = gethostbyname(myname);
-				RES_orderPop();
-			}
+			RES_orderPush("N",RES_ALONE);
+			hp = gethostbyname(myname);
+			RES_orderPop();
 			if( hp == NULL && (RES_NIS_TIMEOUT < (Time()-Start)) ){
 				if( rp = strchr(porder,'N') )
 					ovstrcpy((char*)rp,rp+1);
 				RES_orderSet(porder);
 				sv1log("... NIS not available (seems inactive).\n");
-				NIS_inactive(ypdomain,1);
 			}
 		}
 	}else{

@@ -1055,8 +1055,18 @@ static int findRoute(Connection *Conn,Route *routes[],int startX,int endX,PCStr(
 {	int cx,nd,ns;
 	Route *Rp;
 	int found = -1;
+	IStr(readldsthost,MaxHostNameLen);
 
 	CTX_pushClientInfo(Conn);
+
+	/* new-140704i
+	if( isMYPROXY(dsthost,VStrNULL,AVStr(realdsthost) ){
+		if( realdsthost[0] ){
+			dsthost = realdsthost;
+		}
+	}
+	*/
+
 	for( cx = startX; cx < endX; cx++ ){
 		Rp = routes[cx];
 
@@ -1233,27 +1243,8 @@ static int DELEGATE_permitMX(Connection *Conn,PCStr(proto),PCStr(method),PCStr(d
 	if( Conn->no_dstcheck_proto
 	 && Conn->no_dstcheck_proto == serviceport(proto) )
 	{
-	    if( Conn->forreject ){
-		/* v9.9.12 fix-140828g, don't REJECT all MOUNTed destination.
-		 * HISTORY: this code was introduced in v8.4.0 (Feb. 2003)
-		 *  shortly after REJECT is introduced in v8.0.0 (Sep. 2002)
-		 *  and "no_dstcheck_proto" is used limitedly
-		 * SITUATION: "no_dstcheck_proto" is set basically for a
-		 *  MOUNTed destination of HTTP, or in a protocol gateway
-		 *  in many protocols, maybe to bypass the access restriction
-		 *  by the default REMITTABLE of each SERVER=protocol.
-		 > PROBLEM: skipping the matching of destination protocol makes
-		 >  a REJECT=proto:serv:clent work like REJECT=*:serv:clnt
-		 >  so that if a REJECT is defined, any access is forbidden
-		 >  for a MOUNTed destination, "-Dst" option to allow
-		 >  "ssltunnel" does not work, etc.
-		 * FIX: don't apply this code to a REJECT parameter. 
-		 */
-		sv1log("## REJECT don't ignore protocol matching [%s]\n",proto);
-	    }else{
 		/* skip checking destination protocol for MOUNTed server */
 		dstproto = "*";
-	    }
 	}
 
 	if( !Conn->forreject )

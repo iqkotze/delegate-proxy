@@ -1,7 +1,7 @@
-const char *SIGN_caps_c="{FILESIGN=caps.c:20141031194212+0900:e4a4048df60febb0:Author@DeleGate.ORG:RWKPTzv2hBaBCzPYzSPRSIHNo3FJPoEDX1rP+4jNypQKgmautsLYGkFVrnfDxWGbIG8lvH4tIKxkB7HvZSsUbYxh1xnqqp4bfHByo8Nh9SphmAlRkhozJGWihWhIrenwZborq5QKW2CAHq0ImLNhffu9nYOY/XxBoEvXW34tU6o=}";
+const char *SIGN_caps_c="{FILESIGN=caps.c:20140818123722+0900:401482c5fd574cb9:Author@DeleGate.ORG:i/GZ99sxKide1ao7etmSbBgIYMdzjqIFBsGA5MhtRU402RmuMiZIaDHIsdg86sYzUOcKxOxt42IEk+ehhymp1clp+Kczlt+HkQzqsfnsDmayUiFg1Nhbuq/DQc7LwcOgnfPx0nJX+xY9eorKSOYsBchgJE04WHSugrt+wttGR6c=}";
 
 /*////////////////////////////////////////////////////////////////////////
-Copyright (c) 2008 National Institute of Advanced Industrial Science and Technology (AIST)
+Copyright (c) 2008-2014 National Institute of Advanced Industrial Science and Technology (AIST)
 
 Permission to use this material for noncommercial and/or evaluation
 purpose, copy this material for your own use, and distribute the copies
@@ -69,8 +69,6 @@ int sslway_dl();
 #define substFile(f) substfile(AVStr(f),"",VStrNULL,VStrNULL,VStrNULL);
 
 void setup_hostid(FILE *out,int verb);
-
-#ifndef OPT_S /*{*/
 
 void setup_exeid(Connection *Conn){
 	CStr(path,1024);
@@ -443,7 +441,5 @@ int hostid_main(int ac,const char *av[]){
 	fprintf(out,"%s\n",shid);
 	return 0;
 }
-#endif /*} OPT_S */
-
 /* '"DIGEST-OFF"' */
         

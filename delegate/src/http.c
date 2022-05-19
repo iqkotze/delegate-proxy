@@ -812,8 +812,7 @@ static void genIfModified1(Connection *Conn,FILE *cachefp,PCStr(cpath),int cdate
 	Verbose("+ %s",mod);
 }
 int getVserv(Connection *Conn,PCStr(head),PVStr(hostport));
-#define setReferer HTTP_setReferer
-void HTTP_setReferer(Connection *Conn,PCStr(proto),PCStr(host),int port,PCStr(req),Referer *referer,PVStr(refbuf))
+static void setReferer(Connection *Conn,PCStr(proto),PCStr(host),int port,PCStr(req),Referer *referer,PVStr(refbuf))
 {
 	const char *bp;
 	const char *up;
@@ -6033,14 +6032,7 @@ RX_cachefp = NULL;
 			    }
 			}
 			if( RX_qWithHeader || !RX_inHeader )
-			if( Conn->dg_putpart[0] && !RX_noBody ){
-				/* v9.9.12 new-140819b, return 404 if no part.
-				 * v9.9.12 fix-140823a, if the body exists.
-				 */
-				sv1log("#Pf part[%s] postpone status\n",Conn->dg_putpart);
-			}else{
 				RX_wrHeadTotal += fwrite(line,1,lastRcc,RX_tcp);
-			}
 		}
 
 		if( !RX_isHTTP09 && RX_inHeader ){
@@ -6094,11 +6086,6 @@ RX_cachefp = NULL;
 
 	if( RX_noBody ){
 		/* 9.8.2 no need to prepair the buff. for the empty body */
-	}else
-	if( Conn->dg_putpart[0] ){ /* v9.9.12 new-140819b */
-		sv1log("#Pf DO-response-buffering for Partfilter\n");
-		attach_respbuff(Conn,RX);
-		fprintf(RX_respBuff,"%s",RX_rdBuff);
 	}else
 	if( (HTTP_opts & HTTP_ADDCONTLENG) ){
 		sv1log("#ACLN DO-response-buffering to add Content-Length\n");
@@ -6694,27 +6681,6 @@ Verbose("+++EPIPE ImRespFilter SIG*%d [%d/%X]\n",gotSIGPIPE(),fileno(RX_tcp),p2i
 			RX_wrTotal += FPUTS(CVStr("</PRE>\n"),RX_ctype,RX_convChar,0);
 			}
 		}
-	}
-
-	if(  Conn->dg_putpart[0] ){ /* v9.9.12 new-140819b */
-	  if( RX_tcp == RX_respBuff ){
-	    if( Conn,RX->r_partf.p_NumParts == 0 ){
-		IStr(uquery,URLSZ);
-
-		strcpy(uquery,Conn->dg_putpart);
-		if( strpbrk(uquery,"<>&\"") )
-			URL_reescape(Conn->dg_putpart,AVStr(uquery),0,1);
-		daemonlog("E","#Pf part[%s] not found\n",Conn->dg_putpart);
-		fseek(RX_tcp,0,0);
-		fprintf(RX_tcp,"HTTP/1.0 404 Part Not Found\r\n");
-		fprintf(RX_tcp,"\r\n");
-		fprintf(RX_tcp,"## NO SUCH PART ?%s\n",uquery);
-		QX_hcode = 404;
-	    }else{
-		sv1log("#Pf part[%s] found, size=%d parts=%d\n",
-			Conn->dg_putpart,ftell(RX_tcp),RX->r_partf.p_NumParts);
-	    }
-	  }
 	}
 
 	RX_wrContLen = RX_rdContLen;
@@ -9939,13 +9905,6 @@ This code generates a surplus <CRLF>
 		/* anything should be relayed without detection */
 	}else
 	if( fpoll2(10*1000,fc,fs) & 2 ){
-	    if( !IsAlive(fileno(fs)) ){ /* v9.9.12 new-140823e */
-			daemonlog("E","CONNECT reset by server //%s:%d => %s:%d\n",
-				DST_HOST,DST_PORT,shost,sport);
-			http_Log(Conn,500,CS_EOF,REQ,0);
-			closeCONNECT(Conn,fs,ts);
-			return -1;
-	    }else{
 		/* response from the server before sending request */
 		daemonlog("F","WARNING: //%s:%d seems not HTTPS <=%s:%d\n",
 			DST_HOST,DST_PORT,shost,sport);
@@ -9956,7 +9915,6 @@ This code generates a surplus <CRLF>
 			closeCONNECT(Conn,fs,ts);
 			return -1;
 		}
-	    }
 	}
 	else
 	if( !relayany && lHTTPSCLONLY() ){ /* 9.9.6 -Ess */

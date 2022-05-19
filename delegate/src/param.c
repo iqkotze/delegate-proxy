@@ -53,6 +53,7 @@ char P_CRYPT[]    = "CRYPT";
 char P_CONFOPT[]  = "CONFOPT";
 char P_CONNECT[]  = "CONNECT";
 char P_COUNTER[]  = "COUNTER";
+char P_COUNTERDIR[]  = "COUNTERDIR";
 char P_DATAPATH[] = "DATAPATH";
 char P_DBFILE[]   = "DBFILE";
 char P_DGDEF[]    = "DGDEF";
@@ -96,6 +97,7 @@ char P_HOSTS[]    = "HOSTS";
 char P_HOSTLIST[] = "HOSTLIST";
 char P_HTMLCONV[] = "HTMLCONV";
 char P_HTMUX[]    = "HTMUX";
+char P_HTSTATS[]  = "HTSTATS";
 char P_HTTPCONF[] = "HTTPCONF";
 char P_ICP[]      = "ICP";
 char P_ICPCONF[]  = "ICPCONF";
@@ -275,6 +277,7 @@ static ParamSpec params[] = {
 { P_CONFOPT,	EXP,M0,T1s,0,0},
 { P_CONNECT,	EXP,M0,Tnc,1,1},
 { P_COUNTER,	EXP,M0,T1s,1,1},
+{ P_COUNTERDIR,	EXP,M0,T1s,1,1},
 { P_CRON,	EXP,M0,Tns,0,0},
 { P_CRONS,	EXP,M0,Tns,0,0},
 { P_CRYPT,	EXP,M0,T1s,1,1},
@@ -322,6 +325,7 @@ static ParamSpec params[] = {
 { P_HTMLCONV,	STD,M0,Tns,0,1},
 { P_HTMUX,	EXP,M0,T1h,0,1},
 { P_HTTPCONF,	STD,M0,Tns,0,1},
+{ P_HTSTATS,	EXP,M0,Tns,0,0},
 { P_ICP,	STD,M0,Tns,0,0},
 { P_ICPCONF,	STD,M0,Tns,0,0},
 { P_INETD,	EXP,M0,Tns,0,0},

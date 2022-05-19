@@ -402,6 +402,20 @@ extern int HTTP_CKA_CFI;
 #define HTTP_OLDCACHE		0x20000000
 #define HTTP_DUMPSTAT		0x80000000
 
+typedef struct {
+	int	p_Nput; /* number of parts put */
+	int	p_Isin;	/* isin xxx.html?part */
+	int	p_Incomment; /* v9.9.11 new-140724i, in <!-- comment --> */
+	MStr(	p_Type,32);
+	int	p_Asis;
+	int	p_Indexing;
+	int	p_BaseSet;
+	MStr(	p_Base,256);
+	MStr(	p_Title,256);
+	MStr(	p_Meta,1024);
+} Partf;
+
+
 int HTTP_doKeepAliveWithSTLS(Connection *Conn);
 #define doKeepAliveWithSTLS(Conn) HTTP_doKeepAliveWithSTLS(Conn)
 void  setHTTPenv(Connection *Conn,HTTP_env *he);
@@ -541,6 +555,8 @@ void  http_Log(Connection *Conn,int rcode,int rstat,PCStr(req),int size);
 /*-- GATEWAY */
 void  connected_to_proxy(Connection *Conn,PCStr(req),int clsock);
 void  add_localheader(Connection *Conn,int proxy);
+void  clearPartfilter(Partf *Pf);
+int   Partfilter(Connection *Conn,Partf *Pf,PVStr(line),int size);
 void  getProxyControlPart(Connection *Conn,PVStr(url));
 void  makeProxyRequest(Connection *Conn);
 int   httpfinger(Connection *Conn,int sv,PCStr(server),int iport,PCStr(path),int vno);
@@ -562,43 +578,9 @@ int   HTTP_form2v(Connection *Conn,FILE *fc,int maxargc,const char *argv[]);
 #define CACHE_ONLY	0x00000004
 #define CACHE_RENAME	0x00000008
 
-/*////////////////////////////////////////////////////////////////////////
-Copyright (c) 2014 National Institute of Advanced Industrial Science and Technology (AIST)
+/* MYPROXY */
+/* new-140704d allow only one-hop (direct) by default */
+#define MYPROXY_FORW	0x00000001 /* interpret and forward to the upstream proxy */
+#define MYPROXY_THRU	0x00000002 /* through pass without interpretation */
+#define MYPROXY_STOP	0x00000004 /* stop interpretation and forwarding */
 
-Permission to use, copy, modify, and distribute this material for any
-purpose and without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies, and
-that the name of ETL not be used in advertising or publicity pertaining
-to this material without the specific, prior written permission of an
-authorized representative of ETL.
-ETL MAKES NO REPRESENTATIONS ABOUT THE ACCURACY OR SUITABILITY OF THIS
-MATERIAL FOR ANY PURPOSE.  IT IS PROVIDED "AS IS", WITHOUT ANY EXPRESS
-OR IMPLIED WARRANTIES.
-/////////////////////////////////////////////////////////////////////////
-Content-Type:	program/C; charset=US-ASCII
-Program:	htfilter.h (HTML filter)
-Author:		Yutaka Sato <y.sato@aist.go.jp>
-Description:
-History:
-	970708	extracted from httpd.c
-	140928	to be extracted from http.h (but failed on Windows)
-//////////////////////////////////////////////////////////////////////#*/
-
-typedef struct _Partf {
-	int	p_Nput; /* number of parts put */
-	int	p_NumParts; /* numbers of parts put (excluding STYLE) put */
-	int	p_Isin;	/* isin xxx.html?part */
-	int	p_IsinTag; /* in a tag in which no anchor generation (A and STYLE) */
-	int	p_Incomment; /* v9.9.11 new-140724i, in <!-- comment --> */
-	MStr(	p_Type,32);
-	int	p_Asis;
-	int	p_Indexing;
-	int	p_BaseSet;
-	MStr(	p_Base,256);
-	MStr(	p_Title,256);
-	MStr(	p_Meta,1024);
-	MStr(	p_NoHrefGen,4*1024); /* comma separated list of words not to be hrefgen */
-} Partf;
-
-void  clearPartfilter(Partf *Pf);
-int   Partfilter(Connection *Conn,Partf *Pf,PVStr(line),int size);

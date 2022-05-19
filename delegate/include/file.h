@@ -53,6 +53,7 @@ int Fgetpos(FILE *fp,Fpos_t *pos);
 int Fsetpos(FILE *fp,Fpos_t *pos);
 int Fseeko(FILE *fp,FileSize off,int whence);
 FileSize Ftello(FILE *fp);
+FileSize Fsizeo(FILE *fp);
 
 void setBinaryIO();
 int valid_fdl(PVStr(vfd));

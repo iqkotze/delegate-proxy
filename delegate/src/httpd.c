@@ -42,6 +42,9 @@ static const char *dproxy_base = "/-/nonCERNproxy";
 static const char *bench_base = "/-/bench?";
 static const char *data_base = "/-/data:";
 static const char *date_base = "/-/date";
+static const char *stats_base = "/-/stats/";
+int stats_page(Connection *Conn,PCStr(req),FILE *fc,FILE *tc,int vno,PCStr(path),int *stcodep);
+
 #define icon_relative	(icon_base+3)
 #define FPRINTF		leng += Fprintf
 
@@ -433,10 +436,12 @@ static int setRetry(Connection *Conn,PCStr(req),PCStr(path)){
 	return 0;
 }
 extern char *DFLT_VHOST;
+int HTTP_mypro_xyz = 0; /* v10.0.0 new-140704f */
 
 #define ISMYSELF(Conn) \
 	(!Conn->co_nointernal && Ismyself(Conn,DST_PROTO,DST_HOST,DST_PORT))
 
+int isMYPROXY(PCStr(host),PVStr(next),PVStr(dsthost));
 int putRobotsTxt(Connection *Conn,FILE *tc,FILE *afp,int ismsg);
 static int putBuiltinConfig(Connection *Conn,FILE *tc,int vno,PCStr(path));
 static int putBuiltinMssg(Connection *Conn,FILE *tc,PCStr(path));
@@ -562,6 +567,28 @@ do_RELAY(Conn,RELAY_VHOST),IsResolvable(DST_HOST));
 		strsubst(AVStr(path),ext_base,home_page);
 	}
 
+	/* v10.0.0 new-140704d, http://mypro.xyz */
+	if( ismyself && (HTTP_mypro_xyz & MYPROXY_THRU) == 0 ){
+		extern const char *MYPROXY;
+		IStr(next,MaxHostNameLen);
+		if( isMYPROXY(DST_HOST,AVStr(next),VStrNULL) ){
+			if( HTTP_mypro_xyz & MYPROXY_STOP ){
+				goto FORBIDDEN;
+			}else
+			if( next[0] != 0 ){
+				if( (HTTP_mypro_xyz & MYPROXY_FORW) == 0 ){
+					goto FORBIDDEN;
+				}
+				sv1log("-- intermediate %s [%s] > [%s]\n",
+					MYPROXY,DST_HOST,next);
+				strcpy(REAL_HOST,next);
+				return 0;
+			}else{
+				sv1log("-- ending %s [%s]\n",MYPROXY,DST_HOST);
+			}
+		}
+	}
+
 	if( ismyself ){
 		CStr(upath,URLSZ);
 
@@ -660,6 +687,23 @@ do_RELAY(Conn,RELAY_VHOST),IsResolvable(DST_HOST));
 	nlen = strlen(mssg_base);
 	if( strncmp(path,mssg_base,nlen) == 0 ){
 		leng = putBuiltinMssg(Conn,tc,path+nlen);
+		if( leng == 0 ){
+			goto UNKNOWN;
+		}
+		return leng;
+	}
+
+	nlen = strlen(stats_base);
+	if( strneq(path,stats_base,nlen-1) ){ /* v10.0.0 new-140515a */
+		if( path[nlen-1] == 0 ){
+			IStr(myhp,256);
+			IStr(url,256);
+			HTTP_ClientIF_HP(Conn,AVStr(myhp));
+			sprintf(url,"%s://%s%s","http",myhp,stats_base);
+			*stcodep = 301;
+			return putMovedTo(Conn,tc,url);
+		}
+		leng = stats_page(Conn,req,fc,tc,vno,path+nlen,stcodep);
 		if( leng == 0 ){
 			goto UNKNOWN;
 		}
@@ -773,6 +817,11 @@ UNKNOWN:
 	sv1log("Unknown internal: [%s:%d] %s\n",DST_HOST,DST_PORT,path);
 	*stcodep = 404;
 	return putUnknownPage(Conn,tc,vno,req);
+
+FORBIDDEN:
+	*stcodep = 403;
+	leng = putHttpRejectmsg(Conn,tc,DST_PROTO,"-",0,BVStr(req));
+	return leng;
 }
 
 static int putDeleGateAnchor(Connection *Conn,FILE *tc)
@@ -1150,6 +1199,9 @@ int putHttpCantConnmsg(Connection *Conn,FILE *tc,PCStr(proto),PCStr(server),int 
 		mid = "502-cantconnect.dhtml";
 		sprintf(desc,"<B>Cannot Connect</B>");
 	}
+	if( isMYPROXY(DST_HOST,VStrNULL,VStrNULL) ){
+		fprintf(tmp,"<hr>&gt;&gt; End of Proxy Chain &lt;&lt;<hr>\r\n");
+	}
 	putBuiltinHTML(Conn,tmp,"CantConn-Message",mid,desc,(iFUNCP)printConn,NULL);
 	putFrogVer(Conn,tmp);
 	fflush(tmp); cleng = ftell(tmp); fseek(tmp,0,0);
@@ -1309,6 +1361,8 @@ extern double HTTP_TOUT_PACKINTVL;
 extern int url_unify_ports;
 static const char *ProxyControlMARK;
 extern int HTTP_TOUT_THREAD_PIPELINE;
+
+const char *proxyControlMARK(){ return ProxyControlMARK; }
 
 static void settout(PCStr(what),PCStr(value),PCStr(conf))
 {	double secs;
@@ -1963,6 +2017,17 @@ void scan_HTTPCONF(Connection *Conn,PCStr(conf))
 			HTTP_cacheopt |= CACHE_WITHAUTH;
 	}
 	else
+	if( streq(what,"mypro.xyz") ){
+		if( streq(value,"forw") )
+			HTTP_mypro_xyz |= MYPROXY_FORW;
+		else
+		if( streq(value,"thru") )
+			HTTP_mypro_xyz |= MYPROXY_THRU;
+		else
+		if( streq(value,"stop") )
+			HTTP_mypro_xyz |= MYPROXY_STOP;
+		else	HTTP_mypro_xyz &= ~MYPROXY_STOP;
+	}else
 	if( streq(what,"nomenu") ){
 		extern int HTTP_putmenu;
 		HTTP_putmenu = 0;
@@ -2315,6 +2380,9 @@ static void putDirPage(Connection *Conn,PCStr(path),PCStr(upath),FILE *fp)
 		return;
 	}
 
+	if( strstr(ProxyControls,"sort=date") ){
+		dir2ls(path,NULL,"-lt",CVStr("%N"),tmp);
+	}else
 	dir2ls(path,NULL,NULL,CVStr("%N"),tmp);
 	fflush(tmp);
 	fseek(tmp,0,0);
@@ -2324,14 +2392,35 @@ static void putDirPage(Connection *Conn,PCStr(path),PCStr(upath),FILE *fp)
 			"text/html; charset=utf-8");
 	}
 	fprintf(fp,"<TITLE> Index of /%s </TITLE>\n",upath);
+	fprintf(fp,"<font face=\"courier new\">\r\n");
 	fprintf(fp,"<B>/%s</B>\n",upath);
+	fprintf(fp,"</font>\r\n",path);
 	fprintf(fp,"<PRE>\n",path);
+	fprintf(fp,"<font face=\"courier new\">");
 
 	putDir(Conn,path,tmp,fp,"\r\n");
 
 	fclose(tmp);
+	/*
 	fprintf(fp,"<HR>\n",path);
+	*/
+	fprintf(fp,"</font>",path);
 	fprintf(fp,"</PRE>\n",path);
+	fprintf(fp,"<HR>\n",path);
+
+	/* v10.0.0 new-140530d */{
+	    IStr(date,128);
+	    StrfTimeLocal(AVStr(date),sizeof(date),"%Y-%m-%d %H:%M:%S",Time());
+	    fprintf(fp,"<small>%s</small>\r\n",date);
+	    if( ProxyControlMARK != 0 ){
+		if( strstr(ProxyControls,"sort=date") ){
+		    fprintf(fp,"<a href=\"/%s\">[sort=name]</a>\r\n",upath);
+		}else{
+		    fprintf(fp,"<a href=\"%ssort=date\">[sort=date]</a>\r\n",
+		    ProxyControlMARK);
+		}
+	    }
+	}
 }
 
 int service_cgi(Connection *Conn)
@@ -3389,6 +3478,7 @@ int ssi_main(int ac,const char *av[],Connection *Conn){
 	return 0;
 }
 
+int CCX_disabled(CCXP);
 FileSize CCV_relay_textXX(Connection *Conn,FILE *in,FILE *out,FILE *dup,FileSize *wcc);
 FileSize putHttpMssg(Connection *Conn,FILE *dst,FILE *src,PCStr(req),int vno,PCStr(serv),PCStr(ctype),PCStr(cenc),FileSize leng,int mtime,int exp,PCStr(stat))
 {	int hlen;
@@ -3402,9 +3492,14 @@ FileSize putHttpMssg(Connection *Conn,FILE *dst,FILE *src,PCStr(req),int vno,PCS
 		xcharset = HTTP_outCharset(Conn);
 	else	xcharset = 0;
 	if( xcharset ){
+	    if( CCX_disabled(CCX_TOCL) ){
+		sv1log("--CCX-- putHttpMssg: CCX disabled [%s]\n",ctype);
+	    }else{
+		sv1log("--CCX-- putHttpMssg: CCX ctype[%s] -> (%s)\n",ctype,xcharset);
 		strcpy(xctype,ctype);
 		replace_charset_value(AVStr(xctype),xcharset,1);
 		ctype = xctype;
+	    }
 	}
 
 	if( leng == 0 && 0 < mtime ){
@@ -3744,6 +3839,380 @@ sv1log("#### PXC[%s]\n",pxc);
 			setPartfilter(Conn,pxc+9);
 		}
 	}
+}
+void setPartfilter(Connection *Conn,PCStr(query))
+{
+	if( query ){
+		FStrncpy(Conn->dg_putpart,query);
+		sv1log("#### PART Filter [%s]\n",Conn->dg_putpart);
+	}else	Conn->dg_putpart[0] = 0;
+}
+void clearPartfilter(Partf *Pf)
+{
+	Pf->p_Nput = 0;
+	Pf->p_Isin = 0;
+	Pf->p_Incomment = 0;
+	Pf->p_Type[0] = 0;
+	Pf->p_Asis = 0;
+	Pf->p_Indexing = 0;
+	Pf->p_BaseSet = 0;
+	Pf->p_Base[0] = 0;
+	Pf->p_Title[0] = 0;
+	Pf->p_Meta[0] = 0;
+}
+static void getTitle(PCStr(lp),PVStr(title),int size)
+{	const char *tp;
+	CStr(tbuff,256);
+
+	setVStrEnd(title,0);
+	wordscanY(lp,AVStr(tbuff),sizeof(tbuff),"^>");
+	if( tp = strcasestr(tbuff,"TITLE=") ){
+		valuescanX(tp+6,AVStr(title),size);
+	}
+}
+
+/* v9.9.11 new-140724h */
+/* v9.9.11 new-140724i, in <!-- comment --> */
+const char *findTag(PCStr(html),PCStr(tag),int *inComment){
+	const char *hp = html;
+	const char *ep;
+	const char *found = 0;
+	int tlen = strlen(tag);
+
+	if( *inComment ){
+		if( ep = strstr(hp,"-->") ){
+			Verbose("--incomment findTag[%s] found EOC\n",tag);
+			*inComment = 0;
+			hp = ep + 3;
+		}else{
+			Verbose("--incomment findTag[%s] not found EOC\n",tag);
+			return 0;
+		}
+	}
+	for( ; *hp; hp++ ){
+		if( *hp == '<' ){
+			if( strneq(hp,"<!--",4) ){
+				if( strncaseeq(hp+4,"<nostrip/>",10) ){
+					Verbose("--incoment findTag[%s] <nostrip/>\n",tag);
+				}else
+				if( ep = strstr(hp+4,"-->") ){
+					hp = ep + 3;
+					Verbose("--incoment findTag[%s] found paired EOC\n",tag);
+				}else{
+					*inComment = 1;
+					Verbose("--incoment findTag[%s] found dangling comment\n%s\n",tag,hp);
+					break;
+				}
+			}else
+			if( strncaseeq(hp,tag,tlen) ){
+				if( strtailchr(tag) == '='
+				 || strchr("> \r\n",hp[tlen]) != 0
+				){
+					found = hp;
+					break;
+				}
+			}
+		}
+	}
+	return found;
+}
+
+int Partfilter(Connection *Conn,Partf *Pf,PVStr(line),int size)
+{	refQStr(lp,line); /**/
+	const char *dp;
+	const char *tag;
+	refQStr(attr,line); /**/
+	CStr(name,32);
+	CStr(buff,0x10000);
+	refQStr(tail,buff); /**/
+	CStr(type,256);
+	CStr(title,256);
+	CStr(indent,32);
+	const char *mark;
+	int aname = 0;			/* <A NAME=name> part is found */
+	const char *stylebegin = 0;	/* <STYLE ...> is found */
+	const char *styleend = 0;	/* </STILE> is found */
+	IStr(styleb,0x10000); /* saved STYLE when <A NAME> is found too */
+	IStr(header,0x10000); /* saved header for .skeleton and .index */
+	IStr(dgsign,1024);		/* <!-- generated ... -> */
+	int cm0 = Pf->p_Incomment;
+	int cm1 = Pf->p_Incomment;
+	int cm2 = Pf->p_Incomment;
+	int notempty = 0;	/* there was someting not comment */
+
+	if( strncmp(ProxyControls,"partname=",9) == 0 )
+		mark = "?_?partname=";
+	else	mark = "?";
+
+	if( dp = strcasestr(line,"<TITLE>") ){
+		wordscanY(dp+7,AVStr(Pf->p_Title),128,"^<");
+	}
+	title[0] = 0;
+	if( Pf->p_Isin == 0 ){
+		if( streq(Conn->dg_putpart,".whole") ){ /* v9.9.11 new-140728j */
+			Pf->p_Isin = 20;
+		}
+	}
+	if( Pf->p_Isin == 0 ){
+		cpyQStr(lp,line);
+
+		if( Pf->p_BaseSet == 0 ){ /* v9.9.11 new-140730d */
+			const char *mp = line;
+			IStr(metab,1024);
+			while( tag = findTag(mp,"<META",&cm0) ){
+				if( mp = strchr(tag,'>') ){
+					QStrncpy(metab,tag,mp-tag+2);
+					if( sizeof(Pf->p_Meta)-2 <
+						strlen(Pf->p_Meta)+strlen(metab) ){
+						break;
+					}
+					Xsprintf(TVStr(Pf->p_Meta),"%s\r\n",metab);
+					mp++;
+				}else{
+					break;
+				}
+			}
+		}
+		/* v9.9.11 new-140724h */
+		if( stylebegin = findTag(lp,"<STYLE",&cm1) ){
+		  if( styleend = findTag(stylebegin,"</STYLE",&cm1) ){
+		    if( styleend = strchr(styleend,'>') ){
+			styleend++;
+			if( *styleend == '\r' ) styleend++;
+			if( *styleend == '\n' ) styleend++;
+			  QStrncpy(styleb,stylebegin,styleend-stylebegin+1);
+		    }
+		  }
+		}
+
+		if( streq(Conn->dg_putpart,".parts") ){
+			Pf->p_Isin = 100;
+			/* convert .html#name to .html?name */
+		}else
+		if( streq(Conn->dg_putpart,".skeleton")
+		 || streq(Conn->dg_putpart,".index") ){
+			Pf->p_Isin = 10;
+			Pf->p_Indexing = 1;
+		}else
+	    {
+		while( tag = findTag(lp,"<A NAME=",&cm2) ){
+			/*
+		while( tag = strcasestr(lp,"<A NAME=") ){
+			}
+			getTitle(tag,AVStr(title),sizeof(title));
+			*/
+			attr = (char*)tag + strlen("<A NAME=");
+			valuescanX(attr,AVStr(name),sizeof(name));
+
+			if( streq(name,Conn->dg_putpart) ){
+				aname = 1;
+				getTitle(tag,AVStr(title),sizeof(title));
+				wordscanY(tag,AVStr(type),sizeof(type),"^>");
+				if( strcasestr(type,"TYPE=HIDDEN") ){
+					Pf->p_Asis = 1;
+				}
+
+				if( lp = strchr(tag,'>') )
+					ovstrcpy((char*)line,lp+1);
+				else	ovstrcpy((char*)line,tag);
+				Pf->p_Isin = 1;
+				break;
+			}
+			lp = attr;
+		}
+
+		if( aname != 0 && stylebegin != 0 ){
+			sv1log("--PF found both style and aname\n");
+		}else
+		if( aname != 0 && stylebegin == 0 ){
+			sv1log("--PF found aname only\n");
+		}else
+		if( aname == 0 && stylebegin != 0 ){
+			sv1log("--PF found style only\n");
+			styleb[0] = 0;
+			ovstrcpy((char*)line,stylebegin);
+			Pf->p_Isin = 1;
+		}
+	    }
+		if( Pf->p_Incomment != cm2 ){
+			sv1log("--PF (%d) incomment = %d -> %d\n",Pf->p_Isin,
+				Pf->p_Incomment,cm2);
+			Pf->p_Incomment = cm2;
+		}
+	}
+
+	if( Pf->p_Isin == 0 )
+		return 0;
+
+	if( aname != 0 || 10 <= Pf->p_Isin )
+	if( Pf->p_BaseSet == 0 ){
+	    IStr(all,1024);
+	    Pf->p_BaseSet = 1;
+	    if( Conn->rq_vbase.u_proto ){ /* v9.9.11 new-140809g vbase=URL in SSI include */
+		sprintf(Pf->p_Base,"/%s",Conn->rq_vbase.u_path);
+	    }else{
+		wordScan(REQ_URL,Pf->p_Base);
+		if( dp = strchr(Pf->p_Base,'?') )
+			truncVStr(dp);
+		if( dp = strrchr(Pf->p_Base,'/') )
+			ovstrcpy(Pf->p_Base,dp+1);
+	    }
+
+	    if( streq(Conn->dg_putpart,".whole") ){
+		sv1log("--PF .whole, don't add header\n");
+	    }else{
+		sv1log("#### Base: %s\n",Pf->p_Base);
+		if( Pf->p_Isin < 100 ){
+		    sprintf(all,"<Title>%s / %s</Title>\r\n",Pf->p_Title,
+			title[0]?title:Conn->dg_putpart);
+		    if( !Pf->p_Asis ){
+		      Xsprintf(TVStr(all),"<Div id=HtmlBody>\r\n");
+		      if( Pf->p_Isin < 10 ){
+			Xsprintf(TVStr(all),"<Noindex>\r\n");
+			Xsprintf(TVStr(all),"<A Href=\"%s#%s\">[CTX]</A>\r\n",
+				Pf->p_Base,Conn->dg_putpart);
+			Xsprintf(TVStr(all),"<A Href=\"%s%s%s#%s\">[ALL]</A>\r\n",
+				Pf->p_Base,mark,".whole",Conn->dg_putpart);
+			Xsprintf(TVStr(all),"</Noindex>\r\n");
+			Xsprintf(TVStr(all),"%s\r\n",title[0]?title:"");
+			Xsprintf(TVStr(all),"<HR>\r\n");
+		      }
+		     Verbose("####\n%s\n",all);
+		   }
+		   Strins(AVStr(line),all);
+		   Strins(AVStr(line),Pf->p_Meta);
+		   strcpy(header,all);
+		   Strins(AVStr(header),Pf->p_Meta);
+		}
+	    }
+	}
+
+	if( Pf->p_Nput == 0 ){
+		sprintf(dgsign,"<!-- generated by HTML Partfilter of DeleGate/%s -->\r\n",
+			DELEGATE_ver());
+	}
+	Pf->p_Nput++;
+
+	tail = buff;
+	buff[0] = 0;
+	for( cpyQStr(lp,line); *lp; lp++ ){
+		if( strneq(lp,"<!--",4) ){
+			Pf->p_Incomment = 1;
+			continue;
+		}
+		if( strneq(lp,"-->",3) ){
+			Verbose("--PF incomment found EOC in scanning\n");
+			Pf->p_Incomment = 0;
+			continue;
+		}
+		if( Pf->p_Incomment ){
+			continue;
+		}
+		notempty = 1;
+		if( strncaseeq(lp,"<A ",3) ){
+		    Pf->p_Isin++;
+
+		    if( strncaseeq(lp,"<A NAME=",8) ){
+			getTitle(lp,AVStr(title),sizeof(title));
+			attr = (char*)lp + strlen("<A NAME=");
+			valuescanX(attr,AVStr(name),sizeof(name));
+
+			if( Pf->p_Indexing ){
+			    wordscanY(lp,AVStr(type),sizeof(type),"^>");
+			    if( strcasestr(type,"TYPE=HIDDEN") ){
+			    }else{
+				if( 12 < Pf->p_Isin )
+					sprintf(indent," ...... ");
+				else
+				if( 11 < Pf->p_Isin )
+					sprintf(indent," ... ");
+				else	indent[0] = 0;
+				sprintf(tail,
+"<Li>%s<A Href=\"%s%s%s\">%s</A>\r\n",
+indent,Pf->p_Base,mark,name,title[0]?title:name);
+				tail += strlen(tail);
+			    }
+			}else
+			    if( 100 <= Pf->p_Isin ){
+				sprintf(tail,
+"<Br><Div Style=\"background-color:#e0e0e0;\">\
+&nbsp;<A Href=\"%s%s%s\">%s</A></Div>\r\n",
+Pf->p_Base,mark,name,title[0]?title:name);
+				Strins(AVStr(lp),tail);
+				lp += strlen(tail) + 1;
+				truncVStr(tail);
+					continue;
+			    }
+			}
+			if( tag = strcasestr(lp,"<A HREF=") ){
+				attr = (char*)tag + strlen("<A HREF=");
+				if( *attr == '"' )
+					attr++;
+				if( *attr == '#' ){
+					setVStrElem(attr,0,'?');
+					Strins(AVStr(attr),Pf->p_Base);
+				}
+			}
+		}else
+		if( strncaseeq(lp,"</A>",4) ){
+			Pf->p_Isin--;
+			if( Pf->p_Isin <= 0  ){
+				Pf->p_Isin = 0;
+				if( Pf->p_Asis )
+					strcpy(lp,"\r\n");
+				else	strcpy(lp,"\r\n<Hr>\r\n");
+				Xsprintf(TVStr(lp),"</Div>\r\n");
+				break;
+			}
+		}
+		else
+		if( strncaseeq(lp,"</STYLE",7) ){ /* v9.9.11 new-140724h */
+			if( strchr("> \t\r\n",lp[7]) == 0 )
+				continue;
+
+			Pf->p_Isin--;
+			if( 0 < Pf->p_Isin ){
+				continue;
+			}
+			if( lp = strchr(lp,'>') )
+				lp++;
+			else	lp += strlen(lp);
+			if( *lp == '\r' ) lp++;
+			if( *lp == '\n' ) lp++;
+
+			if( tag = findTag(lp,"<STYLE",&Pf->p_Incomment) ){
+				ovstrcpy((char*)lp,tag);
+				Pf->p_Isin++;
+			}else
+			if( Pf->p_Incomment ){
+				break;
+			}else{
+				strcpy(lp,"\r\n");
+				Pf->p_Isin = 0;
+				break;
+			}
+		}
+	}
+
+	if( notempty == 0 && styleb[0] == 0 ){
+		return 0;
+	}
+	if( Pf->p_Indexing )
+	{
+		strcpy(line,buff);
+		if( header[0] )
+			Strins(AVStr(line),header);
+	}
+	if( styleb[0] )
+		Strins(AVStr(line),styleb);
+	if( Pf->p_Meta[0] ){
+		Strins(AVStr(line),Pf->p_Meta);
+		setVStrEnd(Pf->p_Meta,0);
+	}
+	if( dgsign[0] )
+		Strins(AVStr(line),dgsign);
+
+	return 1;
 }
 
 int putMBOX(Connection *Conn,FILE *in,FILE *out)

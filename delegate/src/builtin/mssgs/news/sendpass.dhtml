@@ -1,12 +1,22 @@
-<HR>
-Sending password to you
 ${estamp.shortok?
   ${Sendpass?
-    <FONT color=green>is finished successfully</FONT>.
+    <table width=100% bgcolor="#f0f0ff"><tr><td>
+     Your password is <font color=blue>sent successflly</font> to you by mail.<br>
+     Check your mail-box and copy the password in the mail into the text field bellow,<br>
+     and then push "Sendmail" button.
+    </td></tr></table>
   :
-    <FONT color=red>FAILED</FONT> (${error.reason})
+   <table width=100% bgcolor=pink><tr><td>
+    &nbsp;Sending password to you <FONT color=red>FAILED</FONT> (${error.reason})
+    &nbsp;<a href="?fmt=Getpass&${formv2ustr.excluding.fmt}">[Retry]</a>
+    &nbsp;<a href="${num.anum1}">[Return]</a>
+   </td></tr></table>
   }
 :
-  <FONT color=red>FAILED</FONT> (${error.reason})
+ <table width=100% bgcolor=pink><tr><td>
+   &nbsp;Sending password to you <FONT color=red>FAILED</FONT> (${error.reason})
+   &nbsp;<a href="?fmt=Getpass&${formv2ustr.excluding.fmt}">[Retry]</a>
+   &nbsp;<a href="${num.anum1}">[Return]</a>
+ </td></tr></table>
 }
-<HR>
+${include:forward.dhtml}

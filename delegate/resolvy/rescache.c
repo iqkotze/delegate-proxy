@@ -41,25 +41,6 @@ int   RES_CACHE_DISABLE = 0;
 int   RES_HC_EXPIRE_REFRESH = 15; /* minimum (forced) refresh interval */
 static int cache_cantopen;
 
-int NIS_inactive(PCStr(ypdomain),int set){ /* v9.9.12 new-140823d */
-	IStr(path,256);
-	const char *tmpdir;
-
-	if( (tmpdir = getTMPDIR()) == 0 )
-		tmpdir = "/tmp";
-	sprintf(path,"%s/%s/nis-inactive-%s",tmpdir,RES_HC_DIR,ypdomain);
-	if( set ){
-		File_touch(path,time(0));
-		return 1;
-	}
-	if( File_is(path) ){
-		if( time(0) - File_mtime(path) < RES_HC_EXPIRE ){
-			return 1;
-		}
-	} 
-	return 0;
-}
-
 static FILE *hosts_cache(int byname,PCStr(nameaddr),PCStr(mode),PVStr(cpath))
 {	unsigned int hidx;
 	CStr(cdirs,1024);

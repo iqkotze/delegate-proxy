@@ -154,7 +154,6 @@ SUBSTSRCS2 = \
 	errno.c
 
 SUBSTSRCS3 = \
-	Gates_Win32.c \
 	gethostid.c \
 	opt_s_vsap.c \
 	opt_s_htaccept.c \

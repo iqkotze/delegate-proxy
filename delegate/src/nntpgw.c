@@ -1,6 +1,6 @@
 /*////////////////////////////////////////////////////////////////////////
 Copyright (c) 1995-2000 Yutaka Sato and ETL,AIST,MITI
-Copyright (c) 2001-2008 National Institute of Advanced Industrial Science and Technology (AIST)
+Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)
 AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443
 
 Permission to use this material for noncommercial and/or evaluation
@@ -30,7 +30,7 @@ History:
 
 void minit_nntp();
 const char *someGroup();
-void subject_headclean(PVStr(subj));
+void subject_stripPrefix(PVStr(subj),int maxDelBracket,int leaveBracket1);
 void setProtoOfClient(Connection *Conn,PCStr(proto));
 void httpAdmin(Connection *Conn,PVStr(user),FILE *tc,PCStr(group),PVStr(search),void *env,iFUNCP prfunc,sFUNCP ckfunc,PVStr(adminid));
 int getSubscription(Connection *Conn,FILE *tc,PCStr(userclass),PCStr(newsgroup),int *subp,int *unsp);
@@ -494,12 +494,55 @@ const char *DELEGATE_verdate();
 int enCreys(PCStr(opts),PCStr(pass),PCStr(data),PVStr(edata),int esize);
 int deCreys(PCStr(opts),PCStr(pass),PCStr(data),PVStr(ddata),int dsize);
 
+int addCommaList(PVStr(ncc),PCStr(cc1)){
+	if( cc1 == 0 || *cc1 == 0 )
+		return 0;
+	if( *ncc != 0 ){
+		strcat(ncc,", ");
+	}
+	strcat(ncc,cc1);
+	return 1;
+}
+
 /*
 #define put1s	HTML_put1s
 #define put1d	HTML_put1d
 */
 #define put1s(fp,fmt,val) HTML_put1sY(Conn,fp,fmt,val)
 #define put1d(fp,fmt,val) HTML_put1dY(Conn,fp,fmt,val)
+
+int argv2str(const char *av[],PCStr(include),PCStr(exclude),PCStr(del),int withname,PVStr(str)){
+	int ai;
+	const char *a1;
+	IStr(nam,128);
+	IStr(val,256);
+	refQStr(sp,str);
+
+	for( ai = 0; a1 = av[ai]; ai++ ){
+		Xsscanf(a1,"%[^=]=%s",AVStr(nam),AVStr(val));
+		if( include && *include ){
+			if( !isinList(include,nam) ){
+				continue;
+			}
+		}
+		if( exclude && *exclude ){
+			if( isinList(exclude,nam) ){
+				continue;
+			}
+		}
+		if( str < sp ){
+			strcpy(sp,del);
+			sp += strlen(sp);
+		}
+		if( withname ){
+			sprintf(sp,"%s=",nam);
+			sp += strlen(sp);
+		}
+		strcpy(sp,val);
+		sp += strlen(sp);
+	}
+	return 0;
+}
 
 static int printItem(Connection *Conn,FILE *fp,PCStr(fmt),PCStr(name),PCStr(arg),NewsEnv *env)
 {	int rcode;
@@ -518,6 +561,18 @@ static int printItem(Connection *Conn,FILE *fp,PCStr(fmt),PCStr(name),PCStr(arg)
 			arg++;
 		}
 	}
+	if( streq(name,"formv2ustr") ){
+		IStr(fval,256);
+
+		pn2 = wordScanY(arg,pn1,"^.");
+		if( *pn2 == '.' ) pn2++;
+		if( streq(pn1,"excluding") ){
+			argv2str(Fav,"",pn2,"&",1,AVStr(fval));
+			if( fp ) fprintf(fp,"%s",fval);
+			return 1;
+		}
+		return 0;
+	}else
 	if( streq(name,"formv") ){
 		pn2 = wordScanY(arg,pn1,"^.");
 		if( streq(pn1,"_admresp_") )
@@ -896,10 +951,13 @@ static int printItem(Connection *Conn,FILE *fp,PCStr(fmt),PCStr(name),PCStr(arg)
 		IStr(buf,0x10000);
 		IStr(md5,128);
 		IStr(line,1024);
+		IStr(occ,1024);
+		IStr(ncc,1024);
 		IStr(xcc,1024);
 		IStr(sbj,1024);
 		IStr(frm,1024);
 		IStr(dat,1024);
+		IStr(seq,1024);
 		IStr(mid,1024);
 		IStr(mmv,1024);
 		IStr(cty,1024);
@@ -919,7 +977,9 @@ static int printItem(Connection *Conn,FILE *fp,PCStr(fmt),PCStr(name),PCStr(arg)
 			fgetsHeaderField(afp,"From",        AVStr(frm),sizeof(frm));
 			fgetsHeaderField(afp,"Reply-To",    AVStr(rto),sizeof(rto));
 			fgetsHeaderField(afp,"Date",        AVStr(dat),sizeof(dat));
+			fgetsHeaderField(afp,"X-Seqno",     AVStr(seq),sizeof(seq));
 			fgetsHeaderField(afp,"Message-ID",  AVStr(mid),sizeof(mid));
+			fgetsHeaderField(afp,"Cc",          AVStr(occ),sizeof(occ));
 			fgetsHeaderField(afp,"X-Cc",        AVStr(xcc),sizeof(xcc));
 			fgetsHeaderField(afp,"Received-SPF",AVStr(spf),sizeof(spf));
 		}
@@ -946,21 +1006,26 @@ static int printItem(Connection *Conn,FILE *fp,PCStr(fmt),PCStr(name),PCStr(arg)
 
 		mfp = TMPFILE("NNTP/HTTP-Sendmail-art");
 		fprintf(mfp,"To: %s\r\n",getv(Fav,"email"));
-		if( xcc[0] )
-			fprintf(mfp,"Cc: %s\r\n",xcc);
-		fprintf(mfp,"Cc: %s\r\n",frm);
-		fprintf(mfp,"Cc: %s\r\n",getv(Fav,"email"));
-		fprintf(mfp,"From: %s\r\n",mad);
+
+		addCommaList(AVStr(ncc),occ);
+		addCommaList(AVStr(ncc),xcc);
+		addCommaList(AVStr(ncc),frm);
+		addCommaList(AVStr(ncc),getv(Fav,"email"));
+		fprintf(mfp,"Cc: %s\r\n",ncc); /* mod-140602c */
+
+		fprintf(mfp,"From: %s\r\n",frm);
 		if( dat[0] )
 			fprintf(mfp,"Date: %s\r\n",dat);
 		fprintf(mfp,"Reply-To: %s\r\n",mad);
 		fprintf(mfp,"Subject: %s\r\n",sbj);
 		fprintf(mfp,"Message-ID: %s\r\n",mid);
+		if( seq[0] )
+			fprintf(mfp,"X-Seqno: %s\r\n",seq);
 		if( cty[0] )
 			fprintf(mfp,"Content-Type: %s\r\n",cty);
 		else	fprintf(mfp,"Content-Type: text/plain\r\n");
 		if( cte[0] )
-			fprintf(mfp,"Content-Transfer-Encoding: %s",cte);
+			fprintf(mfp,"Content-Transfer-Encoding: %s\r\n",cte);
 		fprintf(mfp,"X-DeleGate-Version: %s\r\n",DELEGATE_verdate());
 		fprintf(mfp,"\r\n");
 		if( afp ){
@@ -1140,8 +1205,30 @@ static int maybe_username(PCStr(name))
 	return 0;
 }
 
+/* v10.0.0 new-140729d */
+const char *linkStyleCSS = "\
+font-size:1.0em;\
+font-family:Times New Roman;\
+font-style:italic;\
+border:none;\
+margin:0px;\
+padding:0 0 0 0;\
+color:4040ff;\
+background-color:ffffff;\
+";
+/*
+width=%d.0em;\
+border-width:1px;\
+*/
+static const char *linkStyleX(PCStr(str),PVStr(style)){
+	sprintf(style,linkStyleCSS,strlen(str));
+	return style;
+}
+#define linkStyle(str) linkStyleX(str,AVStr(linkStyleBuff))
+
 static void markup1(Connection *Conn,NewsEnv *env,int nsid,PVStr(dst),PCStr(src),PCStr(references),PCStr(mailboxes),PCStr(group),int anum)
 {	CStr(msgid,1024);
+	IStr(linkStyleBuff,1024);
 
 	if( src[0] != '<' || src[strlen(src)-1] != '>' ){
 		strcpy(dst,src);
@@ -1160,8 +1247,13 @@ static void markup1(Connection *Conn,NewsEnv *env,int nsid,PVStr(dst),PCStr(src)
 	}
 
 	if( strncasecmp(msgid,"URL:",4) == 0 ){
+		if( 1 ){ /* new-140729d */
+		sprintf(dst,"<A HREF=\"%s\" style=\"%s\">&lt;%s&gt;</A>",
+			msgid+4,linkStyle(msgid+4),msgid);
+		}else{
 		sprintf(dst,"<A HREF=\"%s\"><I>&lt;%s&gt;</I></A>",
 			msgid+4,msgid);
+		}
 	}else
 	if( HTTP_putmenu && strchr(msgid,'@') ){
 		CStr(href,1024);
@@ -1175,6 +1267,10 @@ static void markup1(Connection *Conn,NewsEnv *env,int nsid,PVStr(dst),PCStr(src)
 
 		if( isANON & HIDE_HREF ){
 			sprintf(dst,"&lt;%s&gt;",msgid);
+		}else
+		if( 1 ){ /* v10.0.0 new-140729c, to be redirected */
+			sprintf(dst,"<INPUT type=submit name=%s value=&lt;%s&gt; style=\"%s\">",
+				"JumpToReference",msgid,linkStyle(msgid));
 		}else
 		if( strstr(references,src) )
 			sprintf(dst,"<A HREF=\"%s\"><I>&lt;%s&gt;</I></A>",href,msgid);
@@ -1423,6 +1519,12 @@ void skipCitation(NewsEnv *env,PVStr(ostr),PCStr(istr)){
 
 void CCX_resetincode(CCXP);
 #define CCXinsNonJP(ccx) (CCXnonJP(ccx)|CCX_converror(ccx))
+int CCX_converted(CCXP);
+int CCX_disable(CCXP,int disable);
+int CCX_disabled(CCXP);
+int isNoconvCharset(PCStr(name));
+int isKnownCharset(PCStr(name));
+static NewsEnv *env1;
 
 static int getArtAttrs(Connection *Conn,NewsEnv *env,FILE *afp)
 {	CStr(head,0x2000);
@@ -1513,12 +1615,13 @@ static int getArtAttrs(Connection *Conn,NewsEnv *env,FILE *afp)
 	}
 
 	getFV_D(head,"Subject",Subject);
+	subject_stripPrefix(AVStr(Subject),8,1);
 	lineScan(Subject,ssubj);
 	/*
 	MIME_strHeaderDecode(ssubj,AVStr(SSubj),sizeof(SSubj));
 	*/
 	strcpy(SSubj,ssubj);
-	subject_headclean(AVStr(SSubj));
+	subject_stripPrefix(AVStr(SSubj),8,0);
 	getFV_D(head,"Summary",Summary);
 	getFV_D(head,"From",From);
 	setPosterMasks(From);
@@ -1544,12 +1647,37 @@ static int getArtAttrs(Connection *Conn,NewsEnv *env,FILE *afp)
 	stripBracket(AVStr(Message_ID));
 
 	getFv(head,"Content-Type",contenttype);
+	if( strncaseeq(contenttype,"multipart/",10) ){ /* new-140513d */
+		FILE *tmp;
+		IStr(ctype,1024);
+		NewsEnv *oenv;
+
+		fseek(afp,0,0);
+		tmp = TMPFILE("get-charset");
+		oenv = env1;
+		env1 = env;
+		PGPdecodeMIME(afp,tmp,NULL,0x2FF,0,0);
+		env1 = oenv;
+		fseek(afp,0,0);
+		fflush(tmp);
+		fseek(tmp,0,0);
+		fgetsHeaderField(tmp,"Content-Type",AVStr(ctype),sizeof(ctype));
+		sv1log("-- text-part Content-Type: %s\n",ctype);
+		fclose(tmp);
+		if( ctype[0] ){
+			strcpy(contenttype,ctype);
+		}
+	}
 	if( strncasecmp(contenttype,"text/html",9) == 0 )
 		IsHTML = 1;
 	else	IsHTML = 0;
 
 	if( Charset[0] == 0 || strcaseeq(Charset,"US-ASCII") )
 		get_charset(contenttype,AVStr(Charset),sizeof(Charset));
+
+	if( isNoconvCharset(Charset) ){
+		CCX_disable(CCX_TOCL,1);
+	}
 
 	idate = scanNNTPtime(Date);
 	if( idate != -1 )
@@ -1578,28 +1706,25 @@ static void putARTICLE(Connection *Conn,NewsEnv *env,FILE *afp,FILE *tc,int with
 
 		Verbose("Bad article: Date[%s] From[%s]\n",Date,From);
 		return;
-	}else
-	if( withbody ){
-/*
-#fprintf(tc,"<A HREF=\"%d?Referer\">[Referer]</A>\r\n",Anum);
-#if( Anum && strcmp(Group,someGroup()) != 0 ){
-#fprintf(tc,"<A HREF=%d?PrevSubj>%s/prev.gif\"></A>\r\n",Anum,Iconform);
-#fprintf(tc,"<A HREF=%d?NextSubj>%s/next.gif\"></A>\r\n",Anum,Iconform);
-#}
-*/
-
-putBuiltinHTML(Conn,tc,"NNTP/HTTP-Gateway-ARTHead","news/arthead.dhtml",NULL,(iFUNCP)printItem,env);
-
 	}else{
+		/* mod-140513a setting NewSubj for an article header */
 		const char *sp;
 		const char *np;
 		char ch;
+		IStr(SubjectBuf,1024);
 		CStr(prntsubj,1024);
 		CStr(normsubj,1024);
 		refQStr(pp,prntsubj); /**/
 		const char *px = &prntsubj[sizeof(prntsubj)-1];
 
+		/*
 		sp = Subject;
+		*/
+		strcpy(SubjectBuf,Subject);
+		subject_stripPrefix(AVStr(SubjectBuf),8,0);
+		sp = SubjectBuf;
+		/*
+		 * the Re: at the top is added by stripPrefix()
 		sp = skipRe(sp);
 		if( sp[0] == '[' && (np = strchr(sp+1,']')) ){
 			do {
@@ -1611,6 +1736,7 @@ putBuiltinHTML(Conn,tc,"NNTP/HTTP-Gateway-ARTHead","news/arthead.dhtml",NULL,(iF
 				sp++;
 		}
 		sp = skipRe(sp);
+		*/
 		if( *sp ){
 			refQStr(np,normsubj); /**/
 			if( pp != prntsubj )
@@ -1649,6 +1775,7 @@ putBuiltinHTML(Conn,tc,"NNTP/HTTP-Gateway-ARTHead","news/arthead.dhtml",NULL,(iF
 
 		if( strcmp(prevsubj,normsubj) != 0 ){
 			strcpy(prevsubj,normsubj);
+			subject_stripPrefix(AVStr(prntsubj),8,0); /* fix-140604a */
 			if( prntsubj[0] == '[' ){
 				CStr(tag,128);
 				wordScanY(prntsubj+1,tag,"^]");
@@ -1664,8 +1791,19 @@ putBuiltinHTML(Conn,tc,"NNTP/HTTP-Gateway-ARTHead","news/arthead.dhtml",NULL,(iF
 			}
 			strcpy(NewSubj,prntsubj);
 		}else	NewSubj[0] = 0;
+	}
+	if( withbody ){
+/*
+#fprintf(tc,"<A HREF=\"%d?Referer\">[Referer]</A>\r\n",Anum);
+#if( Anum && strcmp(Group,someGroup()) != 0 ){
+#fprintf(tc,"<A HREF=%d?PrevSubj>%s/prev.gif\"></A>\r\n",Anum,Iconform);
+#fprintf(tc,"<A HREF=%d?NextSubj>%s/next.gif\"></A>\r\n",Anum,Iconform);
+#}
+*/
 
+putBuiltinHTML(Conn,tc,"NNTP/HTTP-Gateway-ARTHead","news/arthead.dhtml",NULL,(iFUNCP)printItem,env);
 
+	}else{
 		if( idate == -1 )
 			strcpy(SDate,Date);
 		else	StrftimeLocal(AVStr(SDate),sizeof(SDate),"%m/%d-%H:%M",idate,0);
@@ -2135,7 +2273,10 @@ static int setupPAGESIZE(NewsEnv *env){
 	n1 = ((Anum2+1) / psize) * psize;
 	n2 = n1 + psize;
 	if( n1 <= 0 ) n1 = 1;
+	/* mod-140603c to show the last page of article list in
+	 * round-up range (to ease getting latest list by refresh)
 	if( n2 > Max ) n2 = Max;
+	 */
 	sprintf(Nurlp,"%d-%d",n1,n2);
 	if( getv(Fav,"digest") ){
 		Xsprintf(TVStr(Nurlp),"?%s",Search);
@@ -2399,6 +2540,9 @@ int HttpNews0(Connection *Conn,int vno,FILE *fc,int sv,PCStr(host),int port,PCSt
 		Fac = form2v(AVStr(fab),elnumof(Fav),Fav);
 		Form_conv_namevalue(Fac,Fav);
 	}
+	if( strneq(req,"POST",4) ){ /* v10.0.0 mod-140730a */
+		Fac += HTTP_form2v(Conn,fc,elnumof(Fav)-Fac,Fav+Fac);
+	}
 	if( streq(Search,"Logout") ){
 		if( isANON || ClientAuthUser[0] == 0 ){
 		}else{
@@ -2554,6 +2698,10 @@ int HttpNews0(Connection *Conn,int vno,FILE *fc,int sv,PCStr(host),int port,PCSt
 		digestLen = atoi(fa1);
 	}
 
+	if( fa1 = getv(Fav,"JumpToReference") ){ /* v10.0.0 new-140729c */
+		sv1log("## JumpToReferecne %s <= %s\n",fa1,UrlSelf);
+		strcpy(Msgid,fa1);
+	}
 	if( Msgid[0] ){
 		CStr(xmsgid,1024);
 		CStr(rgroup,1024);
@@ -2618,6 +2766,27 @@ int HttpNews0(Connection *Conn,int vno,FILE *fc,int sv,PCStr(host),int port,PCSt
 			if( Anum2 < 0 ){
 				Anum2 += 1 + Max;
 				if( Anum2 < Min ) Anum2 = Min;
+			}
+			/* mod-140523i return MovedTo for tail range as "group/$" */{
+				int totalc;
+				IStr(url,URLSZ);
+				refQStr(up,url);
+
+				strcpy(url,UrlSelf);
+				if( up = strrchr(url,'/') ){
+					setVStrEnd(up,0);
+				}
+				if( Anum2 == 0 || Anum1 == Anum2 )
+					Xsprintf(TVStr(url),"/%d",Anum1);
+				else	Xsprintf(TVStr(url),"/%d-%d",Anum1,Anum2);
+
+				strcat(addRespHeaders,"Pragma: no-cache\r\n");
+				strcat(addRespHeaders,"Cache-Control: no-cache\r\n");
+				totalc = putMovedTo(Conn,tc,url);
+
+				*stcodep = 302;
+				tc_sav = NULL;
+				goto EXIT;
 			}
 		}
 		if( tooWideRange(Conn,env,tc) ){
@@ -2747,6 +2916,35 @@ int HttpNews0(Connection *Conn,int vno,FILE *fc,int sv,PCStr(host),int port,PCSt
 			*/
 		}
 	}
+	if( fa1 = getv(Fav,"JumpToReference") ){ /* v10.0.0 new-140729c */
+	    if( Anum1 != 0 ){
+		IStr(upath,URLSZ);
+		IStr(url,URLSZ);
+		sprintf(upath,"%s/%d",Group,Anum1);
+		sv1log("## JumpToReference %s <= %s\n",upath,UrlSelf);
+		if( CTX_mount_url_fromL(Conn,AVStr(url),"nntp",Hostport,upath,NULL,MyProto,myhp) ){
+			sv1log("## JumpToReference %s <=\n",url);
+			totalc = putMovedTo(Conn,tc,url);
+			*stcodep = 302;
+			goto EXIT_2;
+		}
+	    }
+	}
+	if( fa1 = getv(Fav,"JumpToArticle") ){ /* v10.0.0 new-140730ab*/
+		IStr(url,URLSZ);
+		IStr(group,URLSZ);
+		int anum = 0;
+		IStr(upath,URLSZ);
+
+		Xsscanf(fa1,"%[^:]:%d",AVStr(group),&anum);
+		strcpy(url,UrlSelf);
+		sprintf(upath,"../../%s/%d?Refresh",group,anum);
+		chdir_cwd(AVStr(url),upath,0);
+		sv1log("## JumpToArticle %s <= \n",url);
+		totalc = putMovedTo(Conn,tc,url);
+		*stcodep = 302;
+		goto EXIT_2;
+	}
 
 	totalc = 0;
 	tc_sav = tc;
@@ -2763,9 +2961,11 @@ if( user[0] ) fprintf(tc,"User[%s]<BR>\r\n",user);
 		if( Anum1 != Anum2 ){
 			setupRange(env,psize);
 			setArtAttrs(Conn,env,Anum1);
+			/* new-140730a
 			if( strneq(req,"POST",4) ){
 			Fac += HTTP_form2v(Conn,fc,elnumof(Fav)-Fac,Fav+Fac);
 			}
+			*/
 		}
 		newsAdmin(Conn,AVStr(UserClass),tc,env,Group,AVStr(Search));
 		goto EXIT;
@@ -2907,24 +3107,47 @@ EXIT:
 			putNotAuthorized(Conn,tc_sav,req,ProxyAuth,NULL,"");
 			*stcodep = 401;
 		}else{
+			int converted = CCXactive(CCX_TOCL) && CCX_converted(CCX_TOCL);
 			fflush(tc);
 			fseek(tc,0,0);
 			length = file_size(fileno(tc));
 
 			if( Charset[0] ){
 				const char *cset;
+				cset = 0;
 				strcpy(xctype,ctype);
+				if( isNoconvCharset(Charset) ){
+				replace_charset_value(AVStr(xctype),Charset,1);
+	sv1log("--CCX-- unsupported charset [%s]->[%s]\n",ctype,xctype);
+				}else
 				if(!CCXguessing(CCX_TOCL)
 				 && CCXoutcharset(CCX_TOCL,&cset) ){
-					int isKnownCharset(PCStr(name));
 					if( cset && isKnownCharset(cset) ){
 						CCX_setindflt(CCX_TOCL,cset);
 					}
 				replace_charset_value(AVStr(xctype),cset,1);
+	sv1log("--CCX-- supported charset conv. [%s]->[%s]\n",Charset,cset);
 				}else
+				{
 				replace_charset_value(AVStr(xctype),Charset,1);
+	sv1log("--CCX-- thru, setting outcharset [%s]->[%s] [%s]\n",Charset,cset,xctype);
+				}
 				ctype = xctype;
 			}
+			else{
+	sv1log("--CCX-- input Charset was not set\n");
+			}
+
+			/*
+			 * char. code conv. hear after will be needless
+			 * because possible conv. was done in putArt1().
+			 */
+			if( converted ){
+				CCX_disable(CCX_TOCL,1);
+			}else
+			if( CCX_disabled(CCX_TOCL) ){
+	sv1log("--CCX-- CCX was disabled, Chaset[%s]\n",Charset);
+			}else
 			if( insNonJP || CCXinsNonJP(CCX_TOCL) ){
 				/* CCX is disalbed by nonJP, so it must not be
 				 * converted as JP in
@@ -2934,11 +3157,18 @@ EXIT:
 				 * article (non-article list)
 				 */
 				CCX_setincode(CCX_TOCL,"nonJP");
+	sv1log("--CCX-- setincode:nonJP\n");
 			}else
+			{
+			/*
 			CCX_resetincode(CCX_TOCL);
+			*/
+	sv1log("--CCX-- DONT resetincode Charset[%s]\n",Charset);
+				CCX_setincode(CCX_TOCL,Charset);
 			/* duplicated CCX in putHttpMssg()->relay_texts()
 			 * shold be suppressed...
 			 */
+			}
 
 			if( LastMod <= 0 )
 				LastMod = DELEGATE_LastModified;
@@ -3018,7 +3248,6 @@ int closeNNTPserver(Connection *Conn){
 	return 1;
 }
 
-static NewsEnv *env1;
 static scanListFunc phead(PCStr(group),Connection *Conn)
 {	CStr(url,1024);
 

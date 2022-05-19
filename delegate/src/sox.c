@@ -1,4 +1,4 @@
-const char *SIGN_sox_c="{FILESIGN=sox.c:20141031194212+0900:8f57bd71083c3ec7:Author@DeleGate.ORG:1YiHM0MKjYpoV/3cpoPrBeujKgQRmVt0fDoJ+hnMbdTFHKwu0+s5NSZwgJLyVXkiv5nEImt+9BpX6w+zi19u7R3qQISzmrISJTeaGLd7CPrR0hWVdvTjWCOx6ogWyp4bz5uBlEpT4vT+FKYaWj41a/R1fTOuQg5O/KV4g2vWO/o=}";
+const char *SIGN_sox_c="{FILESIGN=sox.c:20140818123722+0900:4512464ac6dc78b0:Author@DeleGate.ORG:SNtwg4Sk3EATzwhud5QCd1CPh8YX83lIpsPBomIm8IQHJKdiimYmZQXKzvSF5Gd4xI9c7144BSeRvgda3qmim5qKMxu9dgmSSyvIV8QipAdDRiRU2NNi9BtG9WHXBpf9fHxb1D3KEjvE9EOvACTkBX7/+fQ6Uim4g7ZVXFWFDb0=}";
 
 /*////////////////////////////////////////////////////////////////////////
 Copyright (c) 2002-2008 National Institute of Advanced Industrial Science and Technology (AIST)
@@ -81,6 +81,10 @@ extern int NUM_CHILDREN;
 
 extern int ACC_TIMEOUT;
 extern int CFI_DISABLE;
+int SOXMUX_UDP_TIMEOUT = 180;
+int SOXMUX_UDP_MAX = 64;
+int SOX_NOENCRYPT = 0;
+int SOX_NOCONNDATA = 0;
 
 /*
  *	SIMPLE SOCKET TUNNELING MULTIPLEXER PROTOCOL
@@ -352,33 +356,6 @@ int iamPrivateSox(){
 	return sox_private;
 }
 
-/* OPT_S */
-#define newAgent		SOX_newAgent
-Agent *newAgent(Sox *sox,int raid,int sock,int stat);
-#define get_CONNECT		SOX_get_CONNECT
-void get_CONNECT(Packet *pack,PVStr(remote),PVStr(local));
-#define checkServerFinish	SOX_checkServerFinish
-void checkServerFinish(const char *fmt,...);
-#define writecomm		SOX_writecomm
-int writecomm(Sox *sox,Agent *Apc,Packet *pack);
-#define send_ACK		SOX_send_ACK
-void send_ACK(Sox *sox,Agent *Apc,Packet *pack);
-#define dbgprintf		PK_dbgprintf
-int dbgprintf(PCStr(fmt),...);
-static int (*dbglog)(PCStr(fmt),...) = dbgprintf;
-#define Trace	(*dbglog)
-#define Debug	(dbglev==0)?0:(*dbglog)
-
-#define PK_clrRaid(pack)	PK_setRaid(pack,(Aid)-1)
-#define PK_clrSaid(pack)	PK_setSaid(pack,(Aid)-1)
-
-#ifndef OPT_S /*{*/
-
-int SOXMUX_UDP_TIMEOUT = 180;
-int SOXMUX_UDP_MAX = 64;
-int SOX_NOENCRYPT = 0;
-int SOX_NOCONNDATA = 0;
-
 void scan_SOXCONF(DGC*ctx,PCStr(conf))
 {	CStr(what,32);
 	CStr(value,64);
@@ -455,7 +432,7 @@ static const char *tstmp(Sox *sox){
 static int sox_init_done = 0;
 static int dbglev = 0;
 static FILE *logfp;
-int dbgprintf(PCStr(fmt),...)
+static int dbgprintf(PCStr(fmt),...)
 {	CStr(xfmt,256);
 	int sec,usec;
 	IStr(msg,2*1024);
@@ -492,6 +469,9 @@ int dbgprintf(PCStr(fmt),...)
 	}
 	return 0;
 }
+static int (*dbglog)(PCStr(fmt),...) = dbgprintf;
+#define Trace	(*dbglog)
+#define Debug	(dbglev==0)?0:(*dbglog)
 
 static int nsigPIPE;
 static void sigPIPE(int sig)
@@ -665,7 +645,7 @@ static int writecommX(Sox *sox,Agent *ApL,Agent *Apc,Packet *pack)
 	wcc = sendpackX(sox,ApL,Apc,pack,PHSIZE+PK_Leng(pack),0);
 	return wcc;
 }
-int writecomm(Sox *sox,Agent *Apc,Packet *pack)
+static int writecomm(Sox *sox,Agent *Apc,Packet *pack)
 {
 	return writecommX(sox,NULL,Apc,pack);
 }
@@ -866,7 +846,7 @@ static void set_CONNECT(Agent *Apn,Packet *pack,PCStr(remote),PCStr(local))
 	linescanX(pair,AVStr(pack->p_data),sizeof(pack->p_data));
 	PK_setLeng(pack,strlen(pack->p_data)+1);
 }
-void get_CONNECT(Packet *pack,PVStr(remote),PVStr(local))
+static void get_CONNECT(Packet *pack,PVStr(remote),PVStr(local))
 {	int bsiz;
 
 	bsiz = 0;
@@ -899,6 +879,9 @@ static void got_HELLO(Sox *sox,Agent *Api,Packet *pack)
 	Trace("Got HELLO OK[%s]",XHello);
 	Api->a_gotH = 1;
 }
+
+#define PK_clrRaid(pack)	PK_setRaid(pack,(Aid)-1)
+#define PK_clrSaid(pack)	PK_setSaid(pack,(Aid)-1)
 
 static void send_doCONNDATA(Sox *sox,Agent *Apc,Packet *pack){
 	pack->p_Ver = MYVER;
@@ -1146,7 +1129,7 @@ static int commInactive(Sox *sox)
 	noresp = wtime - rtime;
 	return noresp;
 }
-void send_ACK(Sox *sox,Agent *Apc,Packet *pack)
+static void send_ACK(Sox *sox,Agent *Apc,Packet *pack)
 {	int tid;
 
 	pack->p_Type |= SOX_ACK;
@@ -1209,7 +1192,7 @@ static void sweepAgents(Sox *sox)
 		}
 	}
 }
-Agent *newAgent(Sox *sox,int raid,int sock,int stat)
+static Agent *newAgent(Sox *sox,int raid,int sock,int stat)
 {	Agent *Apn;
 	int bid;
 
@@ -2060,7 +2043,7 @@ static void sigTERM(int sig)
 		(*savsigTERM)(sig);
 	Finish(0);
 }
-void checkServerFinish(const char *fmt,...){
+static void checkServerFinish(const char *fmt,...){
 	IStr(msg,128);
 	int ppid;
 	VARGS(8,fmt);
@@ -2933,8 +2916,6 @@ or run SERVER=ftp at the entrance ?
 	}
 	return 0;
 }
-
-#endif /*} OPT_S */
 
 /* '"DIGEST-OFF"' */
         

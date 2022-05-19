@@ -1,0 +1,19 @@
+<html>
+
+<head>
+<title>DeleGate FTP/HTTP Gateway configuraiton</title>
+</head>
+
+<body>
+<h3>DeleGate FTP/HTTP Gateway configuraiton</h3>
+To enable extended features of FTP/HTTP DeleGate, as sorting the
+files list in a directory, specify the following configuration
+parameter to the DeleGate.
+<pre><font face="courier new">   HTTPCONF=proxycontrol:on
+</pre></font>
+See <a href="http://www.delegate.org/delegate/Manual.htm#proxycontrol">Manual.htm</a>
+for more details.
+</body>
+
+<hr>
+</html>

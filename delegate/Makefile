@@ -1,14 +1,10 @@
-FILE0 =	COPYRIGHT LICENSE.txt LICENSE-ja.txt \
-	CONTENTS.txt \
-	Makefile \
+FILE0 =	COPYRIGHT Makefile \
 	Makefile.QSC \
 	make-init.sh \
 	make-fin.sh \
-	link-win32_win8.sh \
-	install.sh dg9.conf.txt install-chroot.sh setup-subin.sh \
-	README INSTALL README.5-6 README.7-8 README.MAKE CREDITS INSTALL.txt \
+	README INSTALL README.5-6 README.7-8 README.MAKE CREDITS INSTALL.htm \
 	IPv6NOTE.txt \
-	DG9note.html \
+	DGXnote.html \
 	id.shtml \
 	gen/README \
 	CHANGES lib/README mkmkmk.c
@@ -30,16 +26,15 @@ FLTR =	`cd filters;   $(MAKE) -s files | sed "s:^:filters/:"`
 RSLV =	`cd resolvy;   $(MAKE) -s files | sed "s:^:resolvy/:"`
 MIME =	`cd mimekit;   $(MAKE) -s files | sed "s:^:mimekit/:"`
 SUBST =	`cd maker;     $(MAKE) -s files | sed "s:^:maker/:"`
-GATES = `cd gates;     $(MAKE) -s files | sed "s:^:gates/:"`
 HDRS =	`ls -d include/*.h include/Makefile include/mkcpp.c include/mkdef include/typedefs.c`
 
 PDS =	$(MD5) $(REGEX)
 
 FILEA = $(PDS) $(SRC) $(RARY) $(BIN) $(SUBIN) $(DOC) $(TLPT) \
-	$(FSX) $(FLTR) $(RSLV) $(SUBST) $(GATES) $(HDRS)
+	$(FSX) $(FLTR) $(RSLV) $(SUBST) $(HDRS)
 
 FILEB = $(FILE0) $(PDS) $(SRC) $(RARY) $(BIN) $(SUBIN) $(DOC) $(TLPT) \
-	$(FSX) $(FLTR) $(RSLV) $(SUBST) $(GATES) $(HDRS) $(ANN)
+	$(FSX) $(FLTR) $(RSLV) $(SUBST) $(HDRS) $(ANN)
 
 FILEC =	rw.c ck.c qastrip.c srcsign.c srcsign srcvrfy newdist cksums \
 	putsigned.c \
@@ -47,14 +42,13 @@ FILEC =	rw.c ck.c qastrip.c srcsign.c srcsign srcvrfy newdist cksums \
 	rsasign \
 	bench \
 	tc \
-	mkdist.sh mkdist-win.sh \
 	make-xcc make-vc.bat make-vc95.bat make-vc.sh link-wince.sh \
-	link-win32.sh \
+	link-win32.sh link-win32_win8.sh \
 	link-libs.sh \
 	src/win32-dg.rc src/win32-dg.res \
 	make-vce.sh make-vs8ce.bat make-vs8ce_win8.bat include-ce DELEGATE_CONF.vce \
 	make-vs8.bat make-vs9.bat make-vs8_win8.bat \
-	src/delegated.conf \
+	src/delegated.conf.txt \
 	src-srcsign.c \
 	srcfiles \
 	$(FILEB)
@@ -146,9 +140,9 @@ ctar:;	tar cf core-delegate$(VER).tar $(FILEC)
 
 DATE = `date "+%y%m%d%H"`
 dtar:	tar
-	mv delegateX$(VER).tar dgX$(DATE).tar
-	gzip $$DTARARGS dgX$(DATE).tar
-	ls -l dgX$(DATE).tar.gz
+	mv delegateX$(VER).tar dgY$(DATE).tar
+	gzip $$DTARARGS dgY$(DATE).tar
+	ls -l dgY$(DATE).tar.gz
 tar:
 	src/delegated -Fesign -w rary/windows.c
 	echo $(FILEB) $(MIME) | tr ' ' '\n' | src/delegated -Fsort > srcfiles
@@ -157,7 +151,7 @@ tar:
 	echo $(VER)
 
 rtar:
-	tar cf dgX$(DATE)-$(VER).tar $(FILES)
+	tar cf dgY$(DATE)-$(VER).tar $(FILES)
 tarcf:
 	@tar cf - $(FILES)
 
@@ -219,8 +213,10 @@ zip:
 		COPYRIGHT \
 		CHANGES \
 		README \
-		DG9note.html \
+		DGXnote.html \
+		doc/Documents.html \
 		doc/Manual.htm \
+		doc/Manual.shtml \
 		doc/tutor-en.htm \
 		doc/tutor-jp.htm \
 		dg$(DVER).exe

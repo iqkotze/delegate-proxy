@@ -1,0 +1,4 @@
+## delegated.conf.txt
+#-vQ
+-vq
+TIMEOUT=shutout:60

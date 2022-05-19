@@ -1,12 +1,16 @@
-<TITLE> DeleGate Information </TITLE>
+<html>
+<head>
+<TITLE>DeleGate Information</TITLE>
+</head>
 
+<body>
 <TABLE>
 <TR><TD VALIGN=TOP>
 <A HREF="http://www.delegate.org/delegate/"><IMG ALT="Logo of DeleGate" BORDER=0 SRC="${icon.frog9LT}"></A>
 </TD><TD><PRE>
 <B><BIG>${verdate}</BIG></B>
 <SMALL>${copyright}</SMALL>
-<A HREF="/-/COPYRIGHT"><FONT color=red>COPYRIGHT</FONT></A></PRE>
+<A HREF="/-/COPYRIGHT"><FONT color=red>COPYRIGHT</FONT></A> <a href="http://www.delegate.org">HOME</a></PRE>
 </TD>
 </TABLE>
 <P>
@@ -20,24 +24,26 @@ ${admin.isset?
 <LI> <A HREF=/-/ext/admin/><FONT color=#206060>Extended Server Administration</FONT></A>
 <small>(<FONT color=red>scripts are downloaded from <A HREF="http://www.delegate.org/delegate/ext/"><FONT color=red>www.delegate.org</FONT></A></FONT>)</small>
 }
+<li> <a href="/-/stats/">Statistics viewer</a>
 </UL>
 
-<B> STATUS </B><MENU><PRE>
-Version: ${ver}
+<B> STATUS </B><MENU><PRE><font face="courier new">Version: ${ver}
 current-time: ${time.now}
 server-start: ${time.start}
 server-count: ${num.serno}
 server-alive: ${num.peers}
 service-done: ${num.served}
 load_average: ${load.total} (${load.recent}) RPM
-</PRE></MENU>
+</font></PRE></MENU>
 
 <B> CONFIGURATION </B><MENU>
+<font face="courier new">
 SERVER=<B>${server.iproto}</B><BR>
 EXPIRE=<B>${expire}</B> seconds<BR>
 CHARCODE=<B>${codeconv}</B><BR>
 ADMIN=<B>${ADMIN}</B><BR>
 ...<A HREF=builtin/mssgs/config.dhtml>more</A>...<BR>
+</font>
 </MENU>
 
 <B> DISTRIBUTION </B>
@@ -66,3 +72,6 @@ National Institute of Advanced Industrial Science and Technology
 (<A HREF="http://www.aist.go.jp/">AIST</A>),
 Japan
 </ADDRESS>
+
+</body>
+</html>

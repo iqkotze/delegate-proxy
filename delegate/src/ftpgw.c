@@ -152,6 +152,8 @@ typedef struct {
 	int	 dir_lines;
 	int	 cache_date;
 } FtpEnv;
+const char *proxyControlMARK();
+
 static int printItem(Connection *Conn,FILE *fp,PCStr(fmt),PCStr(name),PCStr(arg),FtpEnv *env)
 {	CStr(buff,1024);
 
@@ -203,6 +205,29 @@ static int printItem(Connection *Conn,FILE *fp,PCStr(fmt),PCStr(name),PCStr(arg)
 			StrftimeLocal(AVStr(buff),sizeof(buff),TIMEFORM_mdHMS,
 				env->cache_date,0);
 			fprintf(fp,"%s",buff);
+		}
+	}
+	else
+	if( streq(name,"vurl") ){ /* v10.0.0 */
+		IStr(url,URLSZ);
+		HTTP_baseURLrelative(Conn,arg,AVStr(url));
+		sv1log("vurl.%s = %s\n",arg,url);
+		/* is it reverse mounted ? */
+		if( fp ) fprintf(fp,"%s",url);
+		return 1;
+	}else
+	if( streq(name,"proxycontrols") ){ /* v10.0.0 new-140530 */
+		const char *pxm = proxyControlMARK();
+
+		if( streq(arg,"sort.date") ){
+			return streq(ProxyControls,"sort=date");
+		}else
+		if( streq(arg,"mark") ){
+			if( pxm ){
+				if( fp ) fprintf(fp,"%s",pxm);
+			}
+		}else{
+			return pxm != 0;
 		}
 	}
 	return 0;
@@ -1418,6 +1443,42 @@ FileSize file_copy(FILE *src,FILE *dst,FILE *cache,FileSize bytes,int *binary)
 	return file_copyTimeout(src,dst,cache,bytes,binary,0);
 }
 
+#define SOP_NAME       1
+#define SOP_DATE       2
+#define SOP_SIZE       3
+#define SOP_VERS    0x20
+#define SOP_NOCASE  0x40
+#define SOP_REV     0x80
+
+/* v10.0.0 new-140530e */
+static int cmpls1(int op,const char *a1,const char *a2){
+	IStr(line1,1024);
+	IStr(line2,1024);
+	IStr(date1,128);
+	IStr(date2,128);
+	int t1;
+	int t2;
+	FileSize z1;
+	FileSize z2;
+	IStr(name1,256);
+	IStr(name2,256);
+	int now = time(0);
+	
+	strcpy(line1,a1);
+	strcpy(line2,a2);
+	scan_ls_l(line1,VStrNULL,NULL,VStrNULL,VStrNULL,&z1,AVStr(date1),AVStr(name1),VStrNULL);
+	scan_ls_l(line2,VStrNULL,NULL,VStrNULL,VStrNULL,&z2,AVStr(date2),AVStr(name2),VStrNULL);
+	if( op == SOP_DATE ){
+		t1 = LsDateClock(date1,now);
+		t2 = LsDateClock(date2,now);
+		return t2 - t1;
+	}
+	return z2 - z1;
+}
+static int cmplsdate(const char **a1,const char **a2){
+	return cmpls1(SOP_DATE,*a1,*a2);
+}
+
 void ls_form(Connection *Conn,PCStr(line),PVStr(dirent),PCStr(host),int port,PCStr(dir),int form);
 int dir_copy(Connection *Conn,FILE *src,FILE *dst,FILE *cachefp,PCStr(user),PCStr(host),int port,PCStr(path),int form,int ctime)
 {	int lines,totalc;
@@ -1425,6 +1486,7 @@ int dir_copy(Connection *Conn,FILE *src,FILE *dst,FILE *cachefp,PCStr(user),PCSt
 	CStr(dirent,1024);
 	FtpEnv env;
 	int start = time(0);
+	FILE *orig_src = src;
 
 	totalc = 0;
 
@@ -1445,6 +1507,24 @@ putBuiltinHTML(Conn,dst,"FTP/header","file/ftpgw-header.dhtml",NULL,
 /* skip "total" line
 fgetsTIMEOUT(line,sizeof(line),src);
 */
+	if( proxyControlMARK() && strstr(ProxyControls,"sort=") ){ /* v10.0.0 new-140530e */
+		const char *linev[4*1024];
+		int lx;
+		for( lines = 0; fgetsTIMEOUT(AVStr(line),sizeof(line),src); ){
+			if( lines < elnumof(linev) ){
+				linev[lines++] = strdup(line);
+			}
+		}
+		qsort(linev,lines,sizeof(char*),(sortFunc)cmplsdate);
+
+		src = TMPFILE("FtpGwSort");
+		for( lx = 0; lx < lines; lx++ ){
+			fputs(linev[lx],src);
+			free((void*)linev[lx]);
+		}
+		fflush(src);
+		fseek(src,0,0);
+	}
 	for( lines = 0; fgetsTIMEOUT(AVStr(line),sizeof(line),src) != NULL; )
 	{
 		if( cachefp != NULL )
@@ -1469,6 +1549,10 @@ fgetsTIMEOUT(line,sizeof(line),src);
 
 		totalc += strlen(dirent);
 		lines++;
+	}
+	if( src != orig_src ){
+		fclose(src);
+		src = orig_src;
 	}
 
 	env.dir_lines = lines;

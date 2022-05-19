@@ -2618,7 +2618,6 @@ static FILE *lookaside_cache(int nsid,PCStr(group),PCStr(com),PCStr(arg))
 void rewriteHeader(NewsServer *ns,PVStr(head),PCStr(fnam)){
 	MIME_rewriteHeader(ns->ns_rewposter,ns->ns_rewaddr,AVStr(head),fnam);
 }
-char *RFC822_readHeader(FILE *in,int seeEOR);
 static void rewriteMessageId(NewsServer *ns,FILE *afp,PVStr(mid),int msiz);
 /*
 static FILE *makeArtResponse(PVStr(statresp),PCStr(req),int curanum,FILE *afp)

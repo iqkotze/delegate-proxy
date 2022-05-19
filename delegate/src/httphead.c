@@ -97,6 +97,168 @@ const char *CTX_reqURL(Connection *Conn){ /* v10.0.0 new-140806b */
 	else	return 0;
 }
 
+int CTX_hasCookie(Connection *Conn,PCStr(cookiepat)){ /* v10.0.0 new-140722f */
+	IStr(cookie,URLSZ);
+	IStr(value,URLSZ);
+	IStr(nam,256);
+	IStr(pat,256);
+	IStr(val,256);
+
+	if( Conn == NULL )
+		return 0;
+	if( CurEnv == NULL )
+		return 0;
+
+	/* not set yet
+	if( withCookie == 0 ){
+		return 0;
+	}
+	*/
+
+	/*
+	 * MountCookie cache is reset for each request by clear_DGreq()
+	 */
+	if( MountCookie == MO_HASNOTCOOKIE ){
+		return 0;
+	}else
+	if( MountCookie == MO_HASCOOKIE ){
+		return 1;
+	}
+	if( findFieldValue(REQ_FIELDS,"Cookie") == 0 ){
+		sv1log("--Mount:%s hasCookie? no Cookie\n",Client_Host);
+		MountCookie = MO_HASNOTCOOKIE;
+		return 0;
+	}
+	if( *cookiepat == 0 ){
+		sv1log("--Mount:%s hasCookie? yes\n",Client_Host);
+		MountCookie = MO_HASCOOKIE;
+		return 1;
+	}
+
+	fieldScan(cookiepat,nam,pat);
+	getFieldValue2(REQ_FIELDS,"Cookie",AVStr(cookie),sizeof(cookie));
+
+	if( cookie[0] == 0 ){
+		sv1log("--Mount:%s hasCookie? no, empty Cookie\n",Client_Host);
+		MountCookie = MO_HASNOTCOOKIE;
+		return 0;
+	}
+	if( getParamX(AVStr(cookie),nam,AVStr(value),sizeof(value),1,1) == 0 ){
+		sv1log("--Mount:%s hasCookie? no Cookie with name=%s\n",
+			Client_Host,nam);
+		MountCookie = MO_HASNOTCOOKIE;
+		return 0;
+	}
+	if( *pat == 0 ){
+		sv1log("--Mount:%s hasCookie? yes with name=%s value=[%s]\n",
+			Client_Host,nam,value);
+		MountCookie = MO_HASCOOKIE;
+		return 1;
+	}
+	StrftimeGMT(AVStr(val),sizeof(val),pat,time(0),0);
+	if( isinList(val,value) == 0 ){
+		sv1log("--Mount:%s hasCookie? no, name=%s unmatch value={%s}[%s]\n",
+			Client_Host,nam,val,value);
+		MountCookie = MO_HASNOTCOOKIE;
+		return 0;
+	}
+	sv1log("--Mount:%s hasCookie? yes, Cookie with name=%s value={%s}[%s]\n",
+		Client_Host,nam,val,value);
+	MountCookie = MO_HASCOOKIE;
+	return 1;
+}
+static int getcookie(Connection *Conn,PCStr(opts),PVStr(cookie)){
+	IStr(cookiepat,URLSZ);
+	IStr(nam,256);
+	IStr(pat,256);
+	IStr(val,256);
+
+	if( getOpt1(opts,"setcookie",AVStr(cookiepat)) == 0 )
+		return 0;
+	fieldScan(cookiepat,nam,pat);
+	StrftimeGMT(AVStr(val),sizeof(val),pat,time(0),0);
+	sprintf(cookie,"%s=%s",nam,val);
+	sv1log("--Mount:%s setCookie: Set-Cookie: %s\n",Client_Host,cookie);
+	return 1;
+}
+int CTX_setCookie(Connection *Conn,PVStr(cookie)){ /* v10.0.0 new-140722g */
+	if( Conn == NULL )
+		return 0;
+	if( CurEnv == NULL )
+		return 0;
+	if( MountOptions == NULL )
+		return 0;
+	if( getcookie(Conn,MountOptions,BVStr(cookie)) == 0 )
+		return 0;
+	return 1;
+}
+
+/*
+ * v10.0.0 new-140806b, HTTP header to be returned by SSI include
+ * other than setcookie, maybe also charcode, expire, nocache, ...
+ */
+static const char *metaequiv(PVStr(html),PCStr(name),PCStr(value)){
+	sprintf(html,"<META HTTP-EQUIV=%s CONTENT=\"%s\">\r\n",name,value);
+	return html + strlen(html);
+}
+int MO_getHttpEquiv(Connection *Conn,PCStr(opts),PVStr(html)){
+	refQStr(hp,html);
+	IStr(cookie,URLSZ);
+	int got = 0;
+
+	setVStrEnd(html,0);
+	if( getcookie(Conn,opts,AVStr(cookie)) ){
+		/* path must be reverse MOUNTed */
+		hp = metaequiv(AVStr(hp),"Set-Cookie",cookie);
+		got++;
+	}
+	return got;
+}
+/*
+ * v10.0.0 new-140806a, HTTP header to be forwarded to SSI include
+ * (Host and User-Agent is forwarded in URLget())
+ * header (especially Cookie) to be forwarded should be selectable,
+ * by HTTPCONF, MountOption, or SSI incldue option.
+ */
+static int forwHead1(Connection *Conn,int self,PCStr(field),PVStr(fwhead)){
+	IStr(value,URLSZ);
+	if( getFieldValue2(REQ_FIELDS,field,AVStr(value),sizeof(value)) ){
+		sprintf(fwhead,"%s: %s\r\n",field,value);
+		return 1;
+	}
+	return 0;
+}
+int CTX_forwHead(Connection *Conn,PCStr(dsturl),PVStr(head),int size){ /* v10.0.0 new-140806a */
+	refQStr(hp,head);
+	const char *field;
+	int self = 1;
+
+	setVStrEnd(head,0);
+	if( Conn == NULL )
+		return 0;
+	if( CurEnv == NULL )
+		return 0;
+
+	if( forwHead1(Conn,self,"Accept",AVStr(hp)) )
+		hp += strlen(hp);
+
+	/* this is NG because SSI include does not gunzip
+	if( forwHead1(Conn,self,"Accept-Encoding",AVStr(hp)) )
+		hp += strlen(hp);
+	*/
+
+	if( forwHead1(Conn,self,"Accept-Language",AVStr(hp)) )
+		hp += strlen(hp);
+	if( forwHead1(Conn,self,"Cache-Control",AVStr(hp)) )
+		hp += strlen(hp);
+	if( forwHead1(Conn,self,"Cookie",AVStr(hp)) )
+		hp += strlen(hp);
+
+	if( head[0] == 0 )
+		return 0;
+	return 1;
+}
+
 static int putMimeHeader(FILE *tc,PCStr(type),PCStr(encoding),FileSize size)
 {	int leng = 0;
 
@@ -172,6 +334,22 @@ int getMountExpires(Connection *Conn,PVStr(date),int size){
 	StrftimeGMT(AVStr(date),size,TIMEFORM_RFC822,expire,0);
 	Verbose("PUT Expires: %s [%s]\n",date,odate);
 	return 1;
+}
+
+/* nocache={fromcl,tocl,fromsv,tosv} */
+/* v10.0.0 new-140723b */
+int getMountCacheControl(Connection *Conn,int direction,PVStr(head)){
+	IStr(which,128);
+
+	if( MountOptions == 0 )
+		return 0;
+
+	setVStrEnd(head,0);
+	if( getOpt1(MountOptions,"nocache",AVStr(which)) ){
+		Xsprintf(TVStr(head),"Pragma: no-cache\r\n");
+		Xsprintf(TVStr(head),"Cache-Control: no-cache\r\n");
+	}
+	return strlen(head);
 }
 
 void HTTP_modifyConnection(Connection *Conn,int rlength);
@@ -527,6 +705,13 @@ int putHEAD(Connection *Conn,FILE *tc,int code,PCStr(reason),PCStr(server),PCStr
 		leng += putSignedMD5(tc,Conn->ht_qmd5,MountOptions);
 	}
 
+	if( MountOptions ){ /* v10.0.0 new-140722g */
+		IStr(cookie,URLSZ);
+		if( CTX_setCookie(Conn,AVStr(cookie)) ){
+			FPRINTF(tc,"Set-Cookie: %s\r\n",cookie);
+		}
+	}
+
 	/*
 	if( HTTP_opts & HTTP_SESSION ){
 	*/
@@ -551,6 +736,12 @@ int putHEAD(Connection *Conn,FILE *tc,int code,PCStr(reason),PCStr(server),PCStr
 	getMountExpires(Conn,AVStr(date),sizeof(date));
 	if( date[0] ){
 		FPRINTF(tc,"Expires: %s\r\n",date);
+	}
+	if( MountOptions ){ /* v10.0.0 new-140723b */
+		IStr(nocache,256);
+		if( getMountCacheControl(Conn,0x00,AVStr(nocache)) ){
+			FPRINTF(tc,"%s",nocache);
+		}
 	}
 
 	if( code == 206 ){

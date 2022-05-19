@@ -17,7 +17,7 @@ set -x
 	/subsystem:windows \
 	/out:win32-dg.exe \
 	delegated.o builtin.o commands.o croncom.o remote.o \
-	../lib/libdelegate.a ../lib/libgates.a ../lib/libresolvy.a ../lib/libteleport.a \
+	../lib/libdelegate.a ../lib/libresolvy.a ../lib/libteleport.a \
 	../lib/libmd5.a ../lib/libregex.a ../lib/libcfi.a ../lib/library.a \
 	../lib/libmimekit.a ../lib/libfsx.a ../lib/libsubst.a \
 	win32-dg.res \

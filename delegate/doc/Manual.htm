@@ -1,6 +1,6 @@
 <HEAD>
-<TITLE>DeleGate reference manual version 9.9 </TITLE>
-<META name=description content="DeleGate reference manual version 9.9">
+<TITLE>DeleGate reference manual version 10.0 </TITLE>
+<META name=description content="DeleGate reference manual version 10.0">
 <META name=keywords content="DeleGate,reference,manual">
 <META http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 
@@ -14,7 +14,6 @@ i { font-family:"courier new"; font-size:12pt; }
 #roman { font-family:"Times New Roman"; font-size:12pt; }
 pre { font-family:"courier new"; font-size:12pt; }
 kbd { font-family:"courier new"; font-size:12pt; }
-#hgen { text-decoration:none; }
 </style>
 
 </HEAD>
@@ -22,8 +21,7 @@ kbd { font-family:"courier new"; font-size:12pt; }
 <BODY>
 <DIV id=HtmlBody>
 <HR>
-<BIG><B>The Reference Manual of DeleGate version 9.9</B></BIG>
-<BR>
+<BIG><B>The Reference Manual of DeleGate version 10.0</B></BIG><BR>
 <A NAME=copyright TITLE="Copyright">
 <I id=roman>Copyright (c) 1994-2000 Yutaka Sato
  &lt;ysato <small>AT</small> etl.go.jp&gt;
@@ -49,7 +47,7 @@ or implied warranties.
 </A>
 <HR>
 <P id=roman>
-This document is written based on the latest version of DeleGate version 9.X.
+This document is written based on the latest version of DeleGate version 10.X.
 Comments about this document are expected to be directed to
 <A HREF="mailto:feedback@delegate.org">mailto:feedback@delegate.org</A>
 to be open and shared at
@@ -164,135 +162,6 @@ uFmipG0tdx/uFaZoHgWCJbWlFTSdrsi9FmuhJnenN/7qtdBjJxO2gp1e0ahkEouXplAqS0Z+
 w9jS+dFtaVrTdRn+fgABmnmrLa9FaNbbOwyEg2wUQOA++o5nfUA9f3stc2Rxdn9zEGkNi4gf
 AY8Fi4x5lZaCRQMDQI+cnZ6fL2miMqSlYKginnBoeJI6lJeYeWi2Y4iEhLw9CQA7
 </A>
-
-<nohrefgen>
-ABORT
-ACCEPT
-ADDR
-ADDRESS
-AGAINST
-AGENT
-AF_UNIX
-ALT
-AND
-ARCHIVE
-ARTICLE
-ASSOCIATE
-AUTHINFO
-BIND
-CASE
-COMMANDS
-COMPOSITE
-CONDITION
-CONFIGDATA
-CONTROL
-CRYPT
-CWD
-DATA
-DATE_GMT
-DATE_LOCAL
-DEFENSE
-DEST
-DG_PASS
-DG_USER
-DISABLING
-DOCUMENT_NAME
-DOCUMENT_URI
-DOT
-DST
-DSTIP
-END
-ENCRYPTED
-ENV
-EPRT
-EPSV
-ESAC
-FILE
-FILTER
-FQDH
-FROM
-GENTLE
-GET
-GMT
-HEAD
-HELLO
-HELO
-HIT
-HIT_OBJ
-HTTP_REFERER
-HTTP_SERVER
-HREF
-HOST
-IMG
-INDEX
-INHERIT
-INTERNAL
-ISSUE
-LAST_MODIFIED
-LINGER
-LIST
-LOGIN
-MAIL
-MAINTENANCE
-META
-MUST
-NEGATION
-NETMASK
-NOT
-OPERATORS
-OPTION
-OUTPUT
-PAGE_COUNT
-PAMCONF
-PARAMETER
-PASS
-PERMUTED
-PLATFORM
-POST
-PROTOCOL
-PROXYING
-PTR
-PUT
-RCPT
-RANDENV
-RECIPIENT
-REFERER
-REMOTE_HOST
-RESOLUTION
-REQUEST_URI
-REQUEST_URL
-SCRIPT_NAME
-SD_SEND
-SEE
-SERVER_URL
-SERVER_HOST
-SIZE
-SO_RCVBUF
-SO_REUSEADDR
-SO_REUSEPORT
-SO_SEND
-SO_SNDBUF
-SOA
-SPACE
-SPECIAL
-SPECIFIC
-SUBSTITUTION
-SWF
-TAB
-TIME
-TYPE
-TOTAL_HITS
-USER
-USERNAME
-WILDCARD
-XDC
-XOVER
-XXXX
-YYSH
-</nohrefgen>
-<dohrefgen>
-</dohrefgen>
-
 -->
 
 <P>
@@ -326,6 +195,7 @@ PERMUTED INDEX
  <A HREF="#CMAP">CMAP</A>
  <A HREF="#CONNECT">CONNECT</A>
  <A HREF="#COUNTER">COUNTER</A>
+ <A HREF="#COUNTERDIR">COUNTERDIR</A>
  <A HREF="#CRON">CRON</A>
  <A HREF="#DATAPATH">DATAPATH</A>
  <A HREF="#DELAY">DELAY</A>
@@ -591,6 +461,7 @@ INDEX
   <A HREF="#LOGFILE">LOGFILE</A>
   <A HREF="#PROTOLOG">PROTOLOG</A>
   <A HREF="#COUNTER">COUNTER</A>
+  <A HREF="#COUNTERDIR">COUNTERDIR</A>
   <A HREF="#aging">Aging</A>
   </KBD>
 
@@ -675,7 +546,6 @@ INDEX
 <!-- <DT><A HREF="#trouble">Trouble Shooting</A> -->
 <DT><A HREF="#Functions">Functions</A>
 <DT><A HREF="#FILES">FILES</A>
-<DT><A HREF="#Acronyms">ACRONYMS</A>
 <DT><A HREF="#SeeAlso">SEE ALSO</A>
 <DT><A HREF="#Author">AUTHOR</A>
 <DT><A HREF="#FEEDBACK">FEEDBACK</A>
@@ -783,7 +653,7 @@ depending on application protocol, destination host and source client.
 <P>
 As an application level proxy, DeleGate interpretively relays
 various application protocols, providing various value added services
-including <A HREF="#caching"><I>caching</I></A>
+including <A HREF="#cache"><I>caching</I></A>
 or <A HREF="#conversion"><I>conversion</I></A>
 for relayed data, of which structure depends on each application protocol.
 Based on interpretation of application protocols,
@@ -810,7 +680,7 @@ of virtual names in client
 to/from real names in server,
 where names are embedded in a protocol dependent data structure
 on request/response messages between a client and a server.
-With this function named <A HREF="#mounting"><I>mounting</I></A>,
+With this function named <A HREF="#mount"><I>mounting</I></A>,
 for example, a resource
 http://hostiN/ is shown to client as if it is http://hostx/iN/.
 MOUNT can be used to
@@ -1041,7 +911,7 @@ to execute "execve(2)" system call will be trapped and killed.  This
 will be useful for security enhancement preventing any unexpected
 execve() which can be the method of intruders.
 This -T option automatically turn on -S option to immediately respond to
-events occurred in children, but you can turn off it by adding "s"
+events occurred in children, but you can turn off if by adding "s"
 flag like "-Ts".  Adding "d" flag like "-Txd" will make logging detailed,
 while adding "t" flag like "-Txt" will make logging terse.
 </UL>
@@ -1659,10 +1529,6 @@ You should not change nor specify these parameters if not necessary.
     <TD> <I>dirPath</I>
     <TD> where cache files are placed
 <TR><TD> 
-    <TD> <A HREF="#ADMDIR"><KBD>ADMDIR</KBD></A>
-    <TD> <I>dirPath</I>
-    <TD> where dynamic administration files are
-<TR><TD> 
     <TD> <A HREF="#ETCDIR"><KBD>ETCDIR</KBD></A>
     <TD> <I>dirPath</I>
     <TD> where persistent management files are
@@ -1670,6 +1536,10 @@ You should not change nor specify these parameters if not necessary.
     <TD> <A HREF="#LOGDIR"><KBD>LOGDIR</KBD></A>
     <TD> <I>dirPath</I>
     <TD> where DeleGate logs are
+<TR><TD> 
+    <TD> <A HREF="#COUNTERDIR"><KBD>COUNTERDIR</KBD></A>
+    <TD> <I>dirPath</I>
+    <TD> base directory of counters
 <TR><TD> 
     <TD> <KBD>LOGFILE</KBD>
     <TD> <I>LogFilename</I>
@@ -1691,6 +1561,10 @@ You should not change nor specify these parameters if not necessary.
     <TD> <I>LogFilename</I>
     <TD> file which records expire log
 <TR><TD> 
+    <TD> <A HREF="#COUNTER"><KBD>COUNTER</KBD></A>
+    <TD> <I>CounterOptions</I>
+    <TD> access counters
+<TR><TD> 
     <TD> <KBD>WORKDIR</KBD>
     <TD> <I>dirPath</I>
     <TD> where DeleGate should dump core (-_-;
@@ -1706,10 +1580,6 @@ You should not change nor specify these parameters if not necessary.
     <TD> <KBD>PIDFILE</KBD>
     <TD> <I>fileName</I>
     <TD> where the DeleGate's PID is recorded
-<TR><TD> 
-    <TD> <A HREF="#COUNTER"><KBD>COUNTER</KBD></A>
-    <TD> <I>CounterOptions</I>
-    <TD> access counters
 </TABLE>
 </UL>
 </A>
@@ -2488,9 +2358,6 @@ Specify where dynamic libraries (<A HREF=#DYLIB>DYLIB</A>) are searched.
 </A>
 
 <A NAME=LIBPATH>
-<A NAME=STARTDIR>
-<A NAME=LIBDIR>
-<A NAME=EXECDIR>
 <PRE>
 LIBPATH parameter   ==  LIBPATH=<I>dirPath</I>[:<I>dirPath</I>]*
                     --  default: LIBPATH='.:${STARTDIR}:${LIBDIR}:${EXECDIR}:${ETCDIR}'
@@ -2509,9 +2376,6 @@ By default, LIBPATH is a ordered list of the following directories:<BR>
 <KBD>ETCDIR</KBD> -- <KBD>${DGROOT}/etc</KBD> by default<BR>
 </UL>
 </UL>
-</A>
-</A>
-</A>
 </A>
 
 <A NAME=DATAPATH>
@@ -4587,6 +4451,24 @@ Example:
 </UL>
 </A>
 
+<A NAME=COUNTERDIR>
+<PRE>
+COUNTERDIR parameter  ==  COUNTERDIR=<I>dirPath</I>
+                    --  default: COUNTERDIR="${ADMDIR}/counts[date+/year%y/week%W]"
+</PRE>
+<UL>
+Specify the base directory under which <a href="#COUNTER">counter</a> files are
+placed, if the COUNTER paramer is specified to enable counters (as COUNTER=do).
+Note that the directory is aged weekly by default (by "%W" in the <a href="#aging">
+aging</a> notation).
+It can consume too many files for counters (the size will not be so much
+but the number of files can be too many).
+You can stop the aging as in DeleGate/9.X in which the directory was not aged
+as if sepecified like "{ADMDIR}/counts" (hard coded in the program thus was not
+configurable).
+Or you can age the files yearly as COUNTERDIR="${ADMDIR}/counts[date+/year%y]".
+</UL>
+</A>
 
 <A NAME=CACHE>
 <PRE>
@@ -4957,13 +4839,6 @@ list of parts as follows:
 
 <A NAME=FCL>
 <A NAME=FTOCL>
-<A NAME=FFROMCL>
-<A NAME=FMD>
-<A NAME=FTOMD>
-<A NAME=FFROMMD>
-<A NAME=FSV>
-<A NAME=FTOSV>
-<A NAME=FFROMSV>
 <A NAME=filter-params>
 <PRE>
 FCL parameter       ==  FCL=<I>filterCommand</I>
@@ -5037,13 +4912,6 @@ FTOCL=-tee-h-n FTOSV=-tee
 </A>
 </UL>
 </UL>
-</A>
-</A>
-</A>
-</A>
-</A>
-</A>
-</A>
 </A>
 </A>
 </A>
@@ -5205,21 +5073,6 @@ and origin NNTP-DeleGate (<A HREF="#origin_NNTP">NNTP</A>) are placed hear.
 </UL>
 </A>
 
-<A NAME=ADMDIR>
-<PRE>
-ADMDIR parameter    ==  ADMDIR=<I>dirPath</I>
-                    --  default: ADMDIR='${VARDIR}/adm'
-</PRE>
-<UL>
-The directory to hold genarated files for administration of DeleGate,
-including files for <A HREF="#defense">shutout</A> defense,
-password repository of <A HREF=#func_auth>-Fauth</A>,
-identification code of executalbe file of DeleGate,
-server's statistics file,
-and COUNTER.
-</UL>
-</A>
-
 
 <A NAME=LOGDIR>
 <PRE>
@@ -5233,8 +5086,6 @@ The default directory where log files are placed.
 
 <A NAME=LOGFILE>
 <A NAME=PROTOLOG>
-<A NAME=ERRORLOG>
-<A NAME=TRACELOG>
 <PRE>
 LOGFILE parameter   ==  LOGFILE=[<I>LogFilename</I>]
 PROTOLOG parameter  ==  PROTOLOG=[<I>LogFilename</I>][:<I>logFormat</I>]
@@ -5261,8 +5112,6 @@ the <A HREF="#httplog"><I>common logfile format</I></A> and is customizable.
 The format of PROTOLOG for FTP is compatible with
 <A HREF="#xferlog"><I>xferlog</I></A>.
 </UL>
-</A>
-</A>
 </A>
 </A>
 
@@ -5392,9 +5241,6 @@ The log-file for expiration by "-Fexpire" function or "-expire" action in CRON.
 </A>
 
 <A NAME=WORKDIR>
-<A NAME=ACTDIR>
-<A NAME=TMPDIR>
-<A NAME=PIDFILE>
 <PRE>
 WORKDIR parameter   ==  WORKDIR=<I>dirPath</I>
                     --  default: WORKDIR='${VARDIR}/work/${PORT}'
@@ -5418,9 +5264,6 @@ Information about currently active servers are placed at ACTDIR.
 Those are temporary files which are made on invocation of a
 DeleGate server and are removed at its termination.
 </UL>
-</A>
-</A>
-</A>
 </A>
 
 
@@ -7233,8 +7076,7 @@ PROTOLOG="<I>LogFilename</I>:<I>format</I>".
 In this case, default file name can be omitted.
 For example, <KBD>PROTOLOG=":%X"</KBD> specifies making a NCSA like
 extended common logfile format.
-The default format is
-<KBD>PROTOLOG=":%C %D"</KBD> in version 9.
+The default format is <KBD>PROTOLOG=":%C %D"</KBD>.
 
 <P>
 <UL>
@@ -7564,6 +7406,21 @@ by the CONNECT method.
 notation before any processing.
 As a special case, HTTPCONF="urlesc" means HTTPCONF="urlesc:&lt;&gt;".
 
+<A name="httpconf_mypro.xyz">
+<DT>mypro.xyz:{forw,thru,stop}
+<DD>
+By default, an access to the virtual domain name
+"http://<a href=http://www.delegate.org/mypro.xyz/>mypro.xyz</a>"
+is interpreted as an access to your proxy server.
+HTTPCONF="mypro.xyz:forw" enables forwarding the request to
+upstream proxies by <a href=#mypro.xyz>prefixing the hop count</a>.
+HTTPCONF="mypro.xyz:thru" disables this interpretation and
+forward the request to the upstream proxy if exists.
+HTTPCONF="mypro.xyz:stop" stops this interpretation and forwarding at all.
+Another way for restriction of access to mypro.xyz is using AUTHORIZER
+as AUTHORIZER="-list{User:Pass}:*:*.mypro.xyz:*".
+</A>
+</DD>
 
 <A NAME="proxycontrol">
 <DT>proxycontrol[:{on|off}]
@@ -8218,30 +8075,6 @@ or partial URL like "/<I>upath</I>" which will be interpreted
 as http://<I>delegate</I>/<I>upath</I>.
 Relative URLs like "<I>upath</I>" without leading "/"
 are interpreted as relative to the base (current) shtml file.
-<P>
-<A NAME=RELAY_ssi>
-Note that including a resource by SSI is under the access control of
-DeleGate (as origin or proxy server) common to the access control
-against client users.  That is, if a client user is forbidden to
-access the included resource, it is also forbidden even via SSI-include.
-<BR>
-Especially allowing including a resource out of the DeleGate server,
-with URL like <KBD>virtual=http://<I>exserver</I>/<I>dir</I>/<I>fileX</I></KBD>
-can make a security hole made by a user as a SHTML writer.
-In an origin server, relaying as a proxy must be forbidden by
-<A HREF=#RELAY>RELAY</A>=no, but it also forbids SSI-include to do
-from other servers.
-<BR>
-A simple workaround in version 9 is adding a limited RELAY as
-<KBD>RELAY="proxy:http:<I>exserver</I>:*"</KBD> that only allows
-relaying to <I>exserver</I>.
-Another safer workaround is using MOUNT like
-<KBD>MOUNT="/ex/* http://exserver/dir/*"</KBD> then write SSI-include like
-<KBD>virtual="/ex/<I>fileX</I>"</KBD>.
-But both of these allows client users to access to resources
-other than the intended virtual URL in the <I>exserver</I>.
-</A>
-</DD>
 
 <DT>&lt;!--#fsize virtual="<I>URL</I>" --&gt;
 <DT>&lt;!--#flastmod virtual="<I>URL</I>" --&gt;
@@ -9700,6 +9533,16 @@ Special names "-"and "-.-", when it is used in the "<I>host</I>:<I>port</I>" par
 of URL,  means the host and port of the DeleGate itself.  And URL
 "http://-.-/-/" is reserved for a entry point of a control page of
 DeleGate.
+<br>
+<a name="mypro.xyz">
+Another reserved name is "mypro.xyz". An access to "http://mypro.xyz"
+is interpreted to your proxy server like "http://-.-".
+If the proxy is chained, you can access to upstream proxies by
+prefixing the hop count N from your client, as "http://N.mypro.xyz",
+as "http://2.mypro.xyz" for example.
+This feature can be enabled or disabled by the
+<a href="#httpconf_mypro.xyz">HTTPCONF=mypro.xyz</a> parameter.
+</a>
 
 </UL>
 </A>
@@ -10158,96 +10001,6 @@ for more information.
 </UL>
 </A>
 
-<A NAME=Acronyms>
-<B>Acronyms</B>
-<UL>
-<DL>
-<DT><A NAME=AIST>AIST -- National Institute of Advanced Industrial Science and Technology</A>
-<DT><A NAME=CERN>CERN -- European Organization for Nuclear Research</A>
-<DT><A NAME=ETL>ETL -- ElectroTechnical Laboratory (was integrated to AIST)</A>
-<DT><A NAME=MITI>MITI -- Ministry of International Trade and Industry (antecedents of METI)</A>
-<DT><A NAME=METI>METI -- Ministry of Economy, Trade and Industry</A>
-<DT><A NAME=NCSA>NCSA -- National Center for Super-computing Applications</A>
-</DL>
-
-<DL>
-<DT><A NAME=BSD>BSD -- Berkeley Software Distribution (BSD UNIX)</A>
-<DT><A NAME=CYGWIN>CYGWIN -- A system provides UNIX utilities on MS-Windows</A>
-<DT><A NAME=OSX>OSX -- Mac OSX (Apple version of UNIX)</A>
-<DT><A NAME=UNIX>UNIX -- Uniplexed Information and Computing Service: Linux, BSD, Mac OSX, Solaris, and other</A>
-</DL>
-
-<DL>
-<DT><A NAME=CFI>CFI -- Common Filter Interface of DeleGate</A>
-<DT><A NAME=CGI>CGI -- Common Gateway Interface</A>
-<DT><A NAME=CSS>CSS -- Cascading Style Sheets</A>
-<DT><A NAME=DHCP>DHCP -- Dynamic Host Configuration Protocol</A>
-<DT><A NAME=DNS>DNS -- Domain Name System/Service</A>
-<DT><A NAME=FTP>FTP -- File Transfer Protocol</A>
-<DT><A NAME=FWTK>FWTK -- FireWall Tool Kit</A>
-<DT><A NAME=HTML>HTML -- Hyper Text Markup Language</A>
-<DT><A NAME=HTTP>HTTP -- Hyper Text Transfer Protocol</A>
-<DT><A NAME=HTTPS>HTTPS -- HTTP protocol over SSL (or TLS)</A>
-<DT><A NAME=IMAP>IMAP -- Internet Message Access Protocol</A>
-<DT><A NAME=LDAP>LDAP -- Lightweight Directory Access Protocol</A>
-<DT><A NAME=LPR>LPR -- Line Printer Daemon Protocol</A>
-<DT><A NAME=MIME>MIME -- Multi purpose Internet Mail Extension (Internet mail format)</A>
-<DT><A NAME=MITM>MITM -- Man In the Middle (attack)</A>
-<DT><A NAME=NAT>NAT -- Network Address Translation</A>
-<DT><A NAME=NFS>NFS -- Network File System</A>
-<DT><A NAME=NIS>NIS -- Network Information Service</A>
-<DT><A NAME=NTLM>NTLM -- Net Lan Manager (what?)</A>
-<DT><A NAME=NNTP>NNTP -- Network News Transfer Protocol</A>
-<DT><A NAME=PAM>PAM -- Pluggable Authentication Modules</A>
-<DT><A NAME=PEM>PEM -- Privacy-enhanced Electronic Mail</A>
-<DT><A NAME=POP>POP -- Post Office Protocol</A>
-<DT><A NAME=SPAM>SPAM -- unsolicited or undesired electronic messages</A>
-<DT><A NAME=SMTP>SMTP -- Simple Mail Transfer Protocol</A>
-<DT><A NAME=SSL>SSL -- Secure Socket Layer (original version of TLS)</A>
-<DT><A NAME=SSH>SSH -- Secure Shell</A>
-<DT><A NAME=SSI>SSI -- Server Side Inclusion</A>
-<DT><A NAME=TCP>TCP -- Transport Control Protocol</A>
-<DT><A NAME=TLS>TLS -- Transport Layer Security (successor version of SSL)</A>
-<DT><A NAME=UDP>UDP -- User Datagram Protocol</A>
-<DT><A NAME=URI>URI -- Universal Resource Identifier</A>
-<DT><A NAME=URL>URL -- Uniform Resource Locator (in URI format)</A>
-<DT><A NAME=WWW>WWW -- World Wide Web</A>
-<DT><A NAME=XML>XML -- Extensible Markup Language</A>
-</DL>
-
-<DL>
-<DT><A NAME=ASCII>ASCII -- American Standard Code for Information Interchange</A>
-<DT><A NAME=EUC>EUC -- Extended Unix Code (means EUC-JP in DeleGate)</A>
-<DT><A NAME=JIS>JIS -- In DeleGate, 7bits JIS code for Japanese text (ISO-2022-JP)</A>
-<DT><A NAME=UCS>UCS -- Universal multiple-octet coded Character Set</A>
-<DT><A NAME=SJIS>SJIS -- Shift JIS, 8bits encoding of JIS characters (Shift_JIS)</A>
-</DL>
-
-<DL>
-<DT><A NAME=APOP>APOP -- Digest authentication protocol of POP protocol</A>
-<DT><A NAME=CRL>CRL -- Certificate Revocation List</A>
-<DT><A NAME=FIFO>FIFO -- First In First Out (data stream)</A>
-<DT><A NAME=FQDN>FQDN -- Fully Qualified Domain Name (ex. www.deleate.org)</A>
-<DT><A NAME=LD_LIBRARY_PATH>LD_LIBRARY_PATH -- Path to find Dynamic Linking Library</A>
-<DT><A NAME=PASV>PASV -- abbreviation of Passive Mode in FTP protocol</A>
-<DT><A NAME=PID>PID -- Process ID</A>
-<DT><A NAME=SNI>SNI -- Server Name Indication, (virtual) host name from SSL client</A>
-<DT><A NAME=RTT>RTT -- Round Trip Time</A>
-<DT><A NAME=SHTML>SHTML -- HTML file to be interpreted and translated by SSI</A>
-<DT><A NAME=STARTTLS>STARTTLS -- Starting TLS on the connection of non TLS</A>
-</DL>
-
-<DL>
-<DT><A NAME=SIGBUS>SIGBUS -- Signal raised on bus error (fatal)</A>
-<DT><A NAME=SIGCHLD>SIGCHLD -- Signal to notify status changes in a child process</A>
-<DT><A NAME=SIGHUP>SIGHUP -- Signal to restart a process</A>
-<DT><A NAME=SIGINT>SIGINT -- Signal to interrupt a process, usually generated by tty with Control-C</A>
-<DT><A NAME=SIGSEGV>SIGSEGV -- Signal raised on segment violation (fatal)</A>
-<DT><A NAME=SIGTERM>SIGTERM -- Signal to terminate a process</A>
-</DL>
-</UL>
-</A>
-
 <A NAME=SeeAlso TITLE="SEE ALSO">
 <B>SEE ALSO</B><P>
 <UL>
@@ -10360,7 +10113,7 @@ in a tar+gzip format file named "delegate*.tar.gz".
 </A>
 
 <PRE>
-DeleGate Version 9.9.13     Last change: October 28, 2014
+DeleGate Release 10.0.0             Last change: August 11, 2014
 --------- --------- --------- --------- --------- --------- --------- ---------
 </PRE>
 </DIV>

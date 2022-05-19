@@ -1,5 +1,6 @@
 FILES =	Makefile \
 	Manual.htm \
+	Documents.html \
 	HowToDG.html \
 	jpconv.htm \
 	tutor-jp.htm \

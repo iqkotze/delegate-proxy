@@ -804,7 +804,6 @@ extern int mo_COUNTER;
 #define GW_IS_CFI       0x08000000 /* executing CFI */
 #define GW_SYN_SSLSTART	0x00000010 /* don't wait SSLready but wait SSLstart */
 #define GW_WITH_ORIGDST	0x00000100 /* got SO_ORIGINAL_DST */
-#define GW_GET_ERRRESP	0x00000200 /* get error response not as empty data */
 #define GW_SSI_INCLUDE	0x10000000 /* executing SSI include */
 #define GW_COMMAND	0x20000000 /* -Fcommand */
 #define GW_NO_ANCHOR	0x40000000 /* disable HREF anchor */
@@ -1016,7 +1015,4 @@ typedef struct _SSLwayCTX {
    const char **ss_environ;
 } SSLwayCTX;
 
-int MarkNewConn(FL_PAR,DGCTX);
-#define ConnInitNew(ctx) \
-	MarkNewConn(FL_ARG,ctx),ConnInit(ctx)
 #endif
