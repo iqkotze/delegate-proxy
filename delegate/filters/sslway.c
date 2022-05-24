@@ -300,7 +300,7 @@ int SSL_CTX_load_verify_locations(SSL_CTX *ctx,PCStr(CAfile),PCStr(CApath));
 int  SSL_CTX_set_cipher_list(SSL_CTX *,PCStr(str));
 void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb);
 int  SSL_CTX_set_default_verify_paths(SSL_CTX *ctx);
-void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx, RSA *(*cb)(SSL *ssl,int is_export, int keylength));
+//void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx, RSA *(*cb)(SSL *ssl,int is_export, int keylength));
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx, DH *(*tmp_dh_callback)(SSL *ssl, int is_export, int keylength));
 void SSL_CTX_set_verify(SSL_CTX *ctx,int mode, int (*callback)(int, X509_STORE_CTX *));
 int  SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx,PCStr(file), int type);
@@ -322,6 +322,10 @@ void X509_free(X509 *a);
 int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa);
 
 RSA *RSA_generate_key_ex(int bits, unsigned long e,void (*callback)(int,int,void *),void *cb_arg);
+int DH_generate_key(DH *dh);
+void DH_generate_parameters();
+DH *DH_new();
+
 
 typedef struct {
 	int	ssl_version;
@@ -2155,6 +2159,17 @@ static RSA *tmprsa_callback(SSL *ctx,int exp,int bits)
 	}
 	return tmprsa_key;
 }
+static DH *tmpdh_key;
+static DH *tmpdh_callback(SSL *ctx)
+{
+    if( tmpdh_key == NULL ){
+        DH *tmpdh_key = DH_new();
+        DH_generate_parameters();
+        //tmpdh_key = RSA_generate_key_ex(bits,0x10001,NULL,NULL);
+        DH_generate_key(tmpdh_key);
+    }
+    return tmpdh_key;
+}
 static int verify_callback(int ok,X509_STORE_CTX *ctx)
 {	int err,depth;
 	const char *errsym;
@@ -2889,7 +2904,8 @@ static SSL_CTX *ssl_newsv(){
 	SSL_CTX *ctx;
 	ctx = ssl_new(1);
 	SSL_CTX_set_default_passwd_cb(ctx,(pem_password_cb*)sv_passwd);
-	SSL_CTX_set_tmp_rsa_callback(ctx,tmprsa_callback);
+	//SSL_CTX_set_tmp_rsa_callback(ctx,tmprsa_callback);
+    SSL_CTX_set_tmp_dh_callback(ctx, tmpdh_callback);
 
 	/*
 	if( cl_vrfy ){
@@ -3416,7 +3432,8 @@ SSL_CTX_sess_set_get_cb(ctx,get_session_cb);
 			saveCtx = 1; /* to be saved later with 0 <= accfd */
 		}
 		Lap("after loadContext");
-		SSL_CTX_set_tmp_rsa_callback(ctx,tmprsa_callback);
+		//SSL_CTX_set_tmp_rsa_callback(ctx,tmprsa_callback);
+        SSL_CTX_set_tmp_dh_callback(ctx, tmpdh_callback);
 
 		if( cl_CAfile || cl_CApath )
 			ssl_setCAs(ctx,cl_CAfile,cl_CApath);
