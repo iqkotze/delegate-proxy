@@ -192,6 +192,7 @@ typedef void SSL_CIPHER;
 
 typedef void BIGNUM;
 typedef void RSA;
+typedef void DH;
 /*
 RSA
 	BIGNUM *rsa_n;    // public modulus
@@ -229,7 +230,7 @@ RSA *PEM_read_bio_RSAPrivateKey(BIO*,...);
 
 SSL_CTX *SSL_CTX_new(SSL_METHOD *method);
 void ERR_clear_error(void);
-int  SSL_library_init(void);
+int  OPENSSL_init_ssl(void);
 SSL *SSL_new(SSL_CTX *ctx);
 int  SSL_set_fd(SSL *ssl, int fd);
 int  SSL_connect(SSL *ssl);
@@ -245,7 +246,7 @@ int  SSL_shutdown(SSL *ssl);
 int  SSL_get_shutdown(SSL *ssl);
 void SSL_set_connect_state(SSL *s);
 void SSL_set_accept_state(SSL *s);
-void SSL_load_error_strings(void );
+//void SSL_load_error_strings(void );
 int  SSL_get_error(SSL *s,int ret_code);
 X509 *SSL_get_peer_certificate(SSL *ssl);
 
@@ -299,7 +300,8 @@ int SSL_CTX_load_verify_locations(SSL_CTX *ctx,PCStr(CAfile),PCStr(CApath));
 int  SSL_CTX_set_cipher_list(SSL_CTX *,PCStr(str));
 void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb);
 int  SSL_CTX_set_default_verify_paths(SSL_CTX *ctx);
-void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx, RSA *(*cb)(SSL *ssl,int is_export, int keylength));                         
+void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx, RSA *(*cb)(SSL *ssl,int is_export, int keylength));
+void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx, DH *(*tmp_dh_callback)(SSL *ssl, int is_export, int keylength));
 void SSL_CTX_set_verify(SSL_CTX *ctx,int mode, int (*callback)(int, X509_STORE_CTX *));
 int  SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx,PCStr(file), int type);
 int  SSL_CTX_use_certificate_file(SSL_CTX *ctx,PCStr(file), int type);
@@ -319,7 +321,7 @@ X509_NAME *X509_get_subject_name(X509 *a);
 void X509_free(X509 *a);
 int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa);
 
-RSA *RSA_generate_key(int bits, unsigned long e,void (*callback)(int,int,void *),void *cb_arg);
+RSA *RSA_generate_key_ex(int bits, unsigned long e,void (*callback)(int,int,void *),void *cb_arg);
 
 typedef struct {
 	int	ssl_version;
@@ -1170,8 +1172,8 @@ static SSL_CTX *ssl_new(int serv)
 	int sslnover;
 
 	ERR_clear_error();
-	SSL_library_init();
-	SSL_load_error_strings();
+    OPENSSL_init_ssl();
+	//SSL_load_error_strings();
 
 	meth = 0;
 	if( sslver = serv ? cl_sslver : sv_sslver ){
@@ -2149,7 +2151,7 @@ static RSA *tmprsa_callback(SSL *ctx,int exp,int bits)
 		bits = 2048;
 	}
 	if( tmprsa_key == NULL ){
-		tmprsa_key = RSA_generate_key(bits,0x10001,NULL,NULL);
+		tmprsa_key = RSA_generate_key_ex(bits,0x10001,NULL,NULL);
 	}
 	return tmprsa_key;
 }
@@ -2887,7 +2889,9 @@ static SSL_CTX *ssl_newsv(){
 	SSL_CTX *ctx;
 	ctx = ssl_new(1);
 	SSL_CTX_set_default_passwd_cb(ctx,(pem_password_cb*)sv_passwd);
+    SSL_CTX_set_tmp_dh_callback(ctx, )
 	SSL_CTX_set_tmp_rsa_callback(ctx,tmprsa_callback);
+
 	/*
 	if( cl_vrfy ){
 		SSL_CTX_set_verify(ctx,cl_vrfy,verify_callback);
@@ -3866,9 +3870,9 @@ int _RSA_newkey(RSACtx *Rc){
 	if( RxFlags & RC_VERBOSE ){
 		fprintf(stderr,"generating: ");
 	}
-	rsa = RSA_generate_key(Rc->rsa_bits,Rc->rsa_exp,genkey_cb,Rc);
+	rsa = RSA_generate_key_ex(Rc->rsa_bits,Rc->rsa_exp,genkey_cb,Rc);
 	if( rsa == 0 ){
-		fprintf(stderr," %s RSA_generate_key() FAILED\r\n",RERROR);
+		fprintf(stderr," %s RSA_generate_key_ex() FAILED\r\n",RERROR);
 		return -1;
 	}
 	if( RxFlags & RC_VERBOSE ){
