@@ -2148,7 +2148,7 @@ static RSA *tmprsa_key;
 static RSA *tmprsa_callback(SSL *ctx,int exp,int bits)
 {
 	if( bits != 512 && bits != 1024 ){
-		bits = 2048;
+		bits = 4096;
 	}
 	if( tmprsa_key == NULL ){
 		tmprsa_key = RSA_generate_key_ex(bits,0x10001,NULL,NULL);
@@ -2889,7 +2889,6 @@ static SSL_CTX *ssl_newsv(){
 	SSL_CTX *ctx;
 	ctx = ssl_new(1);
 	SSL_CTX_set_default_passwd_cb(ctx,(pem_password_cb*)sv_passwd);
-    SSL_CTX_set_tmp_dh_callback(ctx, )
 	SSL_CTX_set_tmp_rsa_callback(ctx,tmprsa_callback);
 
 	/*
