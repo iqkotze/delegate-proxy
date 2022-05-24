@@ -4482,7 +4482,9 @@ int connectViaCCSV(int sock,SAP svaddr,int leng,int timeout,PVStr(cstat)){
 		Conn->ccsv.ci_connSt = cr.cr_connSt;
 		Conn->ccsv.ci_ix = cr.cr_ix;
 		Conn->ccsv.ci_id = cr.cr_id;
-		bcopy(&cr.cr_svifsa,&Conn->ccsv.ci_ifaddr,sizeof(VSAddr));
+        // possible overflow?
+		//bcopy(&cr.cr_svifsa,&Conn->ccsv.ci_ifaddr,sizeof(VSAddr));
+        bcopy(&cr.cr_svifsa,&Conn->ccsv.ci_ifaddr,sizeof(cr.cr_svifsa));
 		proto = DST_PROTO;
 		host = DST_HOST;
 		port = DST_PORT;

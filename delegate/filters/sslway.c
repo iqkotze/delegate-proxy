@@ -333,7 +333,7 @@ typedef struct {
  unsigned char	session_id[32];
 } SessionHead;
 
-void ERR_load_crypto_strings(void);
+//void ERR_load_crypto_strings(void);
 RSA *PEM_read_bio_PrivateKey(BIO*,...);
 X509 *PEM_read_X509(FILE*fp,X509**x,pem_password_cb*cb,void *u);
 EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp,EVP_PKEY **x,pem_password_cb *cb,void *u);
@@ -477,7 +477,7 @@ int SignRSA(PCStr(privkey),PCStr(data),PCStr(pass),PCStr(md5),int mlen,PVStr(sig
 		Bp = BIO_new(BIO_s_mem());
 		BIO_puts(Bp,(char*)data);
 		pkey = NULL;
-		ERR_load_crypto_strings();
+		//ERR_load_crypto_strings();
 		ENGINE_load_builtin_engines();
 /*
 		pkey = PEM_read_bio_PrivateKey(Bp,&pkey,pass_cb,cbdata);
@@ -3733,7 +3733,8 @@ int _RSA_init(RSACtx *Rc){
 		fprintf(stderr,"%s no SSL library\r\n",RERROR);
 		return -1;
 	}
-	ERR_load_crypto_strings();
+
+    //ERR_load_crypto_strings();
 	OPENSSL_add_all_algorithms_conf();
 
 	bzero(Rc,sizeof(RSACtx));
