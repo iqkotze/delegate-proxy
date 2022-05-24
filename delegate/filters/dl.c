@@ -70,8 +70,8 @@ static const char *libpat[16] = {
 #else
 #if !defined(_MSC_VER)
 	"dglib%s.so",
+    "lib%s.so.1.1",
 	"lib%s.so.1.0.0",
-	"lib%s.so.1.1",
 	"lib%s.so.0.9.8",    /* 9.2.5 for a while */
 	"lib%s.so",
 	"lib%s.so.1.0.0",    /* 9.9.9 mod-140602e OpenSSL nowadays in 2014 */

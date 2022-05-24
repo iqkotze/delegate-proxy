@@ -3584,8 +3584,8 @@ static int sslway_dl0(){
 			to avoid the error in automatic recursive loading
 			of libcrypto from libssl (on Vine and KURO-BOX).
 		*/
-		if( dl_library("crypto",dlmap_ssl,"") == 0
-		 || dl_library("ssl",dlmap_ssl,"") == 0
+		if( dl_library("ssl",dlmap_ssl,"") == 0
+        || dl_library("crypto",dlmap_ssl,"") == 0
 		){
 			with_dl = 1;
 			return 1;
