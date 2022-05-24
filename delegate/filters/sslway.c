@@ -2160,7 +2160,7 @@ static RSA *tmprsa_callback(SSL *ctx,int exp,int bits)
 	return tmprsa_key;
 }
 static DH *tmpdh_key;
-static DH *tmpdh_callback(SSL *ctx)
+static DH *tmpdh_callback(SSL *ctx, int exp,int bits)
 {
     if( tmpdh_key == NULL ){
         DH *tmpdh_key = DH_new();
