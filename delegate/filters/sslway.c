@@ -338,8 +338,8 @@ typedef struct {
 } SessionHead;
 
 //void ERR_load_crypto_strings(void);
-//RSA *PEM_read_bio_PrivateKey(BIO*,...);
-EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u);
+RSA *PEM_read_bio_PrivateKey(BIO*,...);
+//EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u);
 X509 *PEM_read_X509(FILE*fp,X509**x,pem_password_cb*cb,void *u);
 EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp,EVP_PKEY **x,pem_password_cb *cb,void *u);
 int RSA_size(RSA*rsa);
