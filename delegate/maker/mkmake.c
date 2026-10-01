@@ -659,7 +659,7 @@ static int find_ranlib(char *ranlib,int size,const char *make)
 		return 1;
 
 	unlink(_a);
-	putfile(_c,"w","sub(){}\n");
+	putfile(_c,"w","int sub(void){return 0;}\n");
 	putfile(_make,"w",
 "_.a:; $(CC) -c _.c\n\t$(AR) cr _.a _.o\n\t$(AR) st _.a\n\techo SUCCESS\n");
 	sprintf(command,"%s -f _make",make);
@@ -931,7 +931,7 @@ void cklibs(FILE *out,const char *make)
 	const char *np;
 	char *xp;
 
-	putfile(_c,"w","main(){}\n");
+	putfile(_c,"w","int main(void){return 0;}\n");
 	lc = sscanf(LIBLIST,
   "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s ",
 		lv[ 0],lv[ 1],lv[ 2],lv[ 3],lv[ 4],lv[ 5],lv[ 6],lv[ 7],
@@ -2142,13 +2142,13 @@ int _available(FILE *errlog,const char *sym,const char *cc,const char *flags,con
 	*/
 	if( sym != NULL && (*sym == '#' || strchr(sym,'{')) ){
 		fprintf(fp,"%s\n",sym);
-		fprintf(fp,"main(){ }\n");
+		fprintf(fp,"int main(void){return 0;}\n");
 	}else
 	if( sym != NULL )
 		fprintf(fp,"main(){ %s();}\n",sym);
 	else{
 		sym = "ANYTHING";
-		fprintf(fp,"main(){ }\n");
+		fprintf(fp,"int main(void){return 0;}\n");
 	}
 	fclose(fp);
 	unlink("a.out");

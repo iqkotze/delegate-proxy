@@ -2080,7 +2080,7 @@ static void confCGI(Connection *Conn,DYConf *DC,CLArg *CA,FILE *reqin,PCStr(ereq
 	if( *ereq ){
 		putenv(ereq);
 	}
-	if( 0 <= esock ){
+	if( 0 <= ClientSock ){
 		sprintf(esock,"CLSOCK=%d",ClientSock);
 		putenv(esock);
 	}
