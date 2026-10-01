@@ -81,19 +81,19 @@ int MIME_SPACE_ENCODING = ES_OUT;
 #define IS_PRE_DELIMITER(ch)	DELIMITER(ch)
 #define IS_POST_DELIMITER(ch)	(ch==EOF || DELIMITER(ch))
 
-#define NLNL			0x80000001
-#define XC_EN_FOLD		0x80000002
-#define XC_DE_UNFOLD		0x80000003
-#define XC_DE_CATENATE		0x80000004
-#define XC_DE_AFTER_EWORD	0x80000005 /* just after encoded-word now */
-#define XC_DE_FORMFEED		0x80000006
-#define XC_DE_DEL_LWSP		0x80000007
-#define XC_DE_IGN_LWSP		0x80000008
-#define XC_DE_OFLUSH		0x80000009
-#define XC_DE_EWORD_SP		0x8000000A /* a original SPACE and TAB */
-#define XC_DE_EWORD_TAB		0x8000000B /* - encoded in a encoded-word */
-#define XC_DE_FIELD_TOP		0x8000000C /* new field starts */
-#define XC_DE_TOOLONG		0xF0000001
+#define NLNL			((int)0x80000001u)
+#define XC_EN_FOLD		((int)0x80000002u)
+#define XC_DE_UNFOLD		((int)0x80000003u)
+#define XC_DE_CATENATE		((int)0x80000004u)
+#define XC_DE_AFTER_EWORD	((int)0x80000005u) /* just after encoded-word now */
+#define XC_DE_FORMFEED		((int)0x80000006u)
+#define XC_DE_DEL_LWSP		((int)0x80000007u)
+#define XC_DE_IGN_LWSP		((int)0x80000008u)
+#define XC_DE_OFLUSH		((int)0x80000009u)
+#define XC_DE_EWORD_SP		((int)0x8000000Au) /* a original SPACE and TAB */
+#define XC_DE_EWORD_TAB		((int)0x8000000Bu) /* - encoded in a encoded-word */
+#define XC_DE_FIELD_TOP		((int)0x8000000Cu) /* new field starts */
+#define XC_DE_TOOLONG		((int)0xF0000001u)
 
 #define ENCODE_NONE		 0
 #define ENCODE_BASE64		"B"

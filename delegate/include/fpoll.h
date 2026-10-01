@@ -9,7 +9,7 @@
 #if defined(__STDIO_STREAM_BUFFER_RAVAIL)
 #define READYCC(fp)      __STDIO_STREAM_BUFFER_RAVAIL(fp)
 #else
-#if defined(_LIBIO_H) || defined(_IO_STDIO_H)
+#if defined(_LIBIO_H) || defined(_IO_STDIO_H) || defined(__GLIBC__)
 #define READYCC(fp)     (fp->_IO_read_end - fp->_IO_read_ptr)
 #else
 #define READYCC(fp)     (fp->_egptr - fp->_gptr)
