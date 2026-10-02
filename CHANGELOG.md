@@ -10,6 +10,7 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Quellen als C++20 (`.cpp`), Narrowing- und `register`-Altlasten behoben, kritische Warnungen als Fehler (`feature/cxx20`)
 
 ### Hinzugefügt
+- Installation nach FHS, systemd-Unit mit Hardening, sysusers, tmpfiles, Beispielkonfiguration und Manpage (`feature/install-fhs`)
 - GitLab-CI mit Build, Tests, Sanitizern, Analyse, Coverage, Fuzzing, Lasttest, Doku und Docker; jeder Job lokal über `ci/jobs/` ausführbar (`feature/gitlab-ci`)
 - Coverage mit gcovr, clang-tidy und cppcheck gegen Baseline, Warnungsgrenze, Doxygen-Target `docs` (`feature/coverage-analysis`)
 - 9 libFuzzer-Ziele für Parser, Preset `fuzz`, Funde als Regressionstests (`feature/fuzzing`)

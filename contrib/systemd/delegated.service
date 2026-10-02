@@ -1,0 +1,30 @@
+[Unit]
+Description=DeleGate proxy server
+Documentation=man:delegated(8)
+After=network.target
+ConditionPathExists=/etc/delegate/delegated.conf
+
+[Service]
+Type=simple
+User=delegate
+Group=delegate
+RuntimeDirectory=delegate
+ExecStart=/usr/sbin/delegated -f DGROOT=/var/lib/delegate +=/etc/delegate/delegated.conf
+Restart=on-failure
+LimitNOFILE=65536
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+ReadWritePaths=/var/lib/delegate /var/log/delegate /var/cache/delegate /etc/delegate/certs
+
+[Install]
+WantedBy=multi-user.target
