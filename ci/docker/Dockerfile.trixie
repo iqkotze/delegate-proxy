@@ -1,7 +1,7 @@
 FROM debian:trixie
 RUN apt-get update \
  && apt-get install -y --no-install-recommends build-essential cmake ninja-build pkg-config \
-    libssl-dev zlib1g-dev libgtest-dev python3 curl openssl util-linux ca-certificates \
+    libssl-dev zlib1g-dev libgtest-dev python3 curl openssl util-linux ca-certificates git ccache \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY . /src

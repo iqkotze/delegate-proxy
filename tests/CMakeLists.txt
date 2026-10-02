@@ -8,7 +8,7 @@ target_compile_definitions(dg_unit_tests PRIVATE QS OPENSSL_API_COMPAT=30000 OPE
 target_link_libraries(dg_unit_tests PRIVATE GTest::gtest_main
   dg_core dg_resolvy dg_teleport dg_md5 dg_cfi dg_rary dg_gates dg_mimekit dg_fsx
   ${DG_SYSLIBS} dg_subst ${DG_SYSLIBS})
-gtest_discover_tests(dg_unit_tests DISCOVERY_MODE PRE_TEST)
+gtest_discover_tests(dg_unit_tests DISCOVERY_MODE PRE_TEST PROPERTIES LABELS unit)
 
 add_test(NAME param-check COMMAND ${DG_PYTHON} ${DG_ROOT}/../tools/check-params.py --root ${DG_ROOT}/..)
 
