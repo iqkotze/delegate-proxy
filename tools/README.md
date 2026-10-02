@@ -18,6 +18,18 @@ Zählt Fehler und Warnungen aus `build.log` nach Kategorie und nach Datei. `tool
     tools/warnstats.sh build/debug
     tools/warnstats.sh build/debug 30
 
+## fuzz-run.sh
+
+Startet die libFuzzer-Ziele aus `tests/fuzz/` je eine feste Zeit lang. Die Ziele entstehen mit dem Preset `fuzz` (clang, ASan, UBSan). Die Startkorpora liegen in `tests/fuzz/corpus/<ziel>/`. Das laufende Korpus und gefundene Abstürze liegen in `<build-verzeichnis>/fuzz-work/`. Der Exit-Code ist ungleich 0, wenn ein Ziel abstürzt.
+
+    cmake -S delegate --preset fuzz && cmake --build build/fuzz
+    tools/fuzz-run.sh
+    tools/fuzz-run.sh -t 300 url_split http_time
+
+`-t` setzt die Sekunden je Ziel (Standard 60), `-b` das Build-Verzeichnis (Standard `build/fuzz`). Ohne Zielnamen laufen alle Ziele. Ein Absturz wird als Datei unter `tests/fuzz/crashes/<ziel>/` abgelegt. Dann läuft er als Test mit Label `fuzz-regress` (`WILL_FAIL`, bis der Fehler behoben ist).
+
+    ctest --test-dir build/fuzz -L fuzz-regress
+
 ## cleanup-unifdef.sh
 
 Entfernt mit `unifdef` den Code für andere Plattformen als Linux amd64 aus allen `.cpp` und `.h` Dateien unter `delegate/`. Das Verzeichnis `delegate/pds/` bleibt unberührt. Die Makroliste steht im Skript. Features und Sprachmakros wie `QS` oder `NONC99` werden nicht gesetzt.
@@ -44,6 +56,8 @@ Presets
 * `debug` ist der Standard. Er baut mit C++20 (gnu++20) und `-O2 -g`.
 * `release` baut mit `-O2` und LTO. Durch LTO exportiert die Binärdatei weniger Symbole.
 * `cxx23` entspricht `debug`, aber mit C++23.
+* `clang` entspricht `debug`, aber mit clang++.
+* `fuzz` baut die Fuzz-Ziele mit clang, ASan und UBSan.
 * `asan` entspricht `debug`, aber mit `-fsanitize=address,undefined -fno-omit-frame-pointer`. Der Smoke-Test und alle Tests laufen unter ASan durch.
 
 Alle Quellen sind C++ (`.cpp`). Der Standard lässt sich mit `-DDG_CXX_STANDARD=20` oder `23` wählen. Die Warnungen `return-type`, `narrowing`, `format-security`, `int-to-pointer-cast` und `pointer-arith` sind Fehler.
