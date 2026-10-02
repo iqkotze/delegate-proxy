@@ -78,8 +78,11 @@ Cache files (CACHEDIR).
 .I /run/delegate
 Files of active servers (ACTDIR).
 .TP
-.I /usr/share/doc/delegate/reference/parameters.md
+.I /usr/share/doc/delegate/doc/reference/parameters.md
 Parameter reference.
+.TP
+.I /usr/share/doc/delegate/doc/README.md
+Index of the documentation.
 .SH SYSTEMD
 The unit
 .B delegated.service
@@ -114,6 +117,8 @@ delegated \-P8080 SERVER=http "MOUNT=/* http://origin.example.com/*"
 .fi
 .RE
 .SH SEE ALSO
+.I /usr/share/doc/delegate/doc/README.md
+(documentation),
 .BR systemd.service (5),
 .BR sysusers.d (5),
 .BR tmpfiles.d (5)

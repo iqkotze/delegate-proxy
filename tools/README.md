@@ -1,6 +1,6 @@
 # Werkzeuge
 
-Alle Skripte laufen unter Linux mit bash. Der Pfad zum Repository wird aus dem Skriptort ermittelt.
+Alle Skripte laufen unter Linux mit bash. Der Pfad zum Repository wird aus dem Skriptort ermittelt. Die Projektdokumentation steht in [../doc/README.md](../doc/README.md).
 
 ## smoke-test.sh
 
@@ -143,16 +143,22 @@ Der Name einer Unteroption darf Buchstaben, Ziffern, Punkt, Unterstrich und Minu
 
     tools/check-params.py
 
+## check-docs.py
+
+Prüft in den Markdown-Dateien alle relativen Links auf existierende Ziele. Im deutschen Fließtext von `README.md`, `CLAUDE.md` und `doc/` meldet es Gedankenstriche und Doppelpunkte. Codeblöcke, Tabellen, Inline-Code und URLs bleiben unberücksichtigt. Der Exit-Code ist 1 bei Funden.
+
+    tools/check-docs.py
+
 ## Installation
 
-CMake installiert `delegated` nach FHS (GNUInstallDirs). Für Pakete gilt der Prefix `/usr`. Dann liegen die Dateien so.
+Die Dokumentation dazu steht in [../doc/install.md](../doc/install.md). CMake installiert `delegated` nach FHS (GNUInstallDirs). Für Pakete gilt der Prefix `/usr`. Dann liegen die Dateien so.
 
 * `/usr/sbin/delegated`
 * `/usr/lib/delegate/` mit den Hilfsprogrammen aus `subin/`, nur mit `-DDG_BUILD_SUBIN=ON`. Mit `-DDG_INSTALL_SETUID=ON` erhalten `dgbind`, `dgchroot` und `dgpam` das setuid und setgid Bit. Standard ist OFF.
 * `/etc/delegate/delegated.conf.example`
 * `/usr/lib/systemd/system/delegated.service`, `/usr/lib/sysusers.d/delegate.conf`, `/usr/lib/tmpfiles.d/delegate.conf`
 * `/usr/share/man/man8/delegated.8`
-* `/usr/share/doc/delegate/` mit `CHANGELOG.md`, `reference/` und, falls vorhanden, `README.md` und `examples/`
+* `/usr/share/doc/delegate/` mit `README.md`, `CHANGELOG.md`, `doc/` (alle Dokumente, `reference/`, `examples/`, `legacy/`) und `delegate/` (Lizenz-, Copyright- und Credits-Dateien)
 * leere Verzeichnisse `/var/lib/delegate`, `/var/log/delegate` und `/var/cache/delegate`
 
 CMake überschreibt keine vorhandene Konfiguration. Deshalb heißt die Datei `delegated.conf.example`. Der Administrator kopiert sie nach `delegated.conf`. Die Unit ist auf den Prefix `/usr` und diese Pfade festgelegt.

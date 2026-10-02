@@ -25,8 +25,9 @@ expected=$tmp/expected
 	echo lib/tmpfiles.d/delegate.conf
 	echo share/man/man8/delegated.8
 	echo share/doc/delegate/CHANGELOG.md
-	[ -f "$repo/README.md" ] && echo share/doc/delegate/README.md
-	(cd "$repo/doc" && { find reference examples -type f 2>/dev/null || true; } | sed 's#^#share/doc/delegate/#')
+	echo share/doc/delegate/README.md
+	for f in LICENSE.txt LICENSE-ja.txt COPYRIGHT CREDITS; do echo share/doc/delegate/delegate/$f; done
+	(cd "$repo" && find doc -type f -not -path 'doc/man/*') | sed 's#^#share/doc/delegate/#'
 	if grep -q '^DG_BUILD_SUBIN:BOOL=ON' "$build/CMakeCache.txt"; then
 		for p in dgbind dgchroot dgcpnod dgdate dgforkpty dgpam; do echo "lib/delegate/$p"; done
 	fi

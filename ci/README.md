@@ -1,5 +1,7 @@
 # CI
 
+Die Entwicklungsregeln stehen in [../doc/development.md](../doc/development.md), die Build-Optionen in [../doc/build.md](../doc/build.md).
+
 Die Pipeline steht in `.gitlab-ci.yml`. Jeder Job ruft nur `ci/jobs/<job>.sh` auf. Die Skripte laufen auf einem Entwicklerrechner genauso wie im Runner. Die Logik liegt in den Skripten und in `tools/`, nicht in der YAML-Datei.
 
 ## Stages und Jobs
