@@ -1,75 +1,58 @@
+#include <poll.h>
+#include <vector>
 #include "ystring.h"
 #include "log.h"
 #include <stdio.h>
 #include "vsocket.h"
-#include "yselect.h" /* FD_SETSIZE and FD_SET(),etc. */
+
+#define READY_EVENTS	(POLLIN|POLLPRI|POLLHUP|POLLERR)
+
+/// TIMEOUT_IMM polls once, 0 waits forever, otherwise milliseconds.
+static int pollWait(struct pollfd *pfd,int nfd,int timeout)
+{
+	if( timeout == TIMEOUT_IMM )
+		return poll(pfd,nfd,0);
+	return poll(pfd,nfd,timeout?timeout:-1);
+}
 
 int _PollIns(int timeout,int size,int *mask,int *rmask){
-	struct timeval tvbuf,*tv;
-	int fi,fd,maxfd;
-	FdSet Rmask,Xmask;
-	int nready,rready;
+	std::vector<struct pollfd> pfd;
+	int fi,rfd,nready,rready;
 
-	if( timeout ){
-		tv = &tvbuf;
-		tv->tv_sec  = timeout / 1000;
-		tv->tv_usec = (timeout % 1000) * 1000;
-	}else	tv = NULL;
-
-	maxfd = -1;
-	FD_ZERO(&Rmask);
+	pfd.reserve(size < 0 ? 0 : size);
 	for(fi = 0; fi < size; fi++){
-		fd = mask[fi];
-		fd = SocketOf(fd);
-
-		if( 0 <= fd ){
-			FD_SET(fd,&Rmask);
-			if( maxfd < fd )
-				maxfd = fd;
-		}
+		if( 0 <= mask[fi] )
+			pfd.push_back({mask[fi],(short)(POLLIN|POLLPRI),0});
 		rmask[fi] = 0;
 	}
-	Xmask = Rmask;
-	nready = select(SELECT_WIDTH(maxfd),&Rmask,NULL,&Xmask,tv);
+	nready = pollWait(pfd.data(),pfd.size(),timeout);
 	if( nready <= 0 )
 		return nready;
 
 	rready = 0;
+	rfd = 0;
 	for(fi = 0; fi < size; fi++){
-		int ofd = mask[fi];
-		fd = mask[fi];
-		fd = SocketOf(fd);
-
-		if( 0 <= fd ){
-			if( FD_ISSET(fd,&Rmask) || FD_ISSET(fd,&Xmask) ){
+		if( 0 <= mask[fi] ){
+			if( pfd[rfd++].revents & READY_EVENTS ){
 				rready++;
 				rmask[fi] = 1;
-			}else	rmask[fi] = 0;
-		}else	rmask[fi] = 0;
+			}
+		}
 	}
 	return rready;
 }
 int _PollIn1(int fd,int timeout){
-	struct timeval tv;
-	FdSet Rmask,Xmask;
+	struct pollfd pfd[1];
 	int nready;
-	int ofd = fd;
 
 	if( fd < 0 )
 		return -1;
-	fd = SocketOf(fd);
 
-	if( timeout ){
-		tv.tv_sec  = timeout / 1000;
-		tv.tv_usec = (timeout % 1000) * 1000;
-	}
-
-	FD_ZERO(&Rmask);
-	FD_SET(fd,&Rmask);
-	Xmask = Rmask;
-	nready = select(FD_SETSIZE,&Rmask,NULL,&Xmask,timeout?&tv:NULL);
+	pfd[0].fd = fd;
+	pfd[0].events = POLLIN;
+	pfd[0].revents = 0;
+	nready = pollWait(pfd,1,timeout);
 	if( nready <= 0 )
 		return nready;
-	nready = FD_ISSET(fd,&Rmask) ? 1 : 0;
-	return nready;
+	return (pfd[0].revents & (POLLIN|POLLHUP|POLLERR)) ? 1 : 0;
 }

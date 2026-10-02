@@ -45,7 +45,7 @@ set(DG_CFI_STUBS sslway gzip regex m17nccx)
 # Compatibility functions linked into delegated and the helper programs
 set(DG_SRCS_SUBST
     FMODE _-fcloseFILE2 _-fgetpos _-forkpty _-fseeko _-getrusage _-mkfifo _-mutex
-    _-poll2 _-recv _-regex _-select _-setferror _-sgTTy _-statvfs __alloca __fchmod
+    _-poll _-poll2 _-recv _-regex _-setferror _-sgTTy _-statvfs __alloca __fchmod
     __fchown __flock __fork __gethostbyname2 __getrlimit __getwinsize __link __lstat
     __opendir __pthread_create __pthread_kill __ptrace __sigaction __symlink __sysinfo
     __syslog __tcsetattr __uname __usleep fpurge futimes malloc_size opt_s_caps
