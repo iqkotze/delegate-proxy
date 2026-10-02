@@ -50,6 +50,7 @@ Die Presets stehen in `delegate/CMakePresets.json`.
 | `cxx23` | wie `debug`, aber C++23 |
 | `asan` | wie `debug`, mit `-fsanitize=address,undefined -fno-omit-frame-pointer` |
 | `clang` | wie `debug`, mit `clang++` |
+| `ubsan-clang` | wie `clang`, mit `-fsanitize=undefined,function` ohne Fortsetzung nach Fehlern |
 | `fuzz` | wie `clang`, mit libFuzzer, ASan und UBSan, baut die Fuzz-Ziele |
 | `coverage` | gcc mit `--coverage` und `-O0` |
 
@@ -100,11 +101,11 @@ tools/docker-build.sh gcc16 release
 
 ## Tests
 
-`ctest` führt 238 Tests aus.
+`ctest` führt 248 Tests aus.
 
 | Gruppe | Anzahl | Aufruf |
 |---|---|---|
-| Unit-Tests (GoogleTest) | 199 | `ctest --test-dir build/debug -L unit` |
+| Unit-Tests (GoogleTest) | 209 | `ctest --test-dir build/debug -L unit` |
 | TLS gegen echtes OpenSSL | 22 | `ctest --test-dir build/debug -L tls` |
 | Konfigurationsbeispiele | 13 | `ctest --test-dir build/debug -L examples` |
 | Installation | 2 | `ctest --test-dir build/debug -L install` |
