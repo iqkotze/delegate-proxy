@@ -199,7 +199,7 @@ const char *get_CHARCODE(Connection *Conn){
 	return 0;
 }
 DG_PARAM(CHARCODE, "CHARCODE=[inputCode/]outputCode[:[tosv][:connMap]]", "none", "Convert the character code of relayed text to outputCode (JIS, EUC, SJIS, UTF8, ASCII)", "CHARCODE=UTF8")
-DG_PARAM(CHARSET, "CHARSET=[inputCode/]outputCode[:[tosv][:connMap]]", "none", "[ungeprüft] Same as CHARCODE", "CHARSET=UTF8")
+DG_PARAM(CHARSET, "CHARSET=[inputCode/]outputCode[:[tosv][:connMap]]", "none", "Same as CHARCODE", "CHARSET=UTF8")
 void scan_CHARCODE(Connection *Conn,PCStr(charcodes))
 {
 	if( strchr(charcodes,':') ){

@@ -169,7 +169,7 @@ ERRMSG("ERROR! not allowed to run on this host.\n");
 
 	return 0;
 }
-DG_PARAM(ADMINPASS, "ADMINPASS=password", "none (built-in value set at build time with -DADMINPASS)", "[ungeprüft] Password checked against the built-in ADMINPASS when ADMIN is verified", "ADMINPASS=secret")
+DG_PARAM(ADMINPASS, "ADMINPASS=password", "none (built-in value set at build time with -DADMINPASS)", "Password checked against the built-in ADMINPASS when ADMIN is verified", "ADMINPASS=secret")
 void checkADMIN(DGC*Conn,PCStr(proto))
 {	const char *admin;
 	CStr(owner,256);

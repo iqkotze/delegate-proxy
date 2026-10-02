@@ -407,6 +407,8 @@ static int hide(Connection *Conn,PCStr(name),PCStr(value)){
 	return 0;
 }
 DG_PARAM(MHGWCONF, "MHGWCONF=hide:fname:vlist:users:hides", "none", "[ungeprüft] Mail header hiding rules of the mail-to-HTTP gateway", "MHGWCONF=hide:From:*:*:from")
+DG_PARAM_SUB(MHGWCONF, "hide", "hide:fname:vlist:users:hides", "none", "[ungeprüft] Rule that hides mail header fields; fname, value patterns, users and hidden parts", "MHGWCONF=hide:From:*:*:from")
+DG_PARAM_SUB(MHGWCONF, "winsize", "winsize", "none", "[ungeprüft] Accepted and ignored", "MHGWCONF=winsize")
 void scan_MHGWCONF(Connection *Conn,PCStr(conf))
 {       CStr(what,128);
         CStr(value,2048);

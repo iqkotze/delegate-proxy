@@ -235,6 +235,14 @@ int setREUSEADDR(int on)
 	return reuse;
 }
 DG_PARAM(SOCKOPT, "SOCKOPT=[no]name[:value]", "reuse", "Set socket options such as reuse, share, shut or buffer sizes", "SOCKOPT=noreuse")
+DG_PARAM_SUB(SOCKOPT, "reuse", "[no]reuse", "reuse", "Instant reuse of a port number (SO_REUSEADDR)", "SOCKOPT=noreuse")
+DG_PARAM_SUB(SOCKOPT, "share", "[no]share", "noshare", "Simultaneous use of a port (SO_REUSEPORT)", "SOCKOPT=share")
+DG_PARAM_SUB(SOCKOPT, "shut", "[no]shut", "shut", "Call shutdown on a socket before closing it", "SOCKOPT=noshut")
+DG_PARAM_SUB(SOCKOPT, "connctrl", "[no]connctrl", "connctrl", "Connect control (retry and timeout); noconnctrl disables it", "SOCKOPT=noconnctrl")
+DG_PARAM_SUB(SOCKOPT, "buffsize", "buffsize:size[kiosc][:connMap]", "none", "Size of the socket buffers; k kilo, i input, o output, s server, c client", "SOCKOPT=buffsize:64kis")
+DG_PARAM_SUB(SOCKOPT, "shutdown", "shutdown:g[:connMap]", "none", "Graceful shutdown for HTTP responses, effective on Win32", "SOCKOPT=shutdown:g")
+DG_PARAM_SUB(SOCKOPT, "linger", "linger:value[:connMap]", "none", "[ungeprüft] SO_LINGER of sockets", "SOCKOPT=linger:3")
+DG_PARAM_SUB(SOCKOPT, "keepalive", "keepalive:value[:connMap]", "none", "[ungeprüft] SO_KEEPALIVE of sockets", "SOCKOPT=keepalive:on")
 void scan_SOCKOPT(DGC*ctx,PCStr(conf))
 {
 	scan_commaList(conf,0,scanListCall conf1);
@@ -269,7 +277,10 @@ static scanListFunc ipconf1(PCStr(conf))
 	}
 	return 0;
 }
-DG_PARAM(IPV6, "IPV6=name[:no]", "4map on, 6also off, 4also off", "[ungeprüft] IPv6 handling; 4map unifies mapped addresses, 6also and 4also add the other family", "IPV6=6also")
+DG_PARAM(IPV6, "IPV6=name[:no]", "4map on, 6also off, 4also off", "IPv6 handling; 4map unifies mapped addresses, 6also and 4also add the other family", "IPV6=6also")
+DG_PARAM_SUB(IPV6, "4map", "4map[:no]", "on", "Unify IPv4-mapped IPv6 addresses with IPv4 addresses", "IPV6=4map:no")
+DG_PARAM_SUB(IPV6, "6also", "6also[:no]", "off", "Open entrance sockets as IPv6 sockets that also accept IPv4", "IPV6=6also")
+DG_PARAM_SUB(IPV6, "4also", "4also[:no]", "off", "[ungeprüft] Turn IPV6_V6ONLY off on IPv6 sockets", "IPV6=4also")
 void scan_IPV6(DGC*ctx,PCStr(conf))
 {
 	scan_commaList(conf,0,scanListCall ipconf1);
@@ -832,8 +843,8 @@ DG_PARAM(RES_AF, "RES_AF=afOrder", "46", "Order of the address families to look 
 DG_PARAM(RES_RR, "RES_RR=HostList", "*", "Round robin over the IP addresses of the listed hosts", "RES_RR=\"\"")
 DG_PARAM(RES_VRFY, "RES_VRFY=\"\"", "none", "Verify results of reverse lookups by a forward lookup", "RES_VRFY=\"\"")
 DG_PARAM(RES_DEBUG, "RES_DEBUG=number", "none", "Debug logging level of the built-in resolver", "RES_DEBUG=1")
-DG_PARAM(RES_LOG, "RES_LOG=path", "none", "[ungeprüft] File to which the resolver appends its log", "RES_LOG=/var/spool/delegate/log/resolv.log")
-DG_PARAM(RES_EXPIRE, "RES_EXPIRE=seconds[/onmem[/dnsrr]]", "none", "[ungeprüft] Expiration time in seconds of the host cache of the resolver", "RES_EXPIRE=300")
+DG_PARAM(RES_LOG, "RES_LOG=path", "none", "File to which the resolver appends its log", "RES_LOG=/var/spool/delegate/log/resolv.log")
+DG_PARAM(RES_EXPIRE, "RES_EXPIRE=seconds[/onmem[/dnsrr]]", "none", "Expiration time in seconds of the host cache of the resolver", "RES_EXPIRE=300")
 void init_resolv(PCStr(resolv),PCStr(conf),PCStr(ns),PCStr(af),PCStr(verify),PCStr(rr),PCStr(debug),PCStr(log))
 {
 	IStr(order,RESOLVERS_SIZ);
@@ -5458,7 +5469,11 @@ MMap *arpMMap;
 MMap *md5MMap;
 const char *ARP_CACHE = "${ACTDIR}/delegate-arp";
 const char *MD5_CACHE = "${ACTDIR}/delegate-md5";
-DG_PARAM(ARPCONF, "ARPCONF=name:value", "command:arp %A", "[ungeprüft] ARP lookup settings: command, cache-file, cache-size, cache-expire", "ARPCONF=cache-expire:120")
+DG_PARAM(ARPCONF, "ARPCONF=name:value", "command:arp %A", "ARP lookup settings: command, cache-file, cache-size, cache-expire", "ARPCONF=cache-expire:120")
+DG_PARAM_SUB(ARPCONF, "command", "command:commandLine", "arp %A", "Command that looks up the MAC address of an IP address (%A)", "ARPCONF=\"command:arp -n %A\"")
+DG_PARAM_SUB(ARPCONF, "cache-file", "cache-file:path", "${ACTDIR}/delegate-arp", "File that holds the ARP cache", "ARPCONF=cache-file:/run/delegate/arp")
+DG_PARAM_SUB(ARPCONF, "cache-size", "cache-size:N", "256", "Stores the value in the cache expire variable, like cache-expire; the size is not set", "ARPCONF=cache-size:256")
+DG_PARAM_SUB(ARPCONF, "cache-expire", "cache-expire:seconds", "60", "Seconds an ARP cache entry stays valid", "ARPCONF=cache-expire:120")
 void scan_ARPCONF(DGC*ctx,PCStr(conf)){
 	IStr(nam,32);
 	IStr(val,256);

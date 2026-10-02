@@ -871,6 +871,13 @@ int icp_select(PCStr(url),int icpopts[],const char *svaddrs[],int svports[],doub
 
 #define ICPMAP	"ICPmap"
 DG_PARAM(ICPCONF, "ICPCONF={icpMaxima|icpConf}", "para:2,hitage:1d,hitobjage:1h,hitobjsize:1024,nofetch:1d,timeout:2.0", "Configuration of the DeleGate as ICP server: para, hitage, hitobjage, hitobjsize, timeout", "ICPCONF=para:4,hitage:2d")
+DG_PARAM_SUB(ICPCONF, "para", "para:N", "2", "Number of parallel ICP-DeleGate servers", "ICPCONF=para:4")
+DG_PARAM_SUB(ICPCONF, "hitage", "hitage:period", "1d", "Valid age of cached data reported as HIT", "ICPCONF=hitage:2d")
+DG_PARAM_SUB(ICPCONF, "hitobjage", "hitobjage:period", "1h", "Valid age of cached data sent as HIT_OBJ", "ICPCONF=hitobjage:30m")
+DG_PARAM_SUB(ICPCONF, "hitobjsize", "hitobjsize:bytes", "1024", "Maximum size of cached data sent as HIT_OBJ", "ICPCONF=hitobjsize:2048")
+DG_PARAM_SUB(ICPCONF, "nofetch", "nofetch:period", "1d", "[ungeprüft] Parsed but not used by the ICP code", "ICPCONF=nofetch:1d")
+DG_PARAM_SUB(ICPCONF, "timeout", "timeout:seconds", "2.0", "Default timeout when waiting for a response", "ICPCONF=timeout:3.0")
+DG_PARAM_SUB(ICPCONF, "debug", "debug:N", "0", "Level of debug logging", "ICPCONF=debug:1")
 void scan_ICPCONF(DGC*Conn,PCStr(conf))
 {	int cc,ci;
 	CStr(confb,1024);

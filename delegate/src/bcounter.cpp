@@ -152,6 +152,19 @@ int scan_COUNTER1(DGC*ctx,int COUNTER,PCStr(spec)){
 	return COUNTER;
 }
 DG_PARAM(COUNTER, "COUNTER=listOfCounterControl", "no", "Access counters: do, total, acc, ssi, ref, err, ro, no", "COUNTER=do")
+DG_PARAM_SUB(COUNTER, "do", "do", "off", "Enable all counters: total, acc, ssi, ref and err", "COUNTER=do")
+DG_PARAM_SUB(COUNTER, "total", "total", "off", "Enable the total hit counter of the server", "COUNTER=total")
+DG_PARAM_SUB(COUNTER, "acc", "acc", "off", "Enable an access counter for each requested URL", "COUNTER=acc")
+DG_PARAM_SUB(COUNTER, "ssi", "ssi", "off", "Enable the access counters for SSI PAGE_COUNT", "COUNTER=ssi")
+DG_PARAM_SUB(COUNTER, "ref", "ref", "off", "Enable the referrer counters for the HTTP Referer field", "COUNTER=ref")
+DG_PARAM_SUB(COUNTER, "err", "err", "off", "Enable the error counters for SMTP", "COUNTER=err")
+DG_PARAM_SUB(COUNTER, "ro", "ro", "off", "Enable the counters in read-only mode", "COUNTER=ro")
+DG_PARAM_SUB(COUNTER, "no", "no", "on", "Disable all counters", "COUNTER=no")
+DG_PARAM_SUB(COUNTER, "mntpv", "mntpV", "off", "Use the counter of the MOUNT point (vURL) instead of each URL", "COUNTER=mntpV")
+DG_PARAM_SUB(COUNTER, "mntpr", "mntpR", "off", "[ungeprüft] Use the counter of the real URL (rURL) of the MOUNT point", "COUNTER=mntpR")
+DG_PARAM_SUB(COUNTER, "all", "all", "off", "Same as do", "COUNTER=all")
+DG_PARAM_SUB(COUNTER, "inc", "inc", "off", "[ungeprüft] Increment the counters", "COUNTER=inc")
+DG_PARAM_SUB(COUNTER, "debug", "debug[N]", "off", "Debug level of the counters, hexadecimal", "COUNTER=debug1")
 void scan_COUNTER(DGC*ctx,PCStr(spec)){
 	gl_COUNTER = scan_COUNTER1(ctx,gl_COUNTER,spec);
 	if( CNT_DBGLEV == 0 ){

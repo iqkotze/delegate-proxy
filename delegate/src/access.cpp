@@ -843,6 +843,16 @@ scanListFunc scan_RELAY1(PCStr(relay1),Connection *Conn)
 	return 0;
 }
 DG_PARAM(RELAY, "RELAY=relayTypeList[:connMap]", "delegate,nojava:*:*:.localnet;vhost,nojava:http:{*:80}:.localnet;proxy", "Proxying mode of the DeleGate as HTTP server: proxy, delegate, vhost, no, nojava, noapplet", "RELAY=\"proxy:*:*:*\"")
+DG_PARAM_SUB(RELAY, "proxy", "proxy", "on for all clients", "Work as a standard CERN compatible HTTP proxy that accepts full URLs", "RELAY=proxy")
+DG_PARAM_SUB(RELAY, "delegate", "delegate", "on for .localnet", "Work as a DeleGate proxy that accepts /-_-URL and rewrites URLs in responses", "RELAY=delegate")
+DG_PARAM_SUB(RELAY, "vhost", "vhost", "on for http:*:80 from .localnet", "Relay to the server given in the Host field (transparent proxy)", "RELAY=vhost")
+DG_PARAM_SUB(RELAY, "novhost", "novhost", "off", "Disable relaying by the Host field", "RELAY=novhost")
+DG_PARAM_SUB(RELAY, "tproxy", "tproxy", "off", "Same as vhost", "RELAY=tproxy")
+DG_PARAM_SUB(RELAY, "origdst", "origdst", "off", "[ungeprüft] Relay to the original destination of the connection", "RELAY=origdst")
+DG_PARAM_SUB(RELAY, "y11", "y11", "off", "[ungeprüft] Allow relaying for the Y11 protocol", "RELAY=y11")
+DG_PARAM_SUB(RELAY, "yy", "yy", "off", "[ungeprüft] Allow relaying for the YYMUX protocol", "RELAY=yy")
+DG_PARAM_SUB(RELAY, "nojava", "nojava", "on for delegate and vhost", "Disable APPLET, EMBED and OBJECT tags in relayed responses", "RELAY=delegate,nojava")
+DG_PARAM_SUB(RELAY, "noapplet", "noapplet", "off", "Disable only APPLET tags in relayed responses", "RELAY=delegate,noapplet")
 void scan_RELAY(Connection *Conn,PCStr(relay))
 {
 	scan_List(relay,';',0,scanListCall scan_RELAY1,Conn);
@@ -1964,6 +1974,9 @@ extern const char *PAMbaseurl;
 extern const char *PAMurl;
 int PAMport;
 DG_PARAM(PAMCONF, "PAMCONF=name:value", "none", "[ungeprüft] Settings of PAM authentication: baseurl, url and port", "PAMCONF=port:8000")
+DG_PARAM_SUB(PAMCONF, "baseurl", "baseurl:URL", "none", "[ungeprüft] Base URL of the PAM authentication server", "PAMCONF=baseurl:http://pamhost")
+DG_PARAM_SUB(PAMCONF, "url", "url:URL", "none", "[ungeprüft] URL of the PAM authentication server", "PAMCONF=url:http://pamhost/auth")
+DG_PARAM_SUB(PAMCONF, "port", "port:N", "0", "[ungeprüft] Port of the PAM authentication server", "PAMCONF=port:8000")
 void scan_PAMCONF(Connection *Conn,PCStr(conf))
 {	CStr(name,64);
 	CStr(value,64);

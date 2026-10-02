@@ -494,6 +494,20 @@ static scanListFunc scanconf1(PCStr(conf))
 }
 
 DG_PARAM(DNSCONF, "DNSCONF=what:value", "none", "Settings of the DNS server: para, domain, origin, admin, serial, refresh, retry, mx", "DNSCONF=domain:my.domain")
+DG_PARAM_SUB(DNSCONF, "para", "para:N", "2", "Number of parallel server processes", "DNSCONF=para:4")
+DG_PARAM_SUB(DNSCONF, "domain", "domain:FQDN", "domain of the host of DeleGate", "Domain name used in the SOA record", "DNSCONF=domain:my.domain")
+DG_PARAM_SUB(DNSCONF, "origin", "origin:FQDN", "host name of the host of DeleGate", "Host name used in the SOA record", "DNSCONF=origin:ns.my.domain")
+DG_PARAM_SUB(DNSCONF, "admin", "admin:Email", "ADMIN", "Mail address of the administrator in the SOA record", "DNSCONF=admin:root@my.domain")
+DG_PARAM_SUB(DNSCONF, "mx", "mx:FQDN", "primary host of -MX.host or the inquired host", "Host name returned in MX records", "DNSCONF=mx:mail.my.domain")
+DG_PARAM_SUB(DNSCONF, "serial", "serial:N", "date and hour of the last configuration change", "Serial number of the SOA record", "DNSCONF=serial:2026100201")
+DG_PARAM_SUB(DNSCONF, "refresh", "refresh:period", "6h", "Refresh interval of the SOA record", "DNSCONF=refresh:6h")
+DG_PARAM_SUB(DNSCONF, "retry", "retry:period", "10m", "Retry interval of the SOA record", "DNSCONF=retry:10m")
+DG_PARAM_SUB(DNSCONF, "expire", "expire:period", "14d", "Expire period of the SOA record", "DNSCONF=expire:14d")
+DG_PARAM_SUB(DNSCONF, "minttl", "minttl:period", "6h", "Minimum TTL of the SOA record", "DNSCONF=minttl:6h")
+DG_PARAM_SUB(DNSCONF, "acctcp", "acctcp", "off", "Accept DNS queries over TCP", "DNSCONF=acctcp")
+DG_PARAM_SUB(DNSCONF, "cltcp", "cltcp", "off", "[ungeprüft] Use TCP for DNS messages on the client side", "DNSCONF=cltcp")
+DG_PARAM_SUB(DNSCONF, "svtcp", "svtcp", "off", "[ungeprüft] Use TCP for DNS messages on the server side", "DNSCONF=svtcp")
+DG_PARAM_SUB(DNSCONF, "dbgvul", "dbgvul", "off", "[ungeprüft] Skip the overrun check of the question section, for debugging", "DNSCONF=dbgvul")
 void scan_DNSCONF(Connection *Conn,PCStr(conf))
 {
 	scan_commaList(conf,0,scanListCall scanconf1);

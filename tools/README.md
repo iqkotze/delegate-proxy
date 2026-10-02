@@ -129,7 +129,17 @@ Das Programm zeigt dieselben Daten an.
 
 ## check-params.py
 
-Meldet Parameter, die der Code liest und die kein `DG_PARAM` haben. Es meldet auch Deklarationen, die der Code nicht liest. Geprüft werden die Namen aus `delegate/src/param.cpp`, die Literale in `getEnv` Aufrufen und die Unteroptionen von `MAXIMA` und `TIMEOUT` aus `delegate/src/env.cpp` sowie von `TLSCONF` aus `delegate/filters/sslway.cpp`. Namen mit Unterstrich am Anfang sind intern und werden ignoriert. Der Exit-Code ist 1, wenn Lücken oder ungültige Deklarationen vorliegen. `ctest` führt das Skript als Test `param-check` aus.
+Meldet Parameter, die der Code liest und die kein `DG_PARAM` haben. Es meldet auch Deklarationen, die der Code nicht liest. Geprüft werden die Namen aus `delegate/src/param.cpp` und die Literale in `getEnv` Aufrufen. Namen mit Unterstrich am Anfang sind intern und werden ignoriert.
+
+Für 30 Parameter prüft das Skript auch die Unteroptionen mit `DG_PARAM_SUB`. Es liest die Namen aus den Vergleichen im Parser des Parameters, zum Beispiel `streq(name,"listen")`. Kommentare im Code zählen nicht. Die Tabelle `SUBS` am Anfang des Skripts ordnet jedem Parameter Datei, Funktion und Variable zu. Ein neuer Parser mit Unteroptionen braucht dort einen Eintrag.
+
+* `CONNECT` wertet die `case` Marken der Funktion `connect1` aus. Die Syntax der Unteroption nennt den Buchstaben in Klammern.
+* `SYSLOG` wertet die Optionsbuchstaben aus.
+* `MOUNT` liest die Tabelle `mount_opts` in `mount.cpp`. Die Tabelle `MOUNT_EXTRA` im Skript führt MountOptions auf, die andere Dateien auswerten. Das Skript prüft, dass der Text dort vorkommt.
+* `STLS` kennt Aliase wie `sv`, `cl` und `mim`. Das Skript setzt sie auf die deklarierten Namen um.
+* `HTTPCONF` kennt die Präfixfamilien `kill-`, `add-` und `replace-` mit Vergleichen wie `streq(what+5,"qhead")`.
+
+Der Name einer Unteroption darf Buchstaben, Ziffern, Punkt, Unterstrich und Minus enthalten. Ein Minus am Anfang ist erlaubt. Der Exit-Code ist 1, wenn Lücken oder ungültige Deklarationen vorliegen. `ctest` führt das Skript als Test `param-check` aus.
 
     tools/check-params.py
 

@@ -2752,7 +2752,7 @@ int FMT_fputLog(Connection *Conn,PCStr(filter),PCStr(fmt),...)
 	return 0;
 }
 
-DG_PARAM(LOG, "LOG=proto:filters:logform:pathform", "none", "[ungeprüft] Additional log file for a protocol, with filter, format and path", "LOG=http:*:%C:http.log")
+DG_PARAM(LOG, "LOG=proto:filters:logform:pathform", "none", "Additional log file for a protocol, with filter, format and path", "LOG=http:*:%C:http.log")
 void scan_LOG(Connection *Conn,PCStr(log))
 {	CStr(proto,64);
 	CStr(filters,256);
@@ -2838,7 +2838,7 @@ static char *tmpdgroot(){
 int normalizePath(PCStr(ipath),PVStr(npath));
 DG_PARAM(ETCDIR, "ETCDIR=dirPath", "${VARDIR}/etc", "Directory of persistent configuration and management files", "ETCDIR=/etc/delegate")
 DG_PARAM(ADMDIR, "ADMDIR=dirPath", "${VARDIR}/adm", "Directory of generated administration files, such as shutout, passwords and counters", "ADMDIR=/var/spool/delegate/adm")
-DG_PARAM(LIBDIR, "LIBDIR=dirPath", "${VARDIR}/lib", "[ungeprüft] Directory of library files, the first entry of the default LIBPATH", "LIBDIR=/var/spool/delegate/lib")
+DG_PARAM(LIBDIR, "LIBDIR=dirPath", "${VARDIR}/lib", "Directory of library files, referred to as ${LIBDIR} in LIBPATH", "LIBDIR=/var/spool/delegate/lib")
 DG_PARAM(ACTDIR, "ACTDIR=dirPath", "${DGROOT?&/act:/tmp/delegate}", "Directory of temporary files of active servers, removed at termination", "ACTDIR=/var/spool/delegate/act")
 DG_PARAM(TMPDIR, "TMPDIR=dirPath", "${DGROOT?&/tmp:/tmp/delegate}", "Directory of invisible temporary files", "TMPDIR=/var/spool/delegate/tmp")
 void substfile(PVStr(file),PCStr(proto),PVStr(rvardir),PVStr(rlogdir),PVStr(ractdir))
@@ -3520,7 +3520,7 @@ void setAbortLog(PCStr(form));
 DG_PARAM(LOGFILE, "LOGFILE=[LogFilename]", "${LOGDIR}/${PORT}", "Log file of the DeleGate; empty value stops logging", "LOGFILE='${PORT}[date+.%d]'")
 DG_PARAM(ERRORLOG, "ERRORLOG=LogFilename", "${LOGDIR}/errors.log", "Log file for errors", "ERRORLOG=errors.log")
 DG_PARAM(TRACELOG, "TRACELOG=LogFilename", "${LOGDIR}/ptrace.log", "Log file for the signal trace written with the -T option", "TRACELOG=ptrace.log")
-DG_PARAM(ABORTLOG, "ABORTLOG=LogFilename", "${LOGDIR}/abort/${PORT}", "[ungeprüft] Log file written on abnormal termination", "ABORTLOG=abort.log")
+DG_PARAM(ABORTLOG, "ABORTLOG=LogFilename", "${LOGDIR}/abort/${PORT}", "Log file written on abnormal termination", "ABORTLOG=abort.log")
 static void ScanLogs(Connection *Conn,PCStr(proto))
 {	const char *env;
 
@@ -3618,8 +3618,8 @@ static void scanGGlobals(Connection *Conn,int inmain){
 
 #define ScanGlobal(Conn,proto) DELEGATE_ScanGlobal(Conn,proto)
 DG_PARAM(ADMIN, "ADMIN=user@host.domain", "root@localhost (set at build time with -DADMIN)", "E-mail address of the administrator, shown in messages and sent as FTP password", "ADMIN=admin@example.com")
-DG_PARAM(MANAGER, "MANAGER=user@host.domain", "none", "[ungeprüft] Obsolete alias of ADMIN", "MANAGER=admin@example.com")
-DG_PARAM(M17N, "M17N=on | M17N=off", "off", "[ungeprüft] Enable the m17n library for character code conversion", "M17N=on")
+DG_PARAM(MANAGER, "MANAGER=user@host.domain", "none", "Obsolete alias of ADMIN", "MANAGER=admin@example.com")
+DG_PARAM(M17N, "M17N=on | M17N=off", "off", "Enable the m17n library for character code conversion", "M17N=on")
 void ScanGlobal(Connection *Conn,PCStr(proto))
 {	const char *env;
 
@@ -3842,7 +3842,7 @@ DG_PARAM(LDPATH, "LDPATH=dirPath[;dirPath]*", "${ETCDIR};${LIBDIR};${EXECDIR};${
 DG_PARAM(LIBPATH, "LIBPATH=dirPath[:dirPath]*", ".;${STARTDIR};${LIBDIR};${EXECDIR};${ETCDIR}", "Directories searched for library files such as parameter files, CFI scripts and filters", "LIBPATH=\".:/etc/delegate\"")
 DG_PARAM(DATAPATH, "DATAPATH=dirPath[:dirPath]*", ".;${DGROOT};${STARTDIR};${EXECDIR}", "Directories searched for data files given as relative paths, for example in MOUNT", "DATAPATH=\".:/var/www\"")
 DG_PARAM(VARDIR, "VARDIR=dirPath", "${DGROOT?&:/var/spool/delegate}", "Base directory of CACHEDIR, ETCDIR, ADMDIR, LOGDIR and WORKDIR; obsolete, use DGROOT", "VARDIR=/var/spool/delegate")
-DG_PARAM(STDOUTLOG, "STDOUTLOG=LogFilename", "${LOGDIR}/stdout.log", "[ungeprüft] Log file that receives the standard output of the server", "STDOUTLOG=stdout.log")
+DG_PARAM(STDOUTLOG, "STDOUTLOG=LogFilename", "${LOGDIR}/stdout.log", "Log file that receives the standard output of the server", "STDOUTLOG=stdout.log")
 DG_PARAM(PIDFILE, "PIDFILE=fileName", "${ACTDIR}/pid/${PORT}", "File that records the process ID of the DeleGate", "PIDFILE=/var/run/delegate-8080.pid")
 static void ScanDirDefs(Connection *Conn)
 {	const char *env;
@@ -3901,7 +3901,7 @@ void scan_CACHEARC(PCStr(file));
 void scan_CACHEDIR(PCStr(dirs));
 void scan_CACHEFILE(PCStr(file));
 
-DG_PARAM(IMAGEDIR, "IMAGEDIR=dirPath", "none", "[ungeprüft] Directory of the icon images referred to by Gopher menus", "IMAGEDIR=/var/www/icons")
+DG_PARAM(IMAGEDIR, "IMAGEDIR=dirPath", "none", "Directory of the icon images referred to by Gopher menus", "IMAGEDIR=/var/www/icons")
 void ScanFileDefs(Connection *Conn)
 {	const char *env;
 
@@ -6510,12 +6510,12 @@ void print_caps(FILE *out,int test);
 int Gmtoff();
 
 double ServerStarted;
-DG_PARAM(FUNC, "FUNC=name", "name of the executable file", "[ungeprüft] Function to run when no -F option is given", "FUNC=ver")
-DG_PARAM(INPARAM, "INPARAM=file", "none", "[ungeprüft] Enables the import of parameters at run time; the value is not evaluated", "INPARAM=/var/spool/delegate/params")
-DG_PARAM(LINGER, "LINGER=seconds", "30", "[ungeprüft] Linger time in seconds of the output side of sockets", "LINGER=10")
+DG_PARAM(FUNC, "FUNC=name", "name of the executable file", "Function to run when no -F option is given", "FUNC=ver")
+DG_PARAM(INPARAM, "INPARAM=file", "none", "Enables the import of parameters at run time; the value is not evaluated", "INPARAM=/var/spool/delegate/params")
+DG_PARAM(LINGER, "LINGER=seconds", "30", "Linger time in seconds of the output side of sockets", "LINGER=10")
 DG_PARAM(TUNNEL, "TUNNEL=tunnelType:script", "none", "Communicate with an upstream DeleGate through the standard I/O of a script", "TUNNEL=tty7:tunnel.shio")
 DG_PARAM(INVITE, "INVITE=value", "none", "[ungeprüft] Value passed to the teleport server together with TUNNEL", "INVITE=*")
-DG_PARAM(LOGCENTER, "LOGCENTER=host:port", "none (an empty value selects www.delegate.org:8000)", "[ungeprüft] Log center that the server opens a UDP client connection to", "LOGCENTER=logcenter.example.com:8000")
+DG_PARAM(LOGCENTER, "LOGCENTER=host:port", "none (an empty value selects www.delegate.org:8000)", "Log center that the server opens a UDP client connection to", "LOGCENTER=logcenter.example.com:8000")
 static void _main(int ac,const char *av[])
 {	FILE *fp;
 	int clsock;
@@ -9840,7 +9840,7 @@ void deleteWORKDIR()
 }
 
 FILE *openStatusFile(PCStr(pathform));
-DG_PARAM(STATFILE, "STATFILE=path", "none", "[ungeprüft] File to which status lines with a time stamp are written", "STATFILE=/var/spool/delegate/status")
+DG_PARAM(STATFILE, "STATFILE=path", "none", "File to which status lines with a time stamp are written", "STATFILE=/var/spool/delegate/status")
 void putStatus(PCStr(fmt),...)
 {	const char *file;
 	FILE *fp;

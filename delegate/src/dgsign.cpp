@@ -1543,7 +1543,7 @@ char *signParams(PVStr(ep),ParamSet *PS,FILE *ifp,PCStr(oexe),PCStr(save)){
 	sprintf(ep,"+=enc:imp::%s:\n",econf);
 	return (char*)ep + strlen(ep);
 }
-DG_PARAM(EDITOR, "EDITOR=command", "vi", "[ungeprüft] Editor for the parameters of an executable file; VISUAL is tried next, then vi", "EDITOR=vi")
+DG_PARAM(EDITOR, "EDITOR=command", "vi", "Editor for the parameters of an executable file; VISUAL is tried next, then vi", "EDITOR=vi")
 static int editParams(const char *av[],PCStr(iexe),PVStr(buf),int bsiz){
 	refQStr(bp,buf);
 	const char *bx = &buf[bsiz-1];
@@ -2940,7 +2940,7 @@ static void enc_help(int ac,const char *av[],FILE *out,int enc){
  * -Fenc [-kKEY] file
  * -Fdec [-kKEY] file
  */
-DG_PARAM(VISUAL, "VISUAL=command", "vi", "[ungeprüft] Editor for the argument encode and decode function; EDITOR is tried next, then vi", "VISUAL=vi")
+DG_PARAM(VISUAL, "VISUAL=command", "vi", "Editor for the argument encode and decode function; EDITOR is tried next, then vi", "VISUAL=vi")
 int encdecarg_main(int ac,const char *av[],int enc){
 	int ai;
 	int aj;

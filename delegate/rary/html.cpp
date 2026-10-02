@@ -106,6 +106,18 @@ int scan_URICONV(void *_,PCStr(conv))
 	return 0;
 }
 DG_PARAM(HTMLCONV, "HTMLCONV=convList", "deent", "Conversions of HTML text: deent, enent, fullurl", "HTMLCONV=deent,fullurl")
+DG_PARAM_SUB(HTMLCONV, "deent", "deent", "on", "Decode entity symbols appearing in multi-byte charset text", "HTMLCONV=deent")
+DG_PARAM_SUB(HTMLCONV, "enent", "enent", "off", "Encode entity symbols appearing outside multi-byte charset text", "HTMLCONV=enent")
+DG_PARAM_SUB(HTMLCONV, "fullurl", "fullurl", "off", "Convert all URLs to full URLs; equals URICONV=full:+,-HREF/BASE", "HTMLCONV=fullurl")
+DG_PARAM_SUB(HTMLCONV, "partial", "partial", "off", "Represent MOUNTed URLs as partial URLs if possible", "HTMLCONV=partial")
+DG_PARAM_SUB(HTMLCONV, "normal", "normal", "off", "Normalize MOUNTed URLs that contain ../", "HTMLCONV=normal")
+DG_PARAM_SUB(HTMLCONV, "pre", "pre", "off", "[ungeprüft] Convert plain text to HTML with PRE", "HTMLCONV=pre")
+DG_PARAM_SUB(HTMLCONV, "debug", "debug", "off", "[ungeprüft] Log the HTML conversion", "HTMLCONV=debug")
+DG_PARAM_SUB(HTMLCONV, "dump", "dump", "off", "Show the current URI conversion settings", "HTMLCONV=dump")
+DG_PARAM_SUB(HTMLCONV, "defelem", "defelem:+,elemList", "none", "Define the HTML elements considered by the URI rewriting, like URICONV defelem", "HTMLCONV=defelem:+,IMG")
+DG_PARAM_SUB(HTMLCONV, "defattr", "defattr:+,attrList", "none", "Define the HTML attributes considered by the URI rewriting, like URICONV defattr", "HTMLCONV=defattr:+,SRC")
+DG_PARAM_SUB(HTMLCONV, "uri", "uri:convSpec", "none", "Set the URI conversion, like URICONV", "HTMLCONV=uri:full:+")
+DG_PARAM_SUB(HTMLCONV, "killtag", "killtag:tagList", "none", "Disable the listed tags in HTML responses, like HTTPCONF kill-tag", "HTMLCONV=killtag:SCRIPT")
 int scan_HTMLCONV(void *_,PCStr(clist))
 {
 	ENCODE_HTML_ENTITIES = 0;
