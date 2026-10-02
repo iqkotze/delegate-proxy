@@ -39,33 +39,33 @@ dg_configure_target(dg_core)
 
 dg_files(teleport_srcs teleport ${DG_SRCS_TELEPORT})
 add_library(dg_teleport STATIC ${teleport_srcs})
-dg_configure_target(dg_teleport M64)
+dg_configure_target(dg_teleport)
 
 dg_files(resolvy_srcs resolvy ${DG_SRCS_RESOLVY})
 add_library(dg_resolvy STATIC ${resolvy_srcs})
-dg_configure_target(dg_resolvy M64)
+dg_configure_target(dg_resolvy)
 
 dg_files(mimekit_srcs mimekit ${DG_SRCS_MIMEKIT})
 add_library(dg_mimekit STATIC ${mimekit_srcs})
-dg_configure_target(dg_mimekit M64 DEFS MIMEKIT)
+dg_configure_target(dg_mimekit DEFS MIMEKIT)
 target_include_directories(dg_mimekit PRIVATE ${DG_ROOT}/mimekit)
 
 dg_files(md5_srcs pds/md5 ${DG_SRCS_MD5})
 add_library(dg_md5 STATIC ${md5_srcs})
-dg_configure_target(dg_md5 M64)
+dg_configure_target(dg_md5)
 
 dg_files(fsx_srcs fsx ${DG_SRCS_FSX})
 add_library(dg_fsx STATIC ${fsx_srcs})
-dg_configure_target(dg_fsx M64)
+dg_configure_target(dg_fsx)
 
 dg_files(gates_srcs gates ${DG_SRCS_GATES})
 add_library(dg_gates STATIC ${gates_srcs})
-dg_configure_target(dg_gates M64 SRC_INC NO_EXCEPTIONS)
+dg_configure_target(dg_gates SRC_INC NO_EXCEPTIONS)
 
 dg_files(rary_srcs rary ${DG_SRCS_RARY})
 dg_stub(libpam_stub ${DG_ROOT}/rary/libpam.cpp libpam_dl)
 add_library(dg_rary STATIC ${rary_srcs} ${libpam_stub})
-dg_configure_target(dg_rary M64)
+dg_configure_target(dg_rary)
 
 dg_files(cfi_srcs filters ${DG_SRCS_CFI})
 set(cfi_stubs "")
@@ -74,11 +74,11 @@ foreach(m IN LISTS DG_CFI_STUBS)
   list(APPEND cfi_stubs ${stub})
 endforeach()
 add_library(dg_cfi STATIC ${cfi_srcs} ${cfi_stubs})
-dg_configure_target(dg_cfi M64 SRC_INC)
+dg_configure_target(dg_cfi SRC_INC)
 
 dg_files(subst_srcs maker ${DG_SRCS_SUBST})
 add_library(dg_subst STATIC ${subst_srcs})
-dg_configure_target(dg_subst M64 SRC_INC)
+dg_configure_target(dg_subst SRC_INC)
 
 set(DG_SYSLIBS dl util pthread stdc++)
 
