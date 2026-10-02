@@ -66,6 +66,7 @@ History:
 #include "proc.h"
 #include "log.h"
 #include "file.h" /* dupclosed() */
+#include "dgparam.h"
 
 int isPrivateSox(DGC*ctx);
 int CTX_withAuth(DGC*ctx);
@@ -375,6 +376,7 @@ int SOXMUX_UDP_MAX = 64;
 int SOX_NOENCRYPT = 0;
 int SOX_NOCONNDATA = 0;
 
+DG_PARAM(SOXCONF, "SOXCONF=confSpec[,confSpec]*", "none", "Configuration of SockMux, for example crypt:no and packsize:SIZE", "SOXCONF=crypt:no")
 void scan_SOXCONF(DGC*ctx,PCStr(conf))
 {	CStr(what,32);
 	CStr(value,64);

@@ -50,6 +50,7 @@ TODO:
 #include "mysgTTy.h"
 #include "service.h"
 #include "http.h"
+#include "dgparam.h"
 
 #if 0 /*{ became unnecessary with FL_fcloseFILE for Unix */
 #if defined(fcloseFILE) /*{*/
@@ -3346,6 +3347,7 @@ int scan_yyopts(Connection *Conn,PCStr(arg)){
 	MxFlags = scan_yopts(Mc,Conn,MxFlags,arg);
 	return MxFlags;
 }
+DG_PARAM(YYCONF, "YYCONF=name[:value]", "none", "Environment of the yyMux user session, such as HOME, PATH and SHELL", "YYCONF=\"SHELL:/bin/sh\"")
 void scan_YYCONF(Connection *Conn,PCStr(conf)){
 	MuxCtx *Mc = initgMc(Conn);
 	IStr(nam,128);
@@ -3403,6 +3405,7 @@ void scan_YYCONF(Connection *Conn,PCStr(conf)){
 
 static const char *yy_YYMUX_MAP = "YYMUX";
 static int yy_withYYMUX;
+DG_PARAM(YYMUX, "YYMUX=host[:port][:connMap]", "none", "YYMUX server used as upstream proxy to tunnel and multiplex connections", "YYMUX=hostX:6010")
 void scan_YYMUX(Connection *Conn,PCStr(conf)){
 	MuxCtx *Mc = initgMc(Conn);
 	IStr(host,MaxHostNameLen);

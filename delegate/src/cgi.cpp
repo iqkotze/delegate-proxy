@@ -29,6 +29,7 @@ History:
 #include "log.h"
 #include <ctype.h>
 #include <errno.h>
+#include "dgparam.h"
 #define MY_CGIVER	"1.1"
 
 void closeOnExecServPorts(int set);
@@ -111,6 +112,7 @@ static void cgi_head2env(PCStr(head),StrVec *Evp)
 }
 
 static const char *cgienv;
+DG_PARAM(CGIENV, "CGIENV=name[,name]*", "*", "Environment variables passed to CGI programs", "CGIENV=PATH,LANG")
 int scan_CGIENV(Connection *Conn,PCStr(envlist))
 {
 	cgienv = StrAlloc(envlist);

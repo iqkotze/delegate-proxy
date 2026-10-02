@@ -30,6 +30,7 @@ History:
 #include "log.h"
 #include "yarg.h"
 #include "fpoll.h"
+#include "dgparam.h"
 
 void send_syslogX(PCStr(lclass),PCStr(log));
 void openlogX(PCStr(ident),PCStr(logopt),int facility);
@@ -357,6 +358,7 @@ logstart:
 	return lfd;
 }
 
+DG_PARAM(SYSLOG, "SYSLOG=[syslogOpts,][syslogServ]", "none", "Send log data to a syslog server, a local file or the local syslog", "SYSLOG=syslog://loghost:514")
 void scan_SYSLOG(DGC*Conn,PCStr(conf)){
 	const char *cp;
 	SysLog *SL;

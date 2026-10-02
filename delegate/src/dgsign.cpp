@@ -25,6 +25,7 @@ History:
 #include "credhy.h"
 #include "auth.h"
 #include "param.h"
+#include "dgparam.h"
 
 int AuthFunc(DGCTX,void*faddr,PCStr(FIle),int Line);
 #define iAuthFunc(f) if(AuthFunc(Conn,(void*)f,__FILE__,__LINE__)<0)return -1
@@ -1542,6 +1543,7 @@ char *signParams(PVStr(ep),ParamSet *PS,FILE *ifp,PCStr(oexe),PCStr(save)){
 	sprintf(ep,"+=enc:imp::%s:\n",econf);
 	return (char*)ep + strlen(ep);
 }
+DG_PARAM(EDITOR, "EDITOR=command", "vi", "[ungeprüft] Editor for the parameters of an executable file; VISUAL is tried next, then vi", "EDITOR=vi")
 static int editParams(const char *av[],PCStr(iexe),PVStr(buf),int bsiz){
 	refQStr(bp,buf);
 	const char *bx = &buf[bsiz-1];
@@ -2684,6 +2686,7 @@ static int checkAuth(Connection *Conn,PCStr(auth),PCStr(p_auth),PCStr(p_dom)){
 	iLog("--- AUTH. OK %s=%s",p_auth,auth);
 	return 0;
 }
+DG_PARAM(SUDOAUTH, "SUDOAUTH=pass:users:caps", "none", "[ungeprüft] Like EXECAUTH, applied when the executable file runs with super-user rights", "SUDOAUTH=secret:root:*")
 static int checkSUDOAUTH1(Connection *Conn,int ac,const char *av[]){
 	const char *auth;
 	if( auth = getEnvBin1st(P_EXECAUTH) ){
@@ -2704,6 +2707,7 @@ static int checkSUDOAUTH1(Connection *Conn,int ac,const char *av[]){
 	}
 	return 0;
 }
+DG_PARAM(EXECAUTH, "EXECAUTH=pass:users:caps", "none", "[ungeprüft] Password, user list and capabilities required to run the executable file", "EXECAUTH=secret:root:*")
 int checkEXECAUTH(Connection *Conn,int ac,const char *av[]){
 	const char *auth;
 	if( auth = getEnvBin1st(P_EXECAUTH) ){
@@ -2936,6 +2940,7 @@ static void enc_help(int ac,const char *av[],FILE *out,int enc){
  * -Fenc [-kKEY] file
  * -Fdec [-kKEY] file
  */
+DG_PARAM(VISUAL, "VISUAL=command", "vi", "[ungeprüft] Editor for the argument encode and decode function; EDITOR is tried next, then vi", "VISUAL=vi")
 int encdecarg_main(int ac,const char *av[],int enc){
 	int ai;
 	int aj;

@@ -359,6 +359,7 @@ static FILE *getTmpfile(PCStr(what),int which,int session,int bsize)
 
 
 #include <ctype.h>
+#include "dgparam.h"
 #define IS_GROUPNAMECH(ch) (isalnum(ch) || ch=='-' || ch=='.' || ch=='_')
 
 static void putIdent(FILE *tc,PCStr(msg))
@@ -873,6 +874,7 @@ static scanListFunc scan1(PCStr(conf),Connection *Conn)
 	}
 	return 0;
 }
+DG_PARAM(NNTPCONF, "NNTPCONF=what:conf", "upact:600/300/60", "NNTP settings such as pathhost and upact (update of the active list cache)", "NNTPCONF=upact:600/300/120")
 void scan_NNTPCONF(Connection *Conn,PCStr(conf))
 {
 	minit_nntp();

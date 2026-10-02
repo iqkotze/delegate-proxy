@@ -32,6 +32,7 @@ History:
 #include "ystring.h"
 #include <stdio.h>
 #include <ctype.h>
+#include "dgparam.h"
 
 #ifdef __LONG_LONG_MAX__
 typedef unsigned long long int SymIdInt;
@@ -93,6 +94,7 @@ static scanListFunc hconv1(PCStr(conv))
 	syslog_ERROR("Error: unknown HTML conversion spec: %s\n",conv);
 	return 0;
 }
+DG_PARAM(URICONV, "URICONV={convSpec|defElem|defAttr}", "shown by URICONV=dump", "Select the URI rewriting applied to the attributes of HTML tags", "URICONV=dump")
 int scan_URICONV(void *_,PCStr(conv))
 {
 	if( streq(conv,"where:any") ) URL_SEARCH = /*ANY*/0xFFFF; else
@@ -103,6 +105,7 @@ int scan_URICONV(void *_,PCStr(conv))
 					setURIconv(conv);
 	return 0;
 }
+DG_PARAM(HTMLCONV, "HTMLCONV=convList", "deent", "Conversions of HTML text: deent, enent, fullurl", "HTMLCONV=deent,fullurl")
 int scan_HTMLCONV(void *_,PCStr(clist))
 {
 	ENCODE_HTML_ENTITIES = 0;

@@ -31,6 +31,7 @@ History:
 #include "proc.h"
 #include "auth.h"
 #include "service.h"
+#include "dgparam.h"
 extern Service services[];
 
 int never_cache(Connection *Conn);
@@ -133,6 +134,7 @@ void lsProtos(FILE *out){
 /*
  * SERVICE=name:[port[/udp]][:service]
  */
+DG_PARAM(SERVICE, "SERVICE=name:[port[/udp]][:service]", "none", "[ungeprüft] Define a service name with a port, or as an alias of an existing service", "SERVICE=myhttp:8080:http")
 void scan_SERVICE(Connection *Conn,PCStr(desc))
 {	int ic,ii,port,si,sn;
 	CStr(ib,64);
@@ -281,6 +283,7 @@ static servFuncP get_servfunc(Connection *Conn,int clsock,int *withcachep,int *s
 	return &service_delegate;
 }
 
+DG_PARAM(REJECT, "REJECT=ProtoList:dstHostList:srcHostList", "none", "Reject accesses with the given protocols, to the given servers, from the given clients", "REJECT=\"pop//DELE:mail-server:mail-client\"")
 void scan_REJECT(Connection *Conn,PCStr(protolist))
 {
 	Conn->forreject = 1;
@@ -288,6 +291,7 @@ void scan_REJECT(Connection *Conn,PCStr(protolist))
 	Conn->forreject = 0;
 }
 void scan_PERMITV(Connection *Conn,PCStr(list),const char *protov[]);
+DG_PARAM(PERMIT, "PERMIT=ProtoList:dstHostList:srcHostList", "none", "Permit accesses with the given protocols, to the given servers, from the given clients", "PERMIT=\"*:*:.localnet\"")
 void scan_PERMIT(Connection *Conn,PCStr(protolist))
 {	const char *pn;
 	const char *pv[NSERVICES]; /**/
@@ -1335,6 +1339,7 @@ static void set_iserver(Connection *Conn,PCStr(upath))
 	wordscanX(upath,AVStr(D_SELECTOR),sizeof(D_SELECTOR));
 	ProcTitle(Conn,"%s://%s/",DFLT_PROTO,DFLT_HOST);
 }
+DG_PARAM(SERVER, "SERVER=protocol[://host[:portNum]][:-:MountOptions]", "delegate", "Protocol with clients and default server; SERVER=delegate makes a generalist", "SERVER=telnet")
 int scan_SERVER(Connection *Conn,PCStr(server))
 {	CStr(sbuff,4096);
 	refQStr(proto,sbuff); /**/
@@ -3236,6 +3241,7 @@ int ConnectViaVSAP(Connection *Conn,int relay_input)
 	return sock;
 }
 
+DG_PARAM(OVERRIDE, "OVERRIDE=master:port:param", "none", "[ungeprüft] Value forwarded as OVERRIDE header to the MASTER DeleGate", "OVERRIDE=masterhost:8080:CACHE=no")
 void scan_OVERRIDE(Connection *Conn,PCStr(ovparam))
 {	CStr(master,MaxHostNameLen);
 	CStr(port,256);
@@ -3546,6 +3552,7 @@ void tcp_relay2X(Connection *Conn,int timeout,int s1,int d1,int s2,int d2){
 	tcp_relay2(timeout,s1,d1,s2,d2);
 }
 
+DG_PARAM(SOCKSTAP, "SOCKSTAP=ProtoList[:[dstHostList][:[srcHostList][:params]]]", "none", "Interpret the protocol relayed over SOCKS, so the DeleGate acts as server for it", "SOCKSTAP=http,ftp")
 void scan_SOCKSTAP(Connection *Conn,PCStr(tapspec)){
 	IStr(proto,1024);
 	IStr(dst,1024);
@@ -3603,6 +3610,7 @@ static scanListFunc normlist(PCStr(hp),Connection *Conn,PVStr(list)){
 	InitLog("EQSV/%s %s >>> %s\n",DST_PROTO,hp,lp);
 	return 0;
 }
+DG_PARAM(CLUSTER, "CLUSTER=[protoList]:ServerList", "none", "Define alternative servers used when the connection to a server or proxy fails", "CLUSTER=http:www1,www2,www3..8080")
 void scan_CLUSTER(Connection *Conn,PCStr(servs)){
 	const char *pp;
 	IStr(tag,1024);

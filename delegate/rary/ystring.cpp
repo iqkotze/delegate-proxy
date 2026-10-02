@@ -252,6 +252,7 @@ int fpop_fd(FILE *fp){
 
 #include "ystring.h"
 #include "log.h"
+#include "dgparam.h"
 #ifndef EMU_NO_VSNPRINTF
 #define EMU_NO_VSNPRINTF lNO_VSNPRINTF()
 #endif
@@ -577,6 +578,7 @@ void putsLogXf(PCStr(wh),int isig){
 
 static int debug_flags;
 static int nov;
+DG_PARAM_INTERNAL(DEBUG_VSTR)
 static void setup_debug(){
 	const char *env;
 	if( (debug_flags & DBG_INIT) != 0 ){

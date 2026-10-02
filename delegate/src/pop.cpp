@@ -29,6 +29,7 @@ History:
 #include "file.h"
 #include "auth.h"
 #include "proc.h"
+#include "dgparam.h"
 
 #define LNSIZE 1024
 
@@ -43,6 +44,7 @@ static scanListFunc scan1(PCStr(conf),Connection *Conn){
 	}
 	return 0;
 }
+DG_PARAM(POPCONF, "POPCONF=listmax:N", "none", "[ungeprüft] POP settings; listmax sets the maximum number of listed messages", "POPCONF=listmax:100")
 void scan_POPCONF(Connection *Conn,PCStr(conf)){
 	scan_commaListL(conf,0,scanListCall scan1,Conn);
 }
@@ -1220,6 +1222,7 @@ int POP_open(Connection *Conn,int fromC,int toC,FILE **tsp,FILE **fsp,PCStr(user
 
 int sendmailSMTP(Connection *Conn,PCStr(smtphost),int smtpport,PCStr(mailto),PCStr(mailfrom),FILE *afp);
 
+DG_PARAM(MAILSPOOL, "MAILSPOOL=pop://user@host", "none", "[ungeprüft] POP server that holds the mail spool for -Fpoprelay and -Fpopdown", "MAILSPOOL=pop://user@mailhost")
 int poprelay_main(int ac,const char *av[],Connection *xConn)
 {	Connection popConnBuf, *popConn = &popConnBuf;
 	FILE *tsp,*fsp,*tss,*fss,*afp;

@@ -41,6 +41,7 @@ typedef int mainFunc2(int ac,const char *av[],DGC*Conn);
 typedef int mainFunc3(int ac,const char *av[],DGC*Conn,int sock,int port);
 
 mainFunc help_main;
+mainFunc param_main;
 mainFunc myid_main;
 mainFunc dump_main;
 mainFunc ccx_main;
@@ -165,6 +166,7 @@ typedef struct {
 static SubFunc subfuncs[] = {
 {MS,0,0,"",	"help",	   help_main,	"show the list of functions"},
 {MN,0,0,"",	"ver",	   myid_main,	"show the ver. and conf. of mine"},
+{MS,0,0,"",	"param",	   param_main,	"show the list of parameters or the details of one"},
 {MV,0,0,"",	"cgi", (mainFunc*)cgi_delegate,"DeleGate as a cgi program"},
 {MS,0,0,"",	"ssi", (mainFunc*)ssi_main,"SHTML interpreter"},
 {MS,0,0,"",	"ccx",	   ccx_main,	"character code converter"},

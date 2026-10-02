@@ -55,6 +55,7 @@ History:
 #define HEADSIZE (M_PACKSIZE*sizeof(int32))
 
 #include <errno.h>
+#include "dgparam.h"
 #ifndef EINPROGRESS
 #define EINPROGRESS	-1
 #endif
@@ -302,6 +303,8 @@ extern int RSLV_TIMEDOUT;
  * THRUWAY_ENTR is like MASTER in DeleGate which points to destination server
  * THRUWAY_EXIT is like SERVER in DeleGate which points to mediator DeleGate
  */
+DG_PARAM(THRUWAY_ENTR, "THRUWAY_ENTR=host:port", "none", "[ungeprüft] Destination of Thruwayd, comparable to MASTER", "THRUWAY_ENTR=desthost:8080")
+DG_PARAM(THRUWAY_EXIT, "THRUWAY_EXIT=host:port", "none", "[ungeprüft] Mediator DeleGate of Thruwayd, comparable to SERVER", "THRUWAY_EXIT=mediator:8080")
 int thruwayd_main(int ac,const char *av[])
 {	ACStr(svhosts,64,64);
 	int svports[64],svsocks[64];

@@ -38,6 +38,7 @@ History:
 #include "fpoll.h"
 #include "credhy.h"
 #include "config.h"
+#include "dgparam.h"
 
 extern char **environ;
 extern int LOG_initFd;
@@ -383,6 +384,7 @@ int beDaemon(Connection *Conn,const int isService,const double waitBG){
 }
 
 int setup_caps(FILE *out,PCStr(slkey),PCStr(admin),int test);
+DG_PARAM(CAPSKEY, "CAPSKEY=opaque", "none", "Key that enables functions that are disabled by default", "CAPSKEY=abcdef0123456789")
 void scan_CAPSKEY(Connection *Conn,PCStr(capskey)){
 	setup_caps(stderr,capskey,getADMIN1(),0);
 }

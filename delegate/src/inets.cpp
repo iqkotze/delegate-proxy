@@ -32,6 +32,7 @@ History:
 #include "file.h"
 #include "proc.h"
 #include "log.h"
+#include "dgparam.h"
 
 const char *IPV4MAPV6 = "__0";
 
@@ -233,6 +234,7 @@ int setREUSEADDR(int on)
 	REUSE = on;
 	return reuse;
 }
+DG_PARAM(SOCKOPT, "SOCKOPT=[no]name[:value]", "reuse", "Set socket options such as reuse, share, shut or buffer sizes", "SOCKOPT=noreuse")
 void scan_SOCKOPT(DGC*ctx,PCStr(conf))
 {
 	scan_commaList(conf,0,scanListCall conf1);
@@ -267,6 +269,7 @@ static scanListFunc ipconf1(PCStr(conf))
 	}
 	return 0;
 }
+DG_PARAM(IPV6, "IPV6=name[:no]", "4map on, 6also off, 4also off", "[ungeprüft] IPv6 handling; 4map unifies mapped addresses, 6also and 4also add the other family", "IPV6=6also")
 void scan_IPV6(DGC*ctx,PCStr(conf))
 {
 	scan_commaList(conf,0,scanListCall ipconf1);
@@ -822,6 +825,15 @@ static const char *RES_AUTO_DFLT = "+";
 
 static void waitResolver(PCStr(resl));
 void init_myname(PCStr(RESOLV));
+DG_PARAM(RESOLV, "RESOLV=[resolver[,resolver]*]", "cache,file,nis,dns,sys", "Resolvers to use and their order: cache, file, nis, dns, sys", "RESOLV=cache,dns,sys")
+DG_PARAM(RES_CONF, "RES_CONF=URL", "file:/etc/resolv.conf", "Location of the resolv.conf file read by the built-in resolver", "RES_CONF=file:/etc/resolv.conf")
+DG_PARAM(RES_NS, "RES_NS=nsList", "taken from RES_CONF", "DNS servers to use, optionally through a Socks V5 server", "RES_NS=192.168.1.1,END.")
+DG_PARAM(RES_AF, "RES_AF=afOrder", "46", "Order of the address families to look up: 46, 64, 4 or 6", "RES_AF=64")
+DG_PARAM(RES_RR, "RES_RR=HostList", "*", "Round robin over the IP addresses of the listed hosts", "RES_RR=\"\"")
+DG_PARAM(RES_VRFY, "RES_VRFY=\"\"", "none", "Verify results of reverse lookups by a forward lookup", "RES_VRFY=\"\"")
+DG_PARAM(RES_DEBUG, "RES_DEBUG=number", "none", "Debug logging level of the built-in resolver", "RES_DEBUG=1")
+DG_PARAM(RES_LOG, "RES_LOG=path", "none", "[ungeprüft] File to which the resolver appends its log", "RES_LOG=/var/spool/delegate/log/resolv.log")
+DG_PARAM(RES_EXPIRE, "RES_EXPIRE=seconds[/onmem[/dnsrr]]", "none", "[ungeprüft] Expiration time in seconds of the host cache of the resolver", "RES_EXPIRE=300")
 void init_resolv(PCStr(resolv),PCStr(conf),PCStr(ns),PCStr(af),PCStr(verify),PCStr(rr),PCStr(debug),PCStr(log))
 {
 	IStr(order,RESOLVERS_SIZ);
@@ -1673,6 +1685,7 @@ EXIT:
 		free((char*)names);
 	return 0;
 }
+DG_PARAM(HOSTS, "HOSTS=nameList[/addrList]", "localhost/127.0.0.1", "Host name and address pairs that override DNS, NIS and /etc/hosts", "HOSTS=www.example.com/192.0.2.10")
 void scan_HOSTS(DGC*_,PCStr(hosts))
 {
 	HOSTS_PREDEF = 1;
@@ -4833,6 +4846,7 @@ const char *DELEGATE_getEnv(PCStr(name));
  * RES_WAIT=seconds[:hostname-or-address]
  * default: RES_WAIT=10:WWW.DeleGate.ORG
  */
+DG_PARAM(RES_WAIT, "RES_WAIT=seconds:hostname", "10:WwW.DeleGate.ORG", "Wait at start until the resolver can resolve hostname, for at most seconds", "RES_WAIT=0")
 void scan_RES_WAIT(DGC*ctx,PCStr(reswait)){
 	int wsec;
 	CStr(host,256);
@@ -5444,6 +5458,7 @@ MMap *arpMMap;
 MMap *md5MMap;
 const char *ARP_CACHE = "${ACTDIR}/delegate-arp";
 const char *MD5_CACHE = "${ACTDIR}/delegate-md5";
+DG_PARAM(ARPCONF, "ARPCONF=name:value", "command:arp %A", "[ungeprüft] ARP lookup settings: command, cache-file, cache-size, cache-expire", "ARPCONF=cache-expire:120")
 void scan_ARPCONF(DGC*ctx,PCStr(conf)){
 	IStr(nam,32);
 	IStr(val,256);

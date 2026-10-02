@@ -25,6 +25,7 @@ History:
 #include "param.h"
 #include "file.h"
 #include "ccenv.h"
+#include "dgparam.h"
 
 const char *MYSELF                 = "-.-";
 const char *CLIENT_HOST            = "clnt.-";
@@ -192,6 +193,7 @@ void scan_CACHE1(Connection *Conn,PCStr(specs))
 /*
  * CACHE=do:http:*.sv.domain:*.cl.domain
  */
+DG_PARAM(CACHE, "CACHE=cacheControl[,cacheControl]*[:connMap]", "none (cache is enabled if CACHEDIR is usable)", "Enable (do), disable (no) or use read-only (ro) the cache", "CACHE=do")
 void scan_CACHE(Connection *Conn,PCStr(specs)){
 	if( strchr(specs,':') ){
 		IStr(spec1,128);
@@ -212,14 +214,17 @@ void scan_CACHE(Connection *Conn,PCStr(specs)){
 	scan_CACHE1(Conn,specs);
 }
 
+DG_PARAM(CACHEARC, "CACHEARC=path", "none", "[ungeprüft] Path of the cache archive", "CACHEARC=/var/spool/delegate/cache.arc")
 void scan_CACHEARC(PCStr(path)){
 	DELEGATE_CACHEPATH = stralloc(path);
 }
+DG_PARAM(CACHEDIR, "CACHEDIR=dirPath", "${VARDIR}/cache", "Directory of the cache files; it must be readable and writable", "CACHEDIR=/var/spool/delegate/cache")
 void scan_CACHEDIR(PCStr(dirs))
 {
 	if( dirs )
 		DELEGATE_CACHEDIR = (char*)dirs;
 }
+DG_PARAM(CACHEFILE, "CACHEFILE=fileNameSpec", "$[server:%P/%L/%p]", "Format of the file name of a cache file, derived from server and URL", "CACHEFILE='$[server:%P]/$[hash:%H]/$[server:%L/%p]'")
 void scan_CACHEFILE(PCStr(file))
 {
 	DELEGATE_CACHEFILE = (char*)file;
@@ -269,6 +274,7 @@ void set_DG_EXPIRE(Connection *Conn,int expi)
 {
 	add_DGheader(Conn,D_EXPIRE,"%ds",expi);
 }
+DG_PARAM(EXPIRE, "EXPIRE=validity[/custody][:connMap]", "1h (HTTP, Gopher), 1d (FTP)", "Validity period of cached data in days, hours, minutes or seconds", "EXPIRE=1d")
 void scan_EXPIRE(Connection *Conn,PCStr(expire))
 {	CStr(period,256);
 	CStr(triple,1024);
@@ -576,6 +582,9 @@ getpid(),dir);
 #include <sys/types.h>
 #include <sys/stat.h>
 static int DGROOT_done;
+DG_PARAM(HOME, "HOME=dirPath", "home directory of the owner", "[ungeprüft] Home directory used when DGROOT is derived as ${HOME}/delegate", "HOME=/home/delegate")
+DG_PARAM(DGROOT, "DGROOT=dirPath", "${STARTDIR}/DGROOT if it exists, else ${HOME}/delegate, /var/spool/delegate-${OWNER} or /tmp/delegate-${OWNER}", "Root directory of all DeleGate files (log, cache, work, etc, adm, act, tmp)", "DGROOT=/var/spool/delegate")
+DG_PARAM(UMASK, "UMASK=mask", "umask of the invoker", "Octal mask for file creation, set with umask(2)", "UMASK=022")
 int setDGROOT(){
 	const char *umasks;
 	const char *dgroot;

@@ -35,6 +35,7 @@ ToDo:
 #include "file.h"
 #include "auth.h"
 #include "proc.h"
+#include "dgparam.h"
 
 int ShutdownSocket(int sock);
 int connectToSftpX(Connection *Conn,PCStr(host),int port,PCStr(user),int toC);
@@ -544,6 +545,7 @@ static void init_conf()
 	if( getenv("LPR_NOWAIT")) conf1("LPR_NOWAIT");
 	if( getenv("FTP_ON_HTTP") ) conf1("FTP_ON_HTTP");
 }
+DG_PARAM(FTPCONF, "FTPCONF=ftpControl[:{sv|cl}]", "none", "FTP settings such as nopasv, noport, noxdc, rawxdc", "FTPCONF=nopasv")
 void scan_FTPCONF(Connection *Conn,PCStr(conf))
 {
 	init_conf();
@@ -8375,6 +8377,7 @@ FS->fs_islocal = 0;
 static SStr(thost,32);
 static SStr(tpath,32);
 static int tport;
+DG_PARAM(FTPTUNNEL, "FTPTUNNEL=host:port[:path]", "none", "[ungeprüft] Reach servers through an FTP server that opens a CONNECT tunnel", "FTPTUNNEL=ftphost:21:tunnel")
 int scan_FTPTUNNEL(Connection *Conn,PCStr(spec))
 {	const char *dp;
 	CStr(buf,32);

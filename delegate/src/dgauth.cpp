@@ -24,6 +24,7 @@ History:
 #include "param.h"
 #include "credhy.h"
 #include "auth.h"
+#include "dgparam.h"
 int serverPid();
 
 extern const char *MAP_AUTHSERV;
@@ -256,6 +257,7 @@ void setCKey(PCStr(ekey),int elen);
 void setCKeyP(PCStr(param),PCStr(dom),PCStr(user),PCStr(ekey),int elen);
 
 void scan_CRYPTX(Connection *Conn,int clnt,PCStr(opts),PCStr(param),PCStr(dom),PCStr(user));
+DG_PARAM(CRYPT, "CRYPT=pass:key", "none", "[ungeprüft] Key of the encryption of messages between DeleGates; pass: asks for the key", "CRYPT=pass:secret")
 void scan_CRYPT(Connection *Conn,int clnt)
 {
 	scan_CRYPTX(Conn,clnt,"",P_CRYPT,"master","");

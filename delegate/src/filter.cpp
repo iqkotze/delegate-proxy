@@ -41,6 +41,7 @@ int clearSSLready(int fd);
 #include "proc.h"
 #include "errno.h"
 #include <ctype.h> /* isdigit(), isspace() */
+#include "dgparam.h"
 int ShutdownSocket(int sock);
 
 #define FTOCL_FIELD     "X-Request"
@@ -240,6 +241,7 @@ static const char *open_cfi(PCStr(file))
 
 void set_CERTDIR(PCStr(dir),int exp);
 static int certdir_set;
+DG_PARAM(CERTDIR, "CERTDIR=dir", "${ETCDIR}/certs", "Directory with the certificates and keys used by SSLway", "CERTDIR=/etc/delegate/certs")
 void scan_CERTDIR(Connection *Conn,PCStr(dir)){
 	IStr(xdir,1024);
 	if( !isFullpath(dir) && !strneq(dir,"./",2) ){
@@ -250,6 +252,7 @@ void scan_CERTDIR(Connection *Conn,PCStr(dir)){
 	certdir_set = 1;
 }
 void scan_TLSCONFs(Connection *Conn,PCStr(confs));
+DG_PARAM(TLSCONF, "TLSCONF=tlsConf[,tlsConf]*", "scache:do,xcache:do", "TLS settings such as session caches, log detail and libraries", "TLSCONF=\"libs:crypto+ssl\"")
 void scan_TLSCONF(Connection *Conn,PCStr(confs)){
 	CStr(sel,256);
 	const char *dp;
@@ -980,6 +983,15 @@ void setFTOCL(PCStr(ftocl)){ FS_FTOCL = ftocl; }
 const char *getFTOSV(Connection *Conn){ return getFilter(Conn,F_TOSV); }
 void setFTOSV(PCStr(ftosv)){ FS_FTOSV = ftosv; }
 
+DG_PARAM(FCL, "FCL=[-s,][-p,][-w,]command", "none", "Filter between client and DeleGate", "FCL=sslway")
+DG_PARAM(FTOCL, "FTOCL=[-s,][-p,][-w,]command", "none", "Filter from DeleGate to client", "FTOCL=filter.cfi")
+DG_PARAM(FFROMCL, "FFROMCL=[-s,][-p,][-w,]command", "none", "Filter from client to DeleGate", "FFROMCL=filter.cfi")
+DG_PARAM(FSV, "FSV=[-s,][-p,][-w,]command", "none", "Filter between server and DeleGate", "FSV=sslway")
+DG_PARAM(FTOSV, "FTOSV=[-s,][-p,][-w,]command", "none", "Filter from DeleGate to server", "FTOSV=filter.cfi")
+DG_PARAM(FFROMSV, "FFROMSV=[-s,][-p,][-w,]command", "none", "Filter from server to DeleGate", "FFROMSV=filter.cfi")
+DG_PARAM(FMD, "FMD=[-s,][-p,][-w,]command", "none", "Filter between MASTER and this DeleGate", "FMD=filter.cfi")
+DG_PARAM(FTOMD, "FTOMD=[-s,][-p,][-w,]command", "none", "Filter from this DeleGate to MASTER", "FTOMD=filter.cfi")
+DG_PARAM(FFROMMD, "FFROMMD=[-s,][-p,][-w,]command", "none", "Filter from MASTER to this DeleGate", "FFROMMD=filter.cfi")
 void scan_FILTERS(Connection *Conn)
 {
 	setF0(F_CL    );
@@ -2873,6 +2885,7 @@ static int forkexecFilter1(Connection *Conn,int src,int dst,PCStr(what),int iomo
 /*
  * RPORT : redirection port for response from the MASTER
  */
+DG_PARAM(RPORT, "RPORT={tcp|udp}[:host]", "none", "Separate response connection from the MASTER DeleGate, used together with MASTER", "RPORT=tcp")
 void scan_RPORT(Connection *Conn,PCStr(portin))
 {	CStr(host,MaxHostNameLen);
 	CStr(tcp_udp,128);
@@ -3736,6 +3749,7 @@ EXIT:
 	return wpid;
 }
 
+DG_PARAM(XCOM, "XCOM=filterCommand", "none", "Command run with SERVER=exec; its standard I/O is bound to the client socket", "XCOM=/bin/date")
 int doXCOM(Connection *Conn,int in,int out,int err)
 {	const char *command;
 
@@ -3770,6 +3784,7 @@ int doXCOM(Connection *Conn,int in,int out,int err)
 	Finish(-1);
 	return -1;
 }
+DG_PARAM(XFIL, "XFIL=filterCommand", "none", "Command run with SERVER=exec; its standard I/O is piped to the DeleGate, which relays it", "XFIL=\"/bin/cat\"")
 int doXFIL(Connection *Conn,int in,int out,int err)
 {	const char *filter;
 	int toF,fromF,pidF,wpid;

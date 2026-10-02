@@ -23,6 +23,7 @@ History:
 
 #define DOFGSZ
 #include "mime.h"
+#include "dgparam.h"
 #ifdef MIMEKIT
 #define strid_alloc(s)	stralloc(s)
 #endif
@@ -213,6 +214,7 @@ const char *setHeadMask(PCStr(hmask)){
 	return ohm;
 }
 
+DG_PARAM(MIMECONV, "MIMECONV=mimeConv[,mimeConv]", "none (empty if CHARCODE is given)", "MIME encoding and decoding in NNTP, POP and SMTP: thru, charcode, nospenc, textonly, alt", "MIMECONV=charcode")
 void scan_MIMECONV(PCStr(convspec))
 {
 	if( strneq(convspec,"headmask:",9) ){

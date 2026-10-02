@@ -40,6 +40,7 @@ int PGP_MIME(){ return PGP_MODE & _PGP_MIME; }
 #define CRLF	"\r\n"
 
 #include <fcntl.h>
+#include "dgparam.h"
 #ifdef O_BINARY
 #define LEOLINE	"\r\n"  /* may be on Windows */
 #else
@@ -58,6 +59,7 @@ static scanListFunc pgp1(PCStr(arg))
 		arg);
 	return 0;
 }
+DG_PARAM(PGP, "PGP=mode[,mode]*", "none", "[ungeprüft] PGP processing of mail messages; sign, mime, encr, decr, vrfy", "PGP=sign,mime")
 void scan_PGP(void*_,PCStr(args))
 {
 	scan_commaList(args,0,scanListCall pgp1);

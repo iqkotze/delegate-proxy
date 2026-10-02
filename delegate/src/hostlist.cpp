@@ -60,6 +60,7 @@ int dumpHostCache(FILE *tc);
 #define FILE void
 
 #include "log.h"
+#include "dgparam.h"
 #undef Verbose
 #define Verbose (LOG_type&L_HOSTMATCH)==0?0:putLog0
 
@@ -230,6 +231,7 @@ static void init_hostListTab()
 		addHostListTab(".socksdst","!.localnet");
 	}
 }
+DG_PARAM(HOSTLIST, "HOSTLIST=listName:HostList", "none", "Define a named host list that other host lists can refer to", "HOSTLIST=\".localnet:localhost,./32,192.168.*\"")
 void scan_HOSTLIST(DGC*ctx,PCStr(listdef))
 {	const char *dp;
 	CStr(name,32);

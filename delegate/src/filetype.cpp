@@ -21,6 +21,7 @@ History:
 //////////////////////////////////////////////////////////////////////#*/
 #include "ystring.h"
 #include "dglib.h"
+#include "dgparam.h"
 
 typedef struct {
   const	char	*f_suffix;
@@ -97,6 +98,7 @@ static const char *dflt_filetypes[] = {
 	0
 };
 
+DG_PARAM(FILETYPE, "FILETYPE=suffix:gopherType:altText:iconName:contentType", "built-in table, starting with .txt:0:TXT:text:text/plain", "Map a file name suffix to Gopher type, icon and content type", "FILETYPE=\".txt:0:TXT:text:text/plain\"")
 int scan_FILETYPE(DGC*_,PCStr(filetype))
 {	CStr(suffix,64);
 	CStr(gtype,64);

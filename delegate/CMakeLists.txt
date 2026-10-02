@@ -98,8 +98,10 @@ set_property(SOURCE ${DG_ROOT}/src/builtin.cpp APPEND PROPERTY OBJECT_DEPENDS
 
 # delegated
 dg_files(delegated_srcs src ${DG_SRCS_DELEGATED})
+list(APPEND delegated_srcs ${DG_PARAMS_CPP})
 add_executable(delegated ${delegated_srcs})
 dg_configure_target(delegated)
+add_dependencies(delegated dg_params_gen)
 target_link_libraries(delegated PRIVATE dg_core dg_resolvy dg_teleport dg_md5 dg_cfi
                       dg_rary dg_gates dg_mimekit dg_fsx ${DG_SYSLIBS} dg_subst ${DG_SYSLIBS})
 target_link_options(delegated PRIVATE -Wl,-Map=${CMAKE_BINARY_DIR}/delegated.map)
@@ -113,7 +115,7 @@ add_custom_command(TARGET delegated POST_BUILD
 if(DG_BUILD_TESTS AND EXISTS ${DG_ROOT}/../tests/CMakeLists.txt)
   add_library(dg_app_objs OBJECT ${delegated_srcs})
   dg_configure_target(dg_app_objs DEFS main=dg_delegated_main)
-  add_dependencies(dg_app_objs dg_builtin_gen)
+  add_dependencies(dg_app_objs dg_builtin_gen dg_params_gen)
 endif()
 
 if(DG_BUILD_SUBIN)

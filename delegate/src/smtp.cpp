@@ -31,6 +31,7 @@ History:
 #include "delegate.h"
 #include "filter.h"
 #include "auth.h"
+#include "dgparam.h"
 #define LNSIZE  1024
 
 #undef  sv1log
@@ -269,6 +270,7 @@ static scanListFunc scan1(PCStr(conf),void *_)
 	}
 	return 0;
 }
+DG_PARAM(SMTPCONF, "SMTPCONF=what:conf", "none", "SMTP settings such as MX, reject and bgdatasize", "SMTPCONF=bgdatasize:64K")
 void scan_SMTPCONF(Connection*_,PCStr(conf))
 {
 	scan_commaListL(conf,0,scanListCall scan1,_);
@@ -2678,6 +2680,7 @@ FILE *SMTP_POST(PCStr(host),int port,PCStr(to),PCStr(from))
 }
 
 const char *DELEGATE_SMTPSERVER;
+DG_PARAM(SMTPSERVER, "SMTPSERVER=host[:port]", "none", "[ungeprüft] SMTP server through which the DeleGate sends its own mail (port 25 by default)", "SMTPSERVER=mailhost:25")
 void scan_SMTPSERVER(PCStr(smtpserver))
 {
 	if( smtpserver )

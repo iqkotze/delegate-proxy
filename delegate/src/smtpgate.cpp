@@ -52,6 +52,7 @@ History:
 #include "fpoll.h"
 #include "file.h"
 #include "auth.h"
+#include "dgparam.h"
 
 #define LNSIZE  1024
 #define lfprintf	SMTP_lfprintf
@@ -580,6 +581,7 @@ static int load_conf(Connection *Conn,Gateway *Gw,PCStr(name),FILE *afp,PCStr(se
  *	SMTPGATE=dir[:list-of-subdirs]
  */
 extern substFile *LOG_substfile;
+DG_PARAM(SMTPGATE, "SMTPGATE=dirPath", "${ETCDIR}/smtpgate", "Configuration directory of the SMTP to SMTP or NNTP gateway", "SMTPGATE=/etc/delegate/smtpgate")
 int scan_SMTPGATE(Connection *Conn,PCStr(conf))
 {	CStr(pb,1024);
 	const char *pv[NPARAMS+1]; /**/

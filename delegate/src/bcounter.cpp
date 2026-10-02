@@ -29,6 +29,7 @@ History:
 #include "ystring.h"
 #include "dglib.h"
 #include "log.h"
+#include "dgparam.h"
 
 int CTX_cache_pathX(DGC*ctx,PCStr(base),PCStr(proto),PCStr(server),int iport,PCStr(path1),PVStr(cachepath));
 
@@ -150,6 +151,7 @@ int scan_COUNTER1(DGC*ctx,int COUNTER,PCStr(spec)){
 	}
 	return COUNTER;
 }
+DG_PARAM(COUNTER, "COUNTER=listOfCounterControl", "no", "Access counters: do, total, acc, ssi, ref, err, ro, no", "COUNTER=do")
 void scan_COUNTER(DGC*ctx,PCStr(spec)){
 	gl_COUNTER = scan_COUNTER1(ctx,gl_COUNTER,spec);
 	if( CNT_DBGLEV == 0 ){

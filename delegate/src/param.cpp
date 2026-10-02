@@ -23,6 +23,7 @@ History:
 #include <stdio.h>
 #include "delegate.h"
 #include "param.h"
+#include "dgparam.h"
 
 char P_ABORTLOG[] = "ABORTLOG";
 char P_ACTDIR[]   = "ACTDIR";
@@ -247,6 +248,14 @@ static const char Tno[] = "*o"; /* -X option */
 static const char Tns[] = "*s"; /* specific */
 static const char Tnu[] = "*u"; /* list of URLs */
 
+DG_PARAM_INTERNAL(CFI)
+DG_PARAM_INTERNAL(DBFILE)
+DG_PARAM_INTERNAL(FILEACL)
+DG_PARAM_INTERNAL(FILEOWNER)
+DG_PARAM_INTERNAL(QPORT)
+DG_PARAM_INTERNAL(SERVCONF)
+DG_PARAM_INTERNAL(SOCKSCONF)
+DG_PARAM_INTERNAL(VHOSTDIR)
 static ParamSpec params[] = {
 { "" },
 { P_ABORTLOG,	STD,M0,T1f,1,1},
