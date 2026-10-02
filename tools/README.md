@@ -122,3 +122,17 @@ Die Tests liegen in `tests/unit/` und laufen über `ctest`. Jede Datei deckt ein
 
     ctest --test-dir build/debug
     build/debug/tests/dg_unit_tests --gtest_filter='Md5.*'
+
+## load-test.sh
+
+Misst Durchsatz und Latenz von `delegated` mit `wrk` (`apt-get install wrk`). Das Skript startet einen eigenen Ursprung (`tools/load-origin.py`, asyncio) und `delegated` als Forward-Proxy, als Reverse-Proxy (`MOUNT`) und als TLS-Terminierung (`STLS=fcl`). Jede Variante läuft bei 100, 500 und 1200 gleichzeitigen Verbindungen für mindestens 15 Sekunden. Die Ausgabe ist eine Markdown-Tabelle mit Requests pro Sekunde, p50, p99 (wrk zählt nur abgeschlossene Antworten), Socket-Fehlern, Antworten außer 2xx und 3xx und der höchsten Zahl gleichzeitig offener Verbindungen am Proxy-Port. Das wrk-Timeout beträgt 30 Sekunden, `-T` ändert es.
+
+    tools/load-test.sh build/release/delegated
+    tools/load-test.sh -c "1200" -d 20 -v "reverse tls" -o /tmp/load.md build/release/delegated
+    tools/load-test.sh -c 1200 -d 10 --check build/release/delegated
+
+Weitere Argumente nach dem Programm gehen an `delegated`. Mit `--check` endet das Skript mit Exit-Code 1, wenn ein Socket-Fehler oder eine Antwort außer 2xx und 3xx auftritt oder weniger als 90 Prozent der Verbindungen gleichzeitig offen waren. Der Exit-Code 77 bedeutet, dass `wrk` fehlt. `ctest` führt den Test `load` (1200 Verbindungen, 10 Sekunden, `--check`) nur mit `-DDG_LOAD_TESTS=ON` aus. Er trägt das Label `load`.
+
+    tools/build.sh release -DDG_LOAD_TESTS=ON
+    ctest --test-dir build/release -L load --output-on-failure
+    ctest --test-dir build/release -LE load
