@@ -1,130 +1,101 @@
 #!/usr/bin/env bash
-# Smoke test for a delegated binary (version, HTTP forward proxy, reverse proxy).
-# Usage: tools/smoke-test.sh <delegated> [--keep]   (SMOKE_TLS=1 enables the TLS cases)
+# Smoke test for a delegated binary (version, HTTP proxies, TLS termination, TLS to the origin, generated certificate).
+# Usage: tools/smoke-test.sh <delegated> [--keep]   (SMOKE_TLS=0 skips the TLS cases)
 set -euo pipefail
 
-bin=${1:?usage: smoke-test.sh <delegated> [--keep]}
-keep=0
-[ "${2:-}" = "--keep" ] && keep=1
-bin=$(readlink -f "$bin")
-[ -x "$bin" ] || { echo "not executable: $bin" >&2; exit 2; }
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+. "$here/../tests/tls/lib.sh"
 
-tmp=$(mktemp -d /tmp/dg-smoke.XXXXXX)
-chmod 755 "$tmp"
-pids=()
-ports=()
-fails=0
+[ $# -ge 1 ] || { echo "usage: smoke-test.sh <delegated> [--keep]" >&2; exit 2; }
+tls_setup "$1" "$([ "${2:-}" = "--keep" ] && echo 1 || echo 0)"
 
-cleanup() {
-	local p
-	for p in "${pids[@]}"; do kill "$p" 2>/dev/null || true; done
-	for p in "${ports[@]}"; do pkill -f -- "delegated.*-P$p |DeleGate.*-P$p " 2>/dev/null || true; done
-	sleep 0.3
-	for p in "${pids[@]}"; do kill -9 "$p" 2>/dev/null || true; done
-	for p in "${ports[@]}"; do pkill -9 -f -- "delegated.*-P$p |DeleGate.*-P$p " 2>/dev/null || true; done
-	if [ "$keep" = 1 ]; then echo "kept $tmp"; else rm -rf "$tmp"; fi
-}
-trap cleanup EXIT
-trap 'exit 130' INT TERM
-
-port_busy() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
-
-free_port() {
-	local p
-	while :; do
-		p=$((20000 + RANDOM % 10000))
-		port_busy "$p" || { echo "$p"; return; }
-	done
-}
-
-wait_port() {
-	local i
-	for i in $(seq 1 100); do
-		port_busy "$1" && return 0
-		sleep 0.1
-	done
-	return 1
-}
-
-# Copy of the binary and a DGROOT that the unprivileged user can use
-mkdir -p "$tmp/bin" "$tmp/www" "$tmp/root"
-cp "$bin" "$tmp/bin/delegated"
-chmod 755 "$tmp/bin" "$tmp/bin/delegated"
-echo "smoke-ok" > "$tmp/www/index.html"
-chmod 755 "$tmp/www"
-chmod 644 "$tmp/www/index.html"
-
-drop=()
-if [ "$(id -u)" = 0 ]; then
-	chown nobody "$tmp/root"
-	drop=(setpriv --reuid=nobody --regid=nogroup --clear-groups)
-fi
-
-dg() { env -u SSL_CERT_FILE "${drop[@]}" "$tmp/bin/delegated" "$@"; }
-
-report() {
-	if [ "$2" = 0 ]; then
-		echo "PASS $1"
-	else
-		echo "FAIL $1"
-		fails=$((fails + 1))
-		show_logs
-	fi
-}
-
-show_logs() {
-	local f
-	for f in "$tmp"/*.log "$tmp"/root/log/*; do
-		[ -f "$f" ] || continue
-		echo "--- $f"
-		tail -n 20 "$f"
-	done
-}
-
-origin_port=$(free_port)
-(cd "$tmp/www" && exec python3 -m http.server "$origin_port" --bind 127.0.0.1) >"$tmp/origin.log" 2>&1 &
-pids+=($!)
-wait_port "$origin_port" || { echo "FAIL origin server did not start"; exit 1; }
+new_port
+origin_port=$PORT
+start_origin "$origin_port" || { echo "FAIL origin server did not start"; exit 1; }
 
 case_version() {
 	local out rc
 	out=$(dg -Fver 2>&1) && rc=0 || rc=$?
-	[ "$rc" = 0 ] && grep -q "9\.9\.13" <<<"$out"
+	[ "$rc" = 0 ] && grep -q "9\.9\.13" <<<"$out" && grep -q "Loaded: OpenSSL 3\." <<<"$out"
 }
 
 case_forward() {
 	local p out
-	p=$(free_port)
-	ports+=("$p")
-	dg -P"$p" DGROOT="$tmp/root" ADMIN=test@localhost SERVER=http -f >"$tmp/forward.log" 2>&1 &
-	pids+=($!)
-	wait_port "$p" || return 1
+	new_port; p=$PORT
+	start_dg "$p" SERVER=http || return 1
 	out=$(curl -s -m 10 -x "http://127.0.0.1:$p" "http://127.0.0.1:$origin_port/index.html") || return 1
 	[ "$out" = "smoke-ok" ]
 }
 
 case_reverse() {
 	local p out
-	p=$(free_port)
-	ports+=("$p")
-	dg -P"$p" DGROOT="$tmp/root" ADMIN=test@localhost SERVER=http \
-		"MOUNT=/* http://127.0.0.1:$origin_port/*" -f >"$tmp/reverse.log" 2>&1 &
-	pids+=($!)
-	wait_port "$p" || return 1
+	new_port; p=$PORT
+	start_dg "$p" SERVER=http "MOUNT=/* http://127.0.0.1:$origin_port/*" || return 1
 	out=$(curl -s -m 10 "http://127.0.0.1:$p/index.html") || return 1
 	[ "$out" = "smoke-ok" ]
 }
 
-case_tls() {
-	echo "SKIP tls (not implemented)"
+# TLS terminated by delegated with a configured EC P-256 certificate
+case_tls_terminate() {
+	local p out certs
+	new_root terminate
+	certs=$DGROOT/etc/certs
+	mkdir -p "$certs"
+	mk_cert "$tmp/term" localhost
+	cp "$tmp/term-cert.pem" "$certs/server-cert.pem"
+	cp "$tmp/term-key.pem" "$certs/server-key.pem"
+	if [ "$(id -u)" = 0 ]; then chown -R nobody "$DGROOT"; fi
+	new_port; p=$PORT
+	start_dg "$p" SERVER=http STLS=fcl "MOUNT=/* http://127.0.0.1:$origin_port/*" || return 1
+	out=$(curl -sk -m 10 "https://127.0.0.1:$p/index.html") || return 1
+	[ "$out" = "smoke-ok" ] || return 1
+	out=$(tls_get "$p" | grep -c 'Protocol version: TLSv1\.[23]')
+	[ "$out" = 1 ] &&
+		[ "$(openssl s_client -connect "127.0.0.1:$p" </dev/null 2>/dev/null |
+			openssl x509 -noout -fingerprint -sha256)" = "$(openssl x509 -in "$tmp/term-cert.pem" -noout -fingerprint -sha256)" ]
 }
 
-run() { local name=$1; shift; if "$@"; then report "$name" 0; else report "$name" 1; fi; }
+# TLS from delegated to an openssl s_server origin
+case_tls_origin() {
+	local p o out
+	mk_cert "$tmp/org" localhost
+	new_port; o=$PORT
+	(cd "$tmp/www" && exec openssl s_server -WWW -accept "$o" -cert "$tmp/org-cert.pem" -key "$tmp/org-key.pem" -quiet) \
+		>"$tmp/tls-origin.log" 2>&1 &
+	pids+=($!)
+	wait_port "$o" || return 1
+	new_root origin
+	new_port; p=$PORT
+	start_dg "$p" SERVER=http "MOUNT=/* https://127.0.0.1:$o/*" STLS=fsv || return 1
+	out=$(curl -s -m 10 "http://127.0.0.1:$p/index.html") || return 1
+	[ "$out" = "smoke-ok" ]
+}
+
+# TLS terminated with the certificate that delegated generates when none is configured
+case_tls_generated() {
+	local p out key
+	new_root generated
+	new_port; p=$PORT
+	start_dg "$p" SERVER=http STLS=fcl "MOUNT=/* http://127.0.0.1:$origin_port/*" || return 1
+	out=$(curl -sk -m 10 "https://127.0.0.1:$p/index.html") || return 1
+	[ "$out" = "smoke-ok" ] || return 1
+	key=$DGROOT/etc/certs/server-key.pem
+	[ -f "$DGROOT/etc/certs/server-cert.pem" ] && [ "$(stat -c %a "$key")" = 600 ] &&
+		openssl x509 -in "$DGROOT/etc/certs/server-cert.pem" -noout -text | grep -q 'ASN1 OID: prime256v1'
+}
 
 run "1 version" case_version
 run "2 http forward proxy" case_forward
 run "3 http reverse proxy" case_reverse
-if [ "${SMOKE_TLS:-0}" = 1 ]; then case_tls; else echo "SKIP tls (SMOKE_TLS=0)"; fi
+if [ "${SMOKE_TLS:-1}" != 1 ]; then
+	echo "SKIP tls (SMOKE_TLS=0)"
+elif ! command -v openssl >/dev/null || ! command -v curl >/dev/null; then
+	echo "SKIP tls (openssl or curl not found)"
+else
+	run "4 tls termination" case_tls_terminate
+	run "5 tls to the origin" case_tls_origin
+	run "6 generated certificate" case_tls_generated
+fi
 
 echo "failures: $fails"
 exit "$fails"
