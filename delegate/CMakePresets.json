@@ -1,6 +1,10 @@
 {
   "version": 6,
-  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
   "configurePresets": [
     {
       "name": "base",
@@ -8,45 +12,91 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/../build/${presetName}",
       "cacheVariables": {
-        "DG_CXX_STANDARD": "17"
+        "DG_CXX_STANDARD": "20"
       }
     },
     {
-      "name": "legacy-cxx17",
-      "displayName": "Legacy C++ mode, gnu++17, Debug with -O2 -g",
+      "name": "debug",
+      "displayName": "C++20, Debug with -O2 -g",
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_FLAGS_DEBUG": "-O2 -g",
         "CMAKE_CXX_FLAGS_DEBUG": "-O2 -g"
       }
     },
     {
       "name": "release",
-      "displayName": "Legacy C++ mode, gnu++17, -O2 with LTO",
+      "displayName": "C++20, -O2 with LTO",
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_C_FLAGS_RELEASE": "-O2",
         "CMAKE_CXX_FLAGS_RELEASE": "-O2",
         "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON"
+      }
+    },
+    {
+      "name": "cxx23",
+      "displayName": "C++23, Debug with -O2 -g",
+      "inherits": "debug",
+      "cacheVariables": {
+        "DG_CXX_STANDARD": "23"
+      }
+    },
+    {
+      "name": "asan",
+      "displayName": "C++20, Debug with AddressSanitizer and UBSan",
+      "inherits": "debug",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer"
       }
     }
   ],
   "buildPresets": [
-    { "name": "legacy-cxx17", "configurePreset": "legacy-cxx17" },
-    { "name": "release", "configurePreset": "release" }
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "cxx23",
+      "configurePreset": "cxx23"
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan"
+    }
   ],
   "testPresets": [
     {
-      "name": "legacy-cxx17",
-      "configurePreset": "legacy-cxx17",
-      "output": { "outputOnFailure": true }
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": {
+        "outputOnFailure": true
+      }
     },
     {
       "name": "release",
       "configurePreset": "release",
-      "output": { "outputOnFailure": true }
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "cxx23",
+      "configurePreset": "cxx23",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan",
+      "output": {
+        "outputOnFailure": true
+      }
     }
   ]
 }

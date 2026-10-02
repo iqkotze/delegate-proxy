@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Removes non-Linux conditional code from all .c/.h files under delegate/ (except delegate/pds/) with unifdef.
+# Removes non-Linux conditional code from all .cpp/.h files under delegate/ (except delegate/pds/) with unifdef.
 # Usage: tools/cleanup-unifdef.sh [--dry-run]   (--dry-run only lists the files that would change)
 set -euo pipefail
 
@@ -37,7 +37,7 @@ while IFS= read -r -d '' f; do
 		1) changed=$((changed + 1)); echo "$f" ;;
 		*) failed+=("$f") ;;
 	esac
-done < <(find "$root/delegate" -path "$root/delegate/pds" -prune -o -type f \( -name '*.c' -o -name '*.h' \) -print0 | sort -z)
+done < <(find "$root/delegate" -path "$root/delegate/pds" -prune -o -type f \( -name '*.cpp' -o -name '*.h' \) -print0 | sort -z)
 
 echo "changed: $changed" >&2
 if [ "${#failed[@]}" -gt 0 ]; then

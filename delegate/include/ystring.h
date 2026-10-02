@@ -7,7 +7,6 @@
 #define MaxHostNameLen	256
 
 extern int isWindows95();
-#define isWindows()	0
 #define MSCver() 0
 #define Foff_t long long int
 #define Int64 long long int
@@ -990,7 +989,6 @@ int Xwait(int *status);
 
 
 extern int STDIO_IOFBF;
-#define isWindowsCE() 0
 #define dumposf(fp,wh,min,max,dup) 0
 #define dumpFILEX(fp,inact) 0
 #define XX_fopen(p,m) 0

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Builds and tests delegated with a CMake preset inside a compiler image (cmake and ninja come from pip wheels).
-# Usage: tools/docker-build.sh <trixie|testing|gcc15|gcc16> <preset>   (starts dockerd if it is not running)
+# Usage: tools/docker-build.sh <trixie|testing|gcc15|gcc16> [preset]   (starts dockerd if it is not running)
 set -euo pipefail
 
-variant=${1:?usage: docker-build.sh <trixie|testing|gcc15|gcc16> <preset>}
-preset=${2:?usage: docker-build.sh <trixie|testing|gcc15|gcc16> <preset>}
+variant=${1:?usage: docker-build.sh <trixie|testing|gcc15|gcc16> [preset]}
+preset=${2:-debug}
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 wheels=$root/tools/.cache/wheels
 
