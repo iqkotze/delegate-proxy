@@ -4,7 +4,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
 
-set(DG_CXX_WARNING_FLAGS -Wno-narrowing)
+include(CheckCXXCompilerFlag)
+set(DG_CXX_WARNING_FLAGS "")
+foreach(flag -Werror=return-type -Werror=narrowing -Werror=format-security
+             -Werror=int-to-pointer-cast -Werror=pointer-arith)
+  string(MAKE_C_IDENTIFIER "DG_HAS${flag}" var)
+  check_cxx_compiler_flag(${flag} ${var})
+  if(${var})
+    list(APPEND DG_CXX_WARNING_FLAGS ${flag})
+  endif()
+endforeach()
 if(DG_EXTRA_WARNINGS)
   list(APPEND DG_CXX_WARNING_FLAGS -Wall -Wextra -Wno-parentheses -Wno-unused-variable
        -Wno-unused-but-set-variable -Wno-unused-value -Wno-unused-parameter
@@ -15,7 +24,7 @@ if(DG_WERROR)
   list(APPEND DG_CXX_WARNING_FLAGS -Werror)
 endif()
 
-# Applies language, defines and include paths to a target built from the legacy C sources.
+# Applies language, defines and include paths to a target built from the legacy sources.
 function(dg_configure_target target)
   cmake_parse_arguments(A "M64;SRC_INC;NO_EXCEPTIONS" "" "DEFS" ${ARGN})
   target_include_directories(${target} PRIVATE ${DG_GEN_DIR} ${DG_ROOT}/include)

@@ -5,4 +5,4 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY . /src
-CMD ["tools/build.sh", "legacy-cxx17"]
+CMD ["tools/build.sh", "debug"]

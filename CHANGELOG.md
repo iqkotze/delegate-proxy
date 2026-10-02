@@ -4,6 +4,9 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Geändert
+- Quellen als C++20 (`.cpp`), Narrowing- und `register`-Altlasten behoben, kritische Warnungen als Fehler (`feature/cxx20`)
+
 ### Hinzugefügt
 - 104 Unit-Tests mit GoogleTest, 5 bekannte Fehler als Skip markiert (`feature/unit-tests`)
 - CMake-Build mit Ninja und Presets parallel zum Legacy-Build, Docker-Builds für trixie, testing, gcc 15 und gcc 16 (`feature/cmake-build`)

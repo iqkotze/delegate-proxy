@@ -1,8 +1,8 @@
 # Build options and cache variables.
-set(DG_CXX_STANDARD "17" CACHE STRING "C++ standard for all sources (17, 20 or 23)")
-set_property(CACHE DG_CXX_STANDARD PROPERTY STRINGS 17 20 23)
-if(NOT DG_CXX_STANDARD MATCHES "^(17|20|23)$")
-  message(FATAL_ERROR "DG_CXX_STANDARD must be 17, 20 or 23")
+set(DG_CXX_STANDARD "20" CACHE STRING "C++ standard for all sources (20 or 23)")
+set_property(CACHE DG_CXX_STANDARD PROPERTY STRINGS 20 23)
+if(NOT DG_CXX_STANDARD MATCHES "^(20|23)$")
+  message(FATAL_ERROR "DG_CXX_STANDARD must be 20 or 23")
 endif()
 
 set(ADMIN "root@localhost" CACHE STRING "Administrator mail address compiled into delegated")
