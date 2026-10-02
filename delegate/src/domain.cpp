@@ -26,6 +26,7 @@ History:
 #include "fpoll.h"
 #include "proc.h"
 #include <errno.h>
+#include <vector>
 #include "dgparam.h"
 
 extern int CHILD_SERNO_MULTI;
@@ -164,9 +165,7 @@ int lock_unlock(int fd);
 int PortLockReopen();
 
 int RecvFromPorts(int *sock,char ib[],int ibsize,PVStr(froma),int *lfromp){
-	int sockv[FD_SETSIZE];
-	int rdv[FD_SETSIZE];
-	int udpv[FD_SETSIZE];
+	std::vector<int> sockv(nofile_limit()),udpv(nofile_limit());
 	int ntry,lockfd,lockok,etime,nready,si,sock1,rcc;
 
 	if( numServPorts() <= 1 ){
@@ -181,7 +180,7 @@ int RecvFromPorts(int *sock,char ib[],int ibsize,PVStr(froma),int *lfromp){
 		if( lockok == 0 ){
 			lockok = lock_exclusive(lockfd) == 0;
 		}
-		nready = pollServPort(0,sockv,udpv,NULL);
+		nready = pollServPort(0,sockv.data(),udpv.data(),NULL);
 		if( nready <= 0 ){
 			syslog_ERROR("-- poll failed, errno=%d\n",errno);
 			break;

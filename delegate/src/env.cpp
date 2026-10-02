@@ -627,12 +627,12 @@ static scanListFunc maxima1(PCStr(maxima),Connection *Conn)
 	}
 	return 0;
 }
-DG_PARAM(MAXIMA, "MAXIMA=what:number[,what:number]*", "listen:20,delegated:64,standby:32,ftpcc:16,...", "Maxima of resources: processes, connections, queue sizes and similar", "MAXIMA=delegated:256,listen:1024")
+DG_PARAM(MAXIMA, "MAXIMA=what:number[,what:number]*", "listen:somaxconn,delegated:auto,standby:32,ftpcc:16,...", "Maxima of resources: processes, connections, queue sizes and similar", "MAXIMA=delegated:256,listen:1024")
 DG_PARAM_SUB(MAXIMA, "randstack", "randstack:N", "64", "Randomization range of the stack base for security", "MAXIMA=randstack:32")
 DG_PARAM_SUB(MAXIMA, "randenv", "randenv:N", "1024", "Randomization range of the environment variables base", "MAXIMA=randenv:1024")
 DG_PARAM_SUB(MAXIMA, "randfd", "randfd:N", "32", "Randomization range of the client socket descriptor", "MAXIMA=randfd:32")
-DG_PARAM_SUB(MAXIMA, "listen", "listen:N", "20", "Maximum size of the queue of an entrance port", "MAXIMA=listen:1024")
-DG_PARAM_SUB(MAXIMA, "delegated", "delegated:N", "64 (adapted to the memory size at start)", "Maximum number of DeleGate processes running at a time", "MAXIMA=delegated:256")
+DG_PARAM_SUB(MAXIMA, "listen", "listen:N", "net.core.somaxconn of the kernel (4096 if unreadable)", "Maximum size of the queue of an entrance port", "MAXIMA=listen:1024")
+DG_PARAM_SUB(MAXIMA, "delegated", "delegated:N", "min(available memory / 4 MiB, (open file limit - 64) / 2, 4096), at least 64", "Maximum number of DeleGate processes running at a time", "MAXIMA=delegated:256")
 DG_PARAM_SUB(MAXIMA, "service", "service:N", "0 (unlimited)", "Maximum number of services per delegated process", "MAXIMA=service:1000")
 DG_PARAM_SUB(MAXIMA, "standby", "standby:N", "32", "Maximum number of standby processes", "MAXIMA=standby:16")
 DG_PARAM_SUB(MAXIMA, "conpch", "conpch:N", "0 (unlimited)", "Maximum number of connections at a time per client host", "MAXIMA=conpch:20")

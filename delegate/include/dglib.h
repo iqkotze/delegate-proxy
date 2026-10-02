@@ -691,6 +691,8 @@ void  msleep(int msec);
 /* RESOURCE USAGE */
 int   expand_stack(int smax);
 int   expand_fdset(int amax);
+int   raise_nofile_limit(int *before,int *hard);
+int   nofile_limit();
 
 /* SAFETY BELT */
 void  randenv();
