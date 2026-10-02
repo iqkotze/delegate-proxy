@@ -1,0 +1,52 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/../build/${presetName}",
+      "cacheVariables": {
+        "DG_CXX_STANDARD": "17"
+      }
+    },
+    {
+      "name": "legacy-cxx17",
+      "displayName": "Legacy C++ mode, gnu++17, Debug with -O2 -g",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_FLAGS_DEBUG": "-O2 -g",
+        "CMAKE_CXX_FLAGS_DEBUG": "-O2 -g"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Legacy C++ mode, gnu++17, -O2 with LTO",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_FLAGS_RELEASE": "-O2",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O2",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "legacy-cxx17", "configurePreset": "legacy-cxx17" },
+    { "name": "release", "configurePreset": "release" }
+  ],
+  "testPresets": [
+    {
+      "name": "legacy-cxx17",
+      "configurePreset": "legacy-cxx17",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "output": { "outputOnFailure": true }
+    }
+  ]
+}

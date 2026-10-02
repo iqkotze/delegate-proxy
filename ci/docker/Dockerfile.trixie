@@ -1,0 +1,8 @@
+FROM debian:trixie
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends build-essential cmake ninja-build pkg-config \
+    libssl-dev zlib1g-dev libgtest-dev python3 curl openssl util-linux ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+WORKDIR /src
+COPY . /src
+CMD ["tools/build.sh", "legacy-cxx17"]
