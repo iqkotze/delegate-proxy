@@ -1,8 +1,3 @@
-/*
-the header is necessary to enable some macros
-#include <openssl/ssl.h>
-*/
-
 /*////////////////////////////////////////////////////////////////////////
 Copyright (c) 1998-2000 Yutaka Sato and ETL,AIST,MITI
 Copyright (c) 2001-2007 National Institute of Advanced Industrial Science and Technology (AIST)
@@ -16,7 +11,7 @@ MATERIAL FOR ANY PURPOSE.  IT IS PROVIDED "AS IS", WITHOUT ANY EXPRESS
 OR IMPLIED WARRANTIES.
 /////////////////////////////////////////////////////////////////////////
 Content-Type:	program/C; charset=US-ASCII
-Program:	sslway.c (SSL encoder/decoder with SSLeay/openSSL)
+Program:	sslway.c (SSL encoder/decoder with openSSL)
 Author:		Yutaka Sato <ysato@etl.go.jp>
 Description:
 
@@ -59,18 +54,12 @@ Description:
     -{ss|st|St}/protocol enable STARTTLS for the protocol {SMTP,POP,IMAP,FTP}
     -bugs
 
-    -tls1 just talk TLSv1
-    -ssl2 just talk SSLv2
-    -ssl3 just talk SSLv3
+    -tls1 just talk TLSv1 (needs @SECLEVEL=0 in the cipher list with OpenSSL 3)
+    -ssl2 -ssl3 -- not supported, TLSv1.2 or later is used
 
   Usage:
     delegated FSV=sslway
     delegated FCL=sslway ...
-
-  How to make:
-    - do make at .. or ../src directory
-    - edit Makefile.go to let SSLEAY points to the directory of libssl.a
-    - make -f Makefile.go sslway
 
 History:
 	980412	created
@@ -79,6 +68,23 @@ History:
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <arpa/inet.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/x509v3.h>
+#include <openssl/x509_vfy.h>
+#include <openssl/core_names.h>
+#include <openssl/decoder.h>
+#include <openssl/encoder.h>
+#include "ssl_raii.h"
 #include "ystring.h"
 #include "file.h" /* RecvPeek() */
 #include "proc.h"
@@ -93,6 +99,7 @@ History:
 #endif
 
 #include "log.h"
+#include "dgparam.h"
 
 typedef struct {
 	const char **se_av;
@@ -154,454 +161,188 @@ static int DOLOG(PCStr(fmt),...)
 	return 0;
 }
 
-#ifndef SSL_FILETYPE_PEM /*{*/
-/*BEGIN_STAB(ssl)*/
-#ifdef __cplusplus
-extern "C" {
-#endif
-/*
-#include "ssl.h"
-*/
-#define SSL_FILETYPE_PEM 1
-#define SSL_VERIFY_NONE			0x00
-#define SSL_VERIFY_PEER			0x01
-#define SSL_VERIFY_FAIL_IF_NO_PEER_CERT	0x02
-#define SSL_VERIFY_CLIENT_ONCE		0x04
-
-#define SSL_CTRL_OPTIONS		32
-#define SSL_OP_NO_SSLv2			0x01000000
-#define SSL_OP_NO_SSLv3			0x02000000
-#define SSL_OP_NO_TLSv1			0x04000000
-
-typedef void SSL_CTX;
-typedef void SSL_METHOD;
-typedef void SSL;
-typedef void X509;
-typedef void X509_NAME;
-typedef void X509_STORE;
-typedef void X509_STORE_CTX;
-typedef void BIO_METHOD;
-typedef void BIO;
-typedef void SSL_SESSION;
-typedef void EVP_PKEY;
-typedef void EVP_CIPHER;
-typedef void SSL_CIPHER;
-#define BIO_NOCLOSE 0
-
-typedef void BIGNUM;
-typedef void RSA;
-/*
-RSA
-	BIGNUM *rsa_n;    // public modulus
-	BIGNUM *rsa_e;    // public exponent
-	BIGNUM *rsa_d;    // private exponent
-	BIGNUM *rsa_p;    // secret prime factor
-	BIGNUM *rsa_q;    // secret prime factor
-	BIGNUM *rsa_dmp1; // d mod (p-1)
-	BIGNUM *rsa_dmq1; // d mod (q-1)
-	BIGNUM *rsa_iqmp; // q^-1 mod p
-*/
-int RSA_print_fp(FILE *fp,RSA *rsa,int offset);
-void RSA_free(RSA *rsa);
-int PEM_write_RSAPublicKey(FILE *fp,RSA *rsa);
-typedef int pem_password_cb(char buf[], int size, int rwflag, void *userdata);
-int PEM_write_RSAPrivateKey(FILE *fp,RSA *rsa,const EVP_CIPHER *enc,unsigned char *kstr,int klen,pem_password_cb *cb,void *u);
-EVP_CIPHER *EVP_des_ede3_cbc();
-RSA *PEM_read_RSAPrivateKey(FILE *fp,RSA **x,pem_password_cb *cb,void *u);
-RSA *PEM_read_RSAPublicKey(FILE *fp,RSA **x,pem_password_cb *cb,void *u);
-BIGNUM *BN_new(BIGNUM *a);
-void BN_free(BIGNUM *a);
-char *BN_bn2hex(const BIGNUM *a);
-
-const char *SSLeay_version(int t);
-
-BIO_METHOD *BIO_s_mem();
-BIO *BIO_new(BIO_METHOD*);
-int BIO_puts(BIO *bp,char *buf);
-int BIO_gets(BIO *bp,char *buf,int size);
-
-BIO *BIO_new_fp(FILE *stream, int close_flag);
-int BIO_free(BIO *a);
-X509 *PEM_read_bio_X509(BIO*,...);
-RSA *PEM_read_bio_RSAPrivateKey(BIO*,...);
-
-SSL_CTX *SSL_CTX_new(SSL_METHOD *method);
-void ERR_clear_error(void);
-int  SSL_library_init(void);
-SSL *SSL_new(SSL_CTX *ctx);
-int  SSL_set_fd(SSL *ssl, int fd);
-int  SSL_connect(SSL *ssl);
-int  SSL_accept(SSL *ssl);
-SSL_CIPHER *SSL_get_current_cipher(const SSL *ssl);
-char *SSL_CIPHER_description(const SSL_CIPHER *sc,char *buf,int size);
-int  SSL_write(SSL *ssl, const void *buf, int num);
-int  SSL_read(SSL *ssl,void *buf,int num);
-int  SSL_pending(SSL *s);
-int  SSL_shutdown(SSL *ssl);
-#define SSL_SENT_SHUTDOWN 1
-#define SSL_RECEIVED_SHUTDOWN 2
-int  SSL_get_shutdown(SSL *ssl);
-void SSL_set_connect_state(SSL *s);
-void SSL_set_accept_state(SSL *s);
-void SSL_load_error_strings(void );
-int  SSL_get_error(SSL *s,int ret_code);
-X509 *SSL_get_peer_certificate(SSL *ssl);
-
-SSL_SESSION *SSL_SESSION_new(void);
-#define SSL_CTX_sess_set_new_cb(ctx,cb)	/* it's a macro */
-/*
-#define SSL_CTRL_GET_SESSION_REUSED	6
-#define SSL_CTRL_SESS_HIT	27
-#define SSL_CTRL_SESS_MISSES	29
-#define SSL_CTX_sess_hits(ctx) \
-	SSL_CTX_ctrl(ctx,SSL_CTRL_SESS_HIT,0,NULL)
-#define SSL_CTX_sess_misses(ctx) \
-	SSL_CTX_ctrl(ctx,SSL_CTRL_SESS_MISSES,0,NULL)
-#define SSL_session_reused(ssl) \
-	SSL_ctrl((ssl),SSL_CTRL_GET_SESSION_REUSED,0,NULL)
-*/
-SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx);/*OPT(0)*/
-const char *SSL_get_servername(const SSL *s, const int type);/*OPT(0)*/
-int SSL_get_servername_type(const SSL *s);/*OPT(0)*/
-long SSL_CTX_callback_ctrl(SSL_CTX *, int, void (*)(void));/*OPT(0)*/
-typedef void (*SNCB)();
-#define SSL_CTRL_SET_TLSEXT_SERVERNAME_CB 53
-#define SSL_CTRL_SET_TLSEXT_HOSTNAME 55
-#define TLSEXT_NAMETYPE_host_name 0
-#define SSL_CTX_set_tlsext_servername_callback(ctx, cb) \
-	SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,(SNCB)cb)
-#define SSL_set_tlsext_host_name(con,name) \
-	SSL_ctrl(con,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
-
-#define SSL_session_reused(ssl) 0
-int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c);
-SSL_SESSION *SSL_get_session(SSL *ssl);
-int SSL_set_session(SSL *ssl,SSL_SESSION *sess);
-int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x);
-int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey);
-X509 *SSL_get_certificate(SSL *ssl);
-EVP_PKEY *SSL_get_privatekey(SSL *ssl);
-#define EVP_PKEY_RSA 6
-SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a,unsigned char **pp,long length);
-int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp);
-X509 *d2i_X509(X509 **x,unsigned char**in,int len);
-int i2d_X509(X509 *x,unsigned char **pp);
-EVP_PKEY *d2i_PrivateKey(int type,EVP_PKEY **a,unsigned char **pp,long length);
-int i2d_PrivateKey(EVP_PKEY *a,unsigned char **pp);
-
-long SSL_ctrl(SSL *ssl,int cmd, long larg, void *parg);
-long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd, long larg, void *parg);
-int  SSL_CTX_check_private_key(SSL_CTX *ctx);
-X509_STORE *SSL_CTX_get_cert_store(SSL_CTX *);
-int SSL_CTX_load_verify_locations(SSL_CTX *ctx,PCStr(CAfile),PCStr(CApath));
-int  SSL_CTX_set_cipher_list(SSL_CTX *,PCStr(str));
-void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb);
-int  SSL_CTX_set_default_verify_paths(SSL_CTX *ctx);
-void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx, RSA *(*cb)(SSL *ssl,int is_export, int keylength));                         
-void SSL_CTX_set_verify(SSL_CTX *ctx,int mode, int (*callback)(int, X509_STORE_CTX *));
-int  SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx,PCStr(file), int type);
-int  SSL_CTX_use_certificate_file(SSL_CTX *ctx,PCStr(file), int type);
-int  SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx,PCStr(file));/*OPT(0)*/
-
-SSL_METHOD *SSLv2_server_method(); /*OPT(0)*/
-SSL_METHOD *SSLv2_client_method(); /*OPT(0)*/
-SSL_METHOD *SSLv3_server_method();
-SSL_METHOD *SSLv3_client_method();
-SSL_METHOD *SSLv23_server_method();
-SSL_METHOD *SSLv23_client_method();
-SSL_METHOD *TLSv1_server_method();
-SSL_METHOD *TLSv1_client_method();
-
-X509_NAME *X509_get_issuer_name(X509 *a);
-int i2d_X509_bio(BIO *bp,X509 *x509);
-char *X509_NAME_oneline(X509_NAME *a,char buf[],int size);
-const char *X509_verify_cert_error_string(long n);
-X509 *X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
-int X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);
-int X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx);
-X509_NAME *X509_get_subject_name(X509 *a);
-void X509_free(X509 *a);
-int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa);
-
-RSA *RSA_generate_key(int bits, unsigned long e,void (*callback)(int,int,void *),void *cb_arg);
-
-typedef struct {
-	int	ssl_version;
- unsigned int	key_arg_length;
- unsigned char	key_arg[8];
-	int	master_key_length;
- unsigned char	master_key[48];
- unsigned int	session_id_length;
- unsigned char	session_id[32];
-} SessionHead;
-
-void ERR_load_crypto_strings(void);
-RSA *PEM_read_bio_PrivateKey(BIO*,...);
-X509 *PEM_read_X509(FILE*fp,X509**x,pem_password_cb*cb,void *u);
-EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp,EVP_PKEY **x,pem_password_cb *cb,void *u);
-int RSA_size(RSA*rsa);
-RSA *EVP_PKEY_get1_RSA(EVP_PKEY *pkey);
-EVP_PKEY *X509_get_pubkey(X509 *x);
-#define RSA_PKCS1_PADDING 1
-#define NID_md5 4
-int RSA_private_encrypt(int flen,unsigned char *from,unsigned char *to,RSA *rsa,int padding);
-int RSA_public_decrypt(int flen,unsigned char *from,unsigned char *to,RSA *rsa,int padding);
-int RSA_sign(int type,unsigned char *m,unsigned int m_len,unsigned char *sigret,unsigned int *siglen,RSA *rsa);
-int RSA_verify(int type,unsigned char *m,unsigned int m_len,unsigned char *sigbuf,unsigned int siglen,RSA *rsa);
-
-
-#ifdef __cplusplus
-}
-#endif
-#endif /*}*/
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-unsigned long ERR_get_error(void);
-char *ERR_error_string_n(int,char*,int);
-void ERR_print_errors_fp(FILE *fp);
-void RAND_seed(const void *buf,int num);
-void X509_STORE_set_flags(X509_STORE *ctx, long flags);/*OPT(0)*/
-#define X509_V_FLAG_CRL_CHECK		0x04
-#define X509_V_FLAG_CRL_CHECK_ALL	0x08
-
-#define RC4_INT unsigned int
-typedef struct {
-        RC4_INT x,y;
-        RC4_INT data[256];
-} RC4_KEY;
-void RC4_set_key(RC4_KEY *key,int len,const unsigned char *data);
-void RC4(RC4_KEY *key,unsigned long len,const unsigned char *in,unsigned char *out);
-
-int SSL_CTX_set_session_id_context(SSL_CTX*,const unsigned char *sid_ctx,unsigned int sid_ctx_len); /*OPT(0)*/
-typedef int (*GEN_SESSION_CB)(const SSL *ssl,unsigned char *id,unsigned int *id_len);
-int SSL_CTX_set_generate_session_id(SSL_CTX *ctx, GEN_SESSION_CB cb);/*OPT(0)*/
-void ENGINE_load_builtin_engines(void);/*OPT(0)*/
-void OPENSSL_add_all_algorithms_conf(void);/*OPT(0)*/
-
-BIO *BIO_new_file(const char *filename, const char *mode);
-typedef void DH;
-DH *PEM_read_bio_DHparams(BIO *bp, DH **x, pem_password_cb *cb, void *u);/*OPT(0)*/
-void DH_free(DH *dh);/*OPT(0)*/
-#define SSL_CTRL_SET_TMP_DH 3
-#define SSL_CTX_set_tmp_dh(ctx,dh) \
-        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH,0,(char *)dh)
-
-#ifdef __cplusplus
-}
-#endif
-
-/*END_STAB*/
-
-void myRC4_set_key(RC4_KEY *key,int len,const unsigned char *data){
-	RC4_set_key(key,len,data);
-}
-void myRC4(RC4_KEY *key,unsigned long len,const unsigned char *in,unsigned char *out){
-	RC4(key,len,in,out);
-}
-
 static unsigned char *ssid = (unsigned char*)"SSLway";
 static int ssid_len = 1;
 
 typedef unsigned char Uchar;
 int sslway_dl();
-static void putDylibError(){
- fprintf(stderr,"-- ERROR: can't link the SSL/Crypto library.\n");
- fprintf(stderr,"-- Hint: use -vl option to trace the required library,\n");
- fprintf(stderr,"--- find it (ex. libssl.so.X.Y.Z) under /usr/lib or /lib,\n");
- fprintf(stderr,"--- then set the library version as DYLIB='+,lib*.so.X.Y.Z'\n");
-}
-static int checkCrypt(){
-	if( sslway_dl() == 0 ){
-		putDylibError();
-		return -1;
+static int sslError(PCStr(what)){
+	unsigned long err = ERR_get_error();
+	if( err ){
+		CStr(reason,256);
+		ERR_error_string_n(err,reason,sizeof(reason));
+		fprintf(stderr,"# %s: %s\n",what,reason);
 	}
 	return 0;
 }
-int signRSA(RSA *rsa,PCStr(md5),int mlen,PVStr(sig),unsigned int *slen){
-	int siz;
+static dgssl::PKeyCtxPtr rsaCtx(EVP_PKEY *pkey,int sign,int withMD5){
+	dgssl::PKeyCtxPtr pc(EVP_PKEY_CTX_new(pkey,NULL));
 	int ok = 0;
 
-	if( checkCrypt() < 0 )
-		return 0;
+	if( pc ){
+		ok = (sign ? EVP_PKEY_sign_init(pc.get()) : EVP_PKEY_verify_init(pc.get())) > 0
+		  && EVP_PKEY_CTX_set_rsa_padding(pc.get(),RSA_PKCS1_PADDING) > 0
+		  && (!withMD5 || EVP_PKEY_CTX_set_signature_md(pc.get(),EVP_md5()) > 0);
+	}
+	if( !ok )
+		pc.reset();
+	return pc;
+}
+/// RSASSA-PKCS1-v1_5 signature of an MD5 digest.
+int signRSA(EVP_PKEY *pkey,PCStr(md5),int mlen,PVStr(sig),unsigned int *slen){
+	size_t siglen;
 
-	siz = RSA_size(rsa);
-	if( *slen < siz ){
+	if( *slen < (unsigned int)EVP_PKEY_get_size(pkey) ){
 		fprintf(stderr,"signRSA: not enough sig. buffer\n");
 		return 0;
 	}
-	ok = RSA_sign(NID_md5,(Uchar*)md5,mlen,(Uchar*)sig,slen,rsa);
-	return ok;
+	dgssl::PKeyCtxPtr pc = rsaCtx(pkey,1,1);
+	if( !pc )
+		return sslError("signRSA");
+	siglen = *slen;
+	if( EVP_PKEY_sign(pc.get(),(Uchar*)sig,&siglen,(const Uchar*)md5,mlen) <= 0 )
+		return sslError("signRSA");
+	*slen = siglen;
+	return 1;
 }
+/// Private key operation on a raw block with PKCS#1 type 1 padding.
+static int privateEncryptRSA(EVP_PKEY *pkey,const Uchar *in,int ilen,Uchar *out,int osiz){
+	size_t olen = osiz;
+	dgssl::PKeyCtxPtr pc = rsaCtx(pkey,1,0);
+
+	if( !pc || EVP_PKEY_sign(pc.get(),out,&olen,in,ilen) <= 0 )
+		return -1;
+	return (int)olen;
+}
+/// Public key recovery of a block with PKCS#1 type 1 padding.
+static int publicDecryptRSA(EVP_PKEY *pkey,const Uchar *in,int ilen,Uchar *out,int osiz){
+	Uchar tmp[4096];
+	size_t olen = sizeof(tmp);
+	dgssl::PKeyCtxPtr pc(EVP_PKEY_CTX_new(pkey,NULL));
+
+	if( !pc
+	 || EVP_PKEY_verify_recover_init(pc.get()) <= 0
+	 || EVP_PKEY_CTX_set_rsa_padding(pc.get(),RSA_PKCS1_PADDING) <= 0
+	 || EVP_PKEY_verify_recover(pc.get(),tmp,&olen,in,ilen) <= 0
+	 || (int)olen > osiz ){
+		ERR_clear_error();
+		return -1;
+	}
+	memcpy(out,tmp,olen);
+	return (int)olen;
+}
+static dgssl::PKeyPtr privKey;
 static char *privPEM;
-static RSA *privRSA;
 
 static int pass_cb(char buf[],int size,int rwflag,void *userdata){
 	fprintf(stderr,"## Passphrase for KEY requested:%X\n",p2i(userdata));
 	Xstrcpy(ZVStr(buf,size),(char*)userdata);
 	return strlen((char*)userdata);
 }
-int SignRSA(PCStr(privkey),PCStr(data),PCStr(pass),PCStr(md5),int mlen,PVStr(sig),unsigned int *slen){
-	EVP_PKEY *pkey;
-	RSA *rsa = 0;
-	int ok;
-	CStr(keybuff,8*1024);
-	BIO *Bp;
-	const char *cbdata = pass;
+static const char *readKeyFile(PCStr(path),char *buff,int bsiz){
+	FILE *fp;
+	int rcc;
 
-	if( checkCrypt() < 0 ){
+	fp = fopen(path,"r");
+	if( fp == NULL ){
+		fprintf(stderr,"# %s: Can't open\n",path);
 		return 0;
 	}
+	rcc = fread(buff,1,bsiz-1,fp);
+	fclose(fp);
+	if( rcc <= 0 ){
+		fprintf(stderr,"# %s: Can't read\n",path);
+		return 0;
+	}
+	buff[rcc] = 0;
+	return buff;
+}
+int SignRSA(PCStr(privkey),PCStr(data),PCStr(pass),PCStr(md5),int mlen,PVStr(sig),unsigned int *slen){
+	CStr(keybuff,8*1024);
+	const char *cbdata = pass;
 
-	if( privRSA == NULL || privPEM == NULL || strcmp(privPEM,privkey)!=0 ){
-		OPENSSL_add_all_algorithms_conf(); /* !!!! mandatory !!!! */
+	if( !privKey || privPEM == NULL || strcmp(privPEM,privkey)!=0 ){
 		if( data == 0 || *data == 0 ){
-			FILE *fp;
-			int rcc;
-			fp = fopen(privkey,"r");
-			if( fp == NULL ){
-				fprintf(stderr,"# %s: Can't open\n",privkey);
+			if( (data = readKeyFile(privkey,keybuff,sizeof(keybuff))) == 0 )
 				return 0;
-			}
-			rcc = fread(keybuff,1,sizeof(keybuff)-1,fp);
-			fclose(fp);
-
-			if( rcc <= 0 ){
-				fprintf(stderr,"# %s: Can't read\n",privkey);
-				return 0;
-			}
-			keybuff[rcc] = 0;
-			data = keybuff;
 		}
-
-
-		Bp = BIO_new(BIO_s_mem());
-		BIO_puts(Bp,(char*)data);
-		pkey = NULL;
-		ERR_load_crypto_strings();
-		ENGINE_load_builtin_engines();
-/*
-		pkey = PEM_read_bio_PrivateKey(Bp,&pkey,pass_cb,cbdata);
-*/
+		dgssl::BioPtr Bp = dgssl::bioFromMem(data,-1);
 		if( cbdata == 0 )
 			cbdata = "";
-		pkey = PEM_read_bio_PrivateKey(Bp,&pkey,NULL,cbdata);
-		if( pkey == 0 ){
+		dgssl::PKeyPtr pkey(PEM_read_bio_PrivateKey(Bp.get(),NULL,NULL,(void*)cbdata));
+		if( !pkey ){
 			fprintf(stderr,"# %s: Can't load\n",privkey);
 			return 0;
 		}
-		rsa = EVP_PKEY_get1_RSA(pkey);
-		if( rsa == NULL ){
+		if( !EVP_PKEY_is_a(pkey.get(),"RSA") ){
 			fprintf(stderr,"# %s: BAD KEY\n",privkey);
 			return 0;
 		}
+		free(privPEM);
 		privPEM = strdup(privkey);
-		privRSA = rsa;
+		privKey = std::move(pkey);
 		TRACE("loaded %s",privkey);
 	}
 	if( sig == NULL ){
 		return 1;
 	}
-	ok = signRSA(privRSA,md5,mlen,AVStr(sig),slen);
-	return ok;
+	return signRSA(privKey.get(),md5,mlen,AVStr(sig),slen);
 }
-int verifyRSA(RSA *rsa,PCStr(md5),int mlen,PCStr(sig),unsigned int slen){
-	int siz;
-	int ok = 0;
-
-	if( checkCrypt() < 0 )
-		return 0;
-
-	siz = RSA_size(rsa);
-	ok = RSA_verify(NID_md5,(Uchar*)md5,mlen,(Uchar*)sig,slen,rsa);
-	return ok;
-}
-static char *pubPEM;
-static RSA *pubRSA;
-int VerifyRSA(PCStr(pubkey),PCStr(data),PCStr(md5),int mlen,PCStr(sig),unsigned int slen){
-	X509 *x509;
-	EVP_PKEY *pkey;
-	RSA *rsa;
+/// Verifies an RSASSA-PKCS1-v1_5 signature of an MD5 digest.
+int verifyRSA(EVP_PKEY *pkey,PCStr(md5),int mlen,PCStr(sig),unsigned int slen){
+	dgssl::PKeyCtxPtr pc = rsaCtx(pkey,0,1);
 	int ok;
-	CStr(keybuff,8*1024);
-	BIO *Bp;
 
-	if( checkCrypt() < 0 )
+	if( !pc )
 		return 0;
+	ok = 0 < EVP_PKEY_verify(pc.get(),(const Uchar*)sig,slen,(const Uchar*)md5,mlen);
+	if( !ok )
+		ERR_clear_error();
+	return ok;
+}
+static dgssl::PKeyPtr pubKey;
+static char *pubPEM;
+int VerifyRSA(PCStr(pubkey),PCStr(data),PCStr(md5),int mlen,PCStr(sig),unsigned int slen){
+	CStr(keybuff,8*1024);
 
-	if( pubRSA == NULL || pubPEM == 0 || strcmp(pubPEM,pubkey) != 0 ){
+	if( !pubKey || pubPEM == 0 || strcmp(pubPEM,pubkey) != 0 ){
 		if( data == 0 || *data == 0 ){
-			FILE *fp;
-			int rcc;
-			fp = fopen(pubkey,"r");
-			if( fp == NULL ){
-				fprintf(stderr,"# %s: Can't open\n",pubkey);
+			if( (data = readKeyFile(pubkey,keybuff,sizeof(keybuff))) == 0 )
 				return 0;
-			}
-			rcc = fread(keybuff,1,sizeof(keybuff)-1,fp);
-			fclose(fp);
-			if( rcc <= 0 ){
-				fprintf(stderr,"# %s: Can't read\n",pubkey);
-				return 0;
-			}
-			keybuff[rcc] = 0;
-			data = keybuff;
 		}
-		Bp = BIO_new(BIO_s_mem());
-		BIO_puts(Bp,(char*)data);
-		pkey = NULL;
-		x509 = PEM_read_bio_X509(Bp,NULL,NULL,NULL);
-		if( x509 == NULL ){
+		dgssl::BioPtr Bp = dgssl::bioFromMem(data,-1);
+		dgssl::X509Ptr x509(PEM_read_bio_X509(Bp.get(),NULL,NULL,NULL));
+		if( !x509 ){
 			fprintf(stderr,"# %s: BAD CERT\n",pubkey);
 			return 0;
 		}
+		dgssl::PKeyPtr pkey(X509_get_pubkey(x509.get()));
+		if( !pkey || !EVP_PKEY_is_a(pkey.get(),"RSA") ){
+			fprintf(stderr,"# %s: BAD KEY\n",pubkey);
+			return 0;
+		}
+		free(pubPEM);
 		pubPEM = strdup(pubkey);
-		pkey = X509_get_pubkey(x509);
-		rsa = EVP_PKEY_get1_RSA(pkey);
-		pubRSA = rsa;
+		pubKey = std::move(pkey);
 		TRACE("loaded %s",pubkey);
 	}
 
 	if( sig == NULL ){
 		return 1;
 	}
-	ok = verifyRSA(pubRSA,md5,mlen,sig,slen);
-	return ok;
+	return verifyRSA(pubKey.get(),md5,mlen,sig,slen);
 }
 
-static RSA *newRSApubkey(PCStr(key)){
-	BIO *Bp;
-	X509 *x509;
-	EVP_PKEY *pkey;
-	RSA *rsa;
-
-	Bp = BIO_new(BIO_s_mem());
-	BIO_puts(Bp,(char*)key);
-	pkey = PEM_read_bio_PUBKEY(Bp,NULL,NULL,NULL);
-	if( pkey == NULL )
-		return 0;
-	rsa = EVP_PKEY_get1_RSA(pkey);
-	return rsa;
-}
 int pubDecyptRSA(PCStr(pubkey),int len,PCStr(enc),PVStr(dec)){
-	RSA *rsa;
-	int dlen;
+	dgssl::BioPtr Bp = dgssl::bioFromMem(pubkey,-1);
+	dgssl::PKeyPtr pkey(PEM_read_bio_PUBKEY(Bp.get(),NULL,NULL,NULL));
 
-	if( sslway_dl() <= 0 )
-		return -1;
-	rsa = newRSApubkey(pubkey);
-	if( rsa == NULL ){
+	if( !pkey || !EVP_PKEY_is_a(pkey.get(),"RSA") ){
 		return -1;
 	}
-	dlen = RSA_public_decrypt(len,(unsigned char*)enc,(unsigned char*)dec,rsa,RSA_PKCS1_PADDING);
-	/*RSA_free(rsa);*/
-	return dlen;
+	return publicDecryptRSA(pkey.get(),(const Uchar*)enc,len,(Uchar*)dec,4096);
 }
 
-#ifndef ISDLIB
-#include "randtext.cpp"
-#endif
 
 static double Start;
 static double laps[32];
@@ -613,7 +354,6 @@ static int nthcall;
 static SSL_CTX *ctx_cache;
 static int ctx_filter_id;
 int (*SSL_fatalCB)(PCStr(mssg),...);
-static char *SSLLIBS;
 
 static void opt1(PCStr(arg)){
 	if( strncmp(arg,"-vv",3) == 0 || strncmp(arg,"-vd",3) == 0 ){
@@ -656,6 +396,14 @@ static int SSLopts[2] = {OPT_SHUT_FLUSH,OPT_SHUT_FLUSH};
 static int SHUTwait[2] = {300,300}; /* milli-seconds */
 
 typedef struct DGCtx *DGCp;
+DG_PARAM_SUB(TLSCONF, "scache", "scache:[do|no|acc|con]", "do", "Enables or disables the session caches for accepted (acc) and outgoing (con) connections", "TLSCONF=scache:no")
+DG_PARAM_SUB(TLSCONF, "xcache", "xcache:[do|no]", "do", "Enables or disables the cache of the certificate context", "TLSCONF=xcache:no")
+DG_PARAM_SUB(TLSCONF, "cache", "cache:[do|no]", "scache:do,xcache:do", "Enables or disables all caches", "TLSCONF=cache:no")
+DG_PARAM_SUB(TLSCONF, "shutdown", "shutdown[:none|flush|wait[.ms]|acc|con]", "flush", "Shutdown alert (close notify): flush answers the alert of the peer, wait also sends it", "TLSCONF=shutdown:wait.300")
+DG_PARAM_SUB(TLSCONF, "sni", "sni:[only|warn]", "none", "Refuses (only) or warns (warn) when no certificate exists for the requested server name", "TLSCONF=sni:only")
+DG_PARAM_SUB(TLSCONF, "context", "context:string", "SSLway", "Session id context of the server", "TLSCONF=context:dg1")
+DG_PARAM_SUB(TLSCONF, "debug", "debug", "off", "Reports the use of the session and certificate caches on stderr", "TLSCONF=debug")
+DG_PARAM_SUB(TLSCONF, "libs", "libs:libname[+libname]", "ignored", "Obsolete; OpenSSL is linked directly and the setting is ignored", "TLSCONF=libs:crypto+ssl")
 static scanListFunc scan_TLSCONF1(PCStr(conf),DGCp ctx){
 	CStr(what,128);
 	CStr(val,128);
@@ -730,7 +478,7 @@ static scanListFunc scan_TLSCONF1(PCStr(conf),DGCp ctx){
 	}
 	else
 	if( strcaseeq(what,"libs") ){
-		SSLLIBS = stralloc(val);
+		syslog_ERROR("-- TLSCONF libs:%s ignored, OpenSSL is linked directly\n",val);
 	}
 	else
 	if( strcaseeq(what,"context") ){
@@ -865,7 +613,7 @@ static void ssl_prcert(SSL *ssl,int show,SSL *outssl,int outfd,PCStr(what))
 	CStr(ident,256);
 
 	ident[0] = 0;
-	if( peer = SSL_get_peer_certificate(ssl) ){
+	if( peer = SSL_get1_peer_certificate(ssl) ){
 		sb = X509_NAME_oneline(X509_get_subject_name(peer),subjb,sizeof(subjb));
 		is = X509_NAME_oneline(X509_get_issuer_name(peer),issrb,sizeof(issrb));
 		if( show ){
@@ -912,7 +660,7 @@ static void eRR_print_errors_fp(FILE *fp)
 
 /* new-111110a to show the current cipher of the SSL connection */
 static int showCurrentCipher(SSL *ssl){
-	void *sc;
+	const SSL_CIPHER *sc;
 	IStr(desc,256);
 	const char *descp;
 
@@ -943,7 +691,8 @@ static SSL *ssl_conn(SSL_CTX *ctx,int confd,SslEnv *env)
 	SSL_set_connect_state(conSSL);
 	SSL_set_fd(conSSL,SocketOf(confd));
 	Lap("before connect");
-	if( SSL_connect(conSSL) < 0 ){
+	ERR_clear_error();
+	if( SSL_connect(conSSL) <= 0 ){
 		ERROR("connect failed");
 		ERR_print_errors_fp(stderr);
 		if( SSL_fatalCB ){
@@ -953,6 +702,7 @@ static SSL *ssl_conn(SSL_CTX *ctx,int confd,SslEnv *env)
 		 * so it should be cleared...
 		 */
 		clearCache(ctx,conSSL,XCON);
+		SSL_free(conSSL);
 		return NULL;
 	}else{
 		Lap("after connect");
@@ -974,9 +724,9 @@ static SSL *ssl_acc(SSL_CTX *ctx,int accfd)
 	accSSL = SSL_new(ctx);
 	SSL_set_accept_state(accSSL);
 	SSL_set_fd(accSSL,SocketOf(accfd));
-	SSL_set_fd(accSSL,SocketOf(accfd));
 	Lap("before accept");
-	if( SSL_accept(accSSL) < 0 ){
+	ERR_clear_error();
+	if( SSL_accept(accSSL) <= 0 ){
 		ERROR("accept failed");
 		ERR_print_errors_fp(stderr);
 		/*
@@ -986,6 +736,7 @@ static SSL *ssl_acc(SSL_CTX *ctx,int accfd)
 		if( SSL_fatalCB ){
 			(*SSL_fatalCB)("ssl_acc() failed\n");
 		}
+		SSL_free(accSSL);
 		return NULL;
 	}else{
 		Lap("after accept");
@@ -1157,50 +908,36 @@ static const char *cipher_list = NULL;
 
 static SSL_CTX *ssl_new(int serv)
 {	SSL_CTX *ctx;
-	SSL_METHOD *meth;
 	int sslver;
 	int sslnover;
 
 	ERR_clear_error();
-	SSL_library_init();
-	SSL_load_error_strings();
+	sslway_dl();
 
-	meth = 0;
+	ctx = SSL_CTX_new(serv ? TLS_server_method() : TLS_client_method());
+	if( ctx == NULL ){
+		ERROR("SSL_CTX_new() failed");
+		ERR_print_errors_fp(stderr);
+		return NULL;
+	}
+	SSL_CTX_set_min_proto_version(ctx,TLS1_2_VERSION);
+	SSL_CTX_set_options(ctx,SSL_OP_IGNORE_UNEXPECTED_EOF);
+
 	if( sslver = serv ? cl_sslver : sv_sslver ){
 		switch( sslver ){
 			case 1:
-				if( serv )
-					meth = SSLv2_server_method();
-				else	meth = SSLv2_client_method();
-				break;
 			case 2:
-				if( serv )
-					meth = SSLv3_server_method();
-				else	meth = SSLv3_client_method();
-				break;
-			case 3:
-				if( serv )
-					meth = SSLv23_server_method();
-				else	meth = SSLv23_client_method();
+				ERROR("%s is not supported, using TLSv1.2 or later",
+					sslver==1?"SSLv2":"SSLv3");
 				break;
 			case 4:
-				if( serv )
-					meth = TLSv1_server_method();
-				else	meth = TLSv1_client_method();
+				SSL_CTX_set_min_proto_version(ctx,TLS1_VERSION);
+				SSL_CTX_set_max_proto_version(ctx,TLS1_VERSION);
+				ERROR("TLSv1.0 only; OpenSSL 3 needs a cipher list with @SECLEVEL=0 for it");
 				break;
 		}
-		if( meth == 0 ){
-			ERROR("no method for %X",sslver);
-		}
 	}
-	if( meth == 0 ){
-		if( serv )
-			meth = SSLv23_server_method();
-		else	meth = SSLv23_client_method();
-	}
-	ctx = SSL_CTX_new(meth);
 
-	if( ctx )
 	if( sslnover = serv ? cl_sslnover : sv_sslnover ){
 		int opts = 0;
 		switch( sslnover ){
@@ -1208,7 +945,7 @@ static SSL_CTX *ssl_new(int serv)
 			case 2: opts |= SSL_OP_NO_SSLv3; break;
 			case 3: opts |= SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3; break;
 		}
-		SSL_CTX_ctrl(ctx,SSL_CTRL_OPTIONS,opts,NULL);
+		SSL_CTX_set_options(ctx,opts);
 	}
 	return ctx;
 }
@@ -1369,7 +1106,7 @@ static int loadContext(SSL_CTX *ctx,int ac,char *av[]){
 	X509 *cert;
 	EVP_PKEY *pkey;
 	unsigned CStr(buf,4096);
-	unsigned char *pp; /**/
+	const unsigned char *pp; /**/
 	int len;
 	double start = Time();
 
@@ -1409,11 +1146,12 @@ static int loadContext(SSL_CTX *ctx,int ac,char *av[]){
 	}
 	IGNRETP fread(buf,1,len,fp);
 	pp = (unsigned char*)buf;
-	pkey = d2i_PrivateKey(EVP_PKEY_RSA,NULL,&pp,len);
+	pkey = d2i_AutoPrivateKey(NULL,&pp,len);
 
 	fclose(fp);
 	CFI_unLock();
 
+	if( cert && pkey )
 	if( SSL_CTX_use_certificate(ctx,cert) ){
 		if( SSL_CTX_use_PrivateKey(ctx,pkey) ){
 			if( SSL_CTX_check_private_key(ctx) ){
@@ -1422,10 +1160,14 @@ static int loadContext(SSL_CTX *ctx,int ac,char *av[]){
 						getpid(),"CTX");
 				}
 				Lap("loadContext OK");
+				X509_free(cert);
+				EVP_PKEY_free(pkey);
 				return 0;
 			}
 		}
 	}
+	X509_free(cert);
+	EVP_PKEY_free(pkey);
 	return -1;
 CEXIT:
 	fclose(fp);
@@ -1546,8 +1288,7 @@ static void loadSessions(SSL_CTX *ctx,SSL *ssl,int what){
 		int rcc;
 		SessionCtx scx;
 		SSL_SESSION *sess;
-		unsigned char *sp; /**/
-		SSL_SESSION *s;
+		const unsigned char *sp; /**/
 
 		Sp = &sess_cache[si];
 		cwhat = Sp->s_what;
@@ -1573,8 +1314,7 @@ static void loadSessions(SSL_CTX *ctx,SSL *ssl,int what){
 		}
 		sp = (unsigned char*)scx.x_buff;
 
-		s = SSL_SESSION_new();
-		sess = d2i_SSL_SESSION(&s,&sp,len);
+		sess = d2i_SSL_SESSION(NULL,&sp,len);
 		if( sess == 0 ){
 			continue;
 		}
@@ -1583,6 +1323,7 @@ static void loadSessions(SSL_CTX *ctx,SSL *ssl,int what){
 			if( Sp->s_claddr == cl_addr ){
 				SSL_set_session(ssl,sess);
 				ncon++;
+				SSL_SESSION_free(sess);
 				break;
 			}
 		}else
@@ -1594,6 +1335,7 @@ static void loadSessions(SSL_CTX *ctx,SSL *ssl,int what){
 				SSL_CTX_add_session(ctx,sess);
 			}
 		}
+		SSL_SESSION_free(sess);
 	}
 
 CEXIT:
@@ -1640,7 +1382,9 @@ static void saveSessionsA(SSL_CTX *ctx,SSL *ssl,int what){
 	SessionCtx scx;
 	unsigned int oldest;
 	int oi;
-	SessionHead *shp;
+	const unsigned char *sid;
+	unsigned int sidlen;
+	int sver;
 	CStr(sib,128);
 	int sc = sess_cached;
 	int off1;
@@ -1667,13 +1411,14 @@ static void saveSessionsA(SSL_CTX *ctx,SSL *ssl,int what){
 
 	loadScache(fp,what);
 	sess = SSL_get_session(ssl);
-	shp = (SessionHead*)sess;
 	if( sess == NULL ){
 		ERROR("## no session to be saved");
 		goto CEXIT;
 	}
-	if( shp->ssl_version == 2 ){
-		DEBUG("## don't cache the session of SSL2");
+	sid = SSL_SESSION_get_id(sess,&sidlen);
+	sver = SSL_SESSION_get_protocol_version(sess);
+	if( sidlen == 0 || sizeof(Sp->s_sid) < sidlen ){
+		DEBUG("## no session id to be cached");
 		goto CEXIT;
 	}
 
@@ -1701,7 +1446,7 @@ static void saveSessionsA(SSL_CTX *ctx,SSL *ssl,int what){
 	if( sess_cached ){
 	    for( si = 0; si < sess_cached; si++ ){
 		Sp = &sess_cache[si];
-		if( bcmp(shp->session_id,Sp->s_sid,shp->session_id_length)==0 ){
+		if( bcmp(sid,Sp->s_sid,sidlen)==0 ){
 			if( tlsdebug & DBG_SCACHE ){
 				toHex(Sp->s_sid,32,sib);
 				Xstrcpy(DVStr(sib,40),"...");
@@ -1709,7 +1454,7 @@ static void saveSessionsA(SSL_CTX *ctx,SSL *ssl,int what){
 					getpid(),what==XACC?"ACC":"CON",sib);
 			}
 			DEBUG("session HIT %X/%d/%d %X/%d",
-				shp->ssl_version,shp->session_id_length,len,
+				sver,sidlen,len,
 				Sp->s_ver,Sp->s_leng);
 			sess_hits++;
 			goto CEXIT;
@@ -1734,8 +1479,9 @@ static void saveSessionsA(SSL_CTX *ctx,SSL *ssl,int what){
 	Sp->s_date = time(NULL);
 	Sp->s_svaddr = sv_addr;
 	Sp->s_claddr = cl_addr;
-	Sp->s_ver = shp->ssl_version;
-	Bcopy(shp->session_id,Sp->s_sid,shp->session_id_length);
+	Sp->s_ver = sver;
+	bzero(Sp->s_sid,sizeof(Sp->s_sid));
+	Bcopy(sid,Sp->s_sid,sidlen);
 
 	fseek(fp,SC_BASE,0);
 
@@ -1772,7 +1518,7 @@ ERROR("saveSession[%d] FATAL-D %d %d",nsi,off1,ftell(fp));
 	CFI_unLock();
 
 	if( tlsdebug & DBG_SCACHE ){
-		toHex((char*)shp->session_id,shp->session_id_length,sib);
+		toHex((char*)sid,sidlen,sib);
 		Xstrcpy(DVStr(sib,40),"...");
 		fprintf(stderr,"[%d] %s scPUT %s %d/%d\n",
 			getpid(),what==XACC?"ACC":"CON",sib,wcc,nsess);
@@ -1816,6 +1562,7 @@ static int use_cert_chain(SSL_CTX *ctx,PCStr(certfile),int clnt){
 	}else{
 		if( LTRACE <= loglevel )
 		ERR_print_errors_fp(stderr);
+		ERR_clear_error();
 		return 0;
 	}
 	return 1;
@@ -1872,7 +1619,7 @@ static int setcert1(SSL_CTX *ctx,PCStr(certfile),PCStr(keyfile),int clnt)
 		ERROR("certfile not found or wrong: %s [at %s]",certfile,cwd);
 		code = -1;
 	}
-	if( SSL_CTX_use_RSAPrivateKey_file(ctx,keyfile,SSL_FILETYPE_PEM) ){
+	if( SSL_CTX_use_PrivateKey_file(ctx,keyfile,SSL_FILETYPE_PEM) ){
 		DEBUG("keyfile loaded: %s",keyfile);
 	}else{
 		ERROR("keyfile not found or wrong: %s [at %s]",keyfile,cwd);
@@ -1893,10 +1640,6 @@ static CTXC ctxc[1]; /* should be on memmap */
 #define ctx2		ctxc[0].cc_ctx
 #define ctx2_domain	ctxc[0].cc_domain
 static SSL_CTX *ssl_newsv();
-#define SSL_TLSEXT_ERR_ALERT_WARNING 1
-#define SSL_TLSEXT_ERR_OK 0
-#define SSL_TLSEXT_ERR_ALERT_FATAL 2
-#define SSL_TLSEXT_ERR_NOACK 3
 static struct {
 	MStr(s_name,128);
 } TlsSni;
@@ -1918,6 +1661,9 @@ static int get_vhost(SSL *ssl,int *ad,void *arg){
 	}
 	if( ctx2 == 0 ){
 		ctx2 = ssl_newsv();
+		if( ctx2 == 0 ){
+			return SSL_TLSEXT_ERR_NOACK;
+		}
 	}else
 	if( ctx2_domain[0] && streq(ctx2_domain,vhost) ){
 		ERROR("TLSxSNI: %s (reusing)",vhost);
@@ -2052,49 +1798,199 @@ static int ssl_dfltCAs(SSL_CTX *ctx,int clnt){
 }
 
 static int cert_opts;
-static const char *dflt_cert;
-static const char *dflt_vkey;
-void sslway_dflt_certkey(PCStr(cert),PCStr(vkey)){
-	dflt_cert = cert;
-	dflt_vkey = vkey;
-}
-int set_dfltcerts(SSL_CTX *ctx){
-	X509 *cert;
-	EVP_PKEY *pkey;
-	CStr(file,128);
-	int ok;
-	BIO *Bp;
+static int mkdirs(PCStr(path)){
+	CStr(buf,1024);
+	char *p;
 
-	if( dflt_cert == 0 || dflt_vkey == 0 )
-		return -1;
-
-	Bp = BIO_new(BIO_s_mem());
-	BIO_puts(Bp,(char*)dflt_vkey);
-	pkey = NULL;
-	PEM_read_bio_RSAPrivateKey(Bp,&pkey,NULL,NULL);
-	ok = SSL_CTX_use_RSAPrivateKey(ctx,(RSA*)pkey);
-	if( !ok ){
-		ERROR("-- pkey=%X %d",pkey,ok);
-	}
-
-	BIO_puts(Bp,(char*)dflt_cert);
-	cert = NULL;
-	PEM_read_bio_X509(Bp,&cert,NULL,NULL);
-	ok = SSL_CTX_use_certificate(ctx,cert);
-	if( !ok ){
-		ERROR("-- cert=%X %d",cert,ok);
-	}
-
-	if( SSL_CTX_check_private_key(ctx) ){
-		ERROR("-- Using Default Certificate");
-		if( tlsdebug & DBG_XCACHE ){
-			fprintf(stderr,"[%d] %s using default\n",
-				getpid(),"CTX");
+	strncpy(buf,path,sizeof(buf)-1);
+	buf[sizeof(buf)-1] = 0;
+	for( p = buf+1; *p; p++ ){
+		if( *p == '/' ){
+			*p = 0;
+			mkdir(buf,0755);
+			*p = '/';
 		}
+	}
+	return mkdir(buf,0755) == 0 || errno == EEXIST ? 0 : -1;
+}
+static int hostIsAddr(PCStr(host)){
+	unsigned char a[16];
+	return inet_pton(AF_INET,host,a) == 1 || inet_pton(AF_INET6,host,a) == 1;
+}
+static int sanHost(PCStr(host)){
+	const char *hp;
+	if( *host == 0 )
 		return 0;
-	}else{
+	for( hp = host; *hp; hp++ ){
+		if( !isalnum(*hp & 0xFF) && !strchr(".-_:",*hp) )
+			return 0;
+	}
+	return 1;
+}
+static int addExt(X509 *x,int nid,PCStr(value)){
+	X509V3_CTX vctx;
+	X509_EXTENSION *ext;
+	int ok;
+
+	X509V3_set_ctx(&vctx,x,x,NULL,NULL,0);
+	ext = X509V3_EXT_conf_nid(NULL,&vctx,nid,value);
+	if( ext == NULL )
+		return 0;
+	ok = X509_add_ext(x,ext,-1);
+	X509_EXTENSION_free(ext);
+	return ok;
+}
+/// Creates a self-signed EC P-256 certificate (SHA-256, 825 days) with SAN host and 127.0.0.1.
+int sslway_selfsigned(PCStr(host),EVP_PKEY **pkeyp,X509 **certp){
+	CStr(hostb,256);
+	CStr(san,600);
+	unsigned char sn[8];
+	uint64_t serial = 0;
+	int i;
+
+	*pkeyp = NULL;
+	*certp = NULL;
+	if( host == NULL || !sanHost(host) ){
+		if( gethostname(hostb,sizeof(hostb)-1) != 0 )
+			hostb[0] = 0;
+		hostb[sizeof(hostb)-1] = 0;
+		host = sanHost(hostb) ? hostb : "localhost";
+	}
+	dgssl::PKeyPtr pkey(EVP_EC_gen("P-256"));
+	dgssl::X509Ptr x(X509_new());
+	if( !pkey || !x )
+		return -1;
+
+	if( RAND_bytes(sn,sizeof(sn)) != 1 )
+		return -1;
+	for( i = 0; i < 8; i++ )
+		serial = (serial << 8) | sn[i];
+	serial = (serial & 0x7FFFFFFFFFFFFFFFULL) | 1;
+	ASN1_INTEGER_set_uint64(X509_get_serialNumber(x.get()),serial);
+
+	X509_set_version(x.get(),2);
+	X509_gmtime_adj(X509_getm_notBefore(x.get()),-300);
+	X509_gmtime_adj(X509_getm_notAfter(x.get()),(long)825*24*3600);
+	X509_set_pubkey(x.get(),pkey.get());
+	X509_NAME *name = X509_get_subject_name(x.get());
+	X509_NAME_add_entry_by_txt(name,"CN",MBSTRING_UTF8,(const unsigned char*)host,-1,-1,0);
+	X509_set_issuer_name(x.get(),name);
+
+	snprintf(san,sizeof(san),"%s:%s%s",hostIsAddr(host)?"IP":"DNS",host,
+		strcmp(host,"127.0.0.1")==0?"":",IP:127.0.0.1");
+	if( !addExt(x.get(),NID_basic_constraints,"critical,CA:FALSE")
+	 || !addExt(x.get(),NID_key_usage,"critical,digitalSignature")
+	 || !addExt(x.get(),NID_ext_key_usage,"serverAuth,clientAuth")
+	 || !addExt(x.get(),NID_subject_alt_name,san) )
+		return -1;
+	if( X509_sign(x.get(),pkey.get(),EVP_sha256()) <= 0 )
+		return -1;
+	*pkeyp = pkey.release();
+	*certp = x.release();
+	return 0;
+}
+static int savePem(PCStr(path),EVP_PKEY *pkey,X509 *cert){
+	CStr(tmp,1100);
+	int fd,ok;
+
+	snprintf(tmp,sizeof(tmp),"%s.%d.tmp",path,(int)getpid());
+	unlink(tmp);
+	fd = open(tmp,O_WRONLY|O_CREAT|O_EXCL,pkey?0600:0644);
+	if( fd < 0 )
+		return -1;
+	{
+		dgssl::BioPtr bio(BIO_new_fd(fd,BIO_CLOSE));
+		if( pkey )
+			ok = PEM_write_bio_PrivateKey(bio.get(),pkey,NULL,NULL,0,NULL,NULL);
+		else	ok = PEM_write_bio_X509(bio.get(),cert);
+		BIO_flush(bio.get());
+	}
+	if( !ok || rename(tmp,path) != 0 ){
+		unlink(tmp);
 		return -1;
 	}
+	return 0;
+}
+/// Stores the generated server certificate and key in the directory unless both exist.
+int sslway_autocertFiles(PCStr(dir),char *certpath,char *keypath,int psiz){
+	CStr(lockpath,1100);
+	int lfd,rcode = -1;
+
+	snprintf(certpath,psiz,"%s/%s",dir,sv_cert_default);
+	snprintf(keypath,psiz,"%s/%s",dir,sv_key_default);
+	if( mkdirs(dir) != 0 )
+		return -1;
+	snprintf(lockpath,sizeof(lockpath),"%s/.autocert.lock",dir);
+	lfd = open(lockpath,O_RDWR|O_CREAT,0600);
+	if( lfd < 0 )
+		return -1;
+	flock(lfd,LOCK_EX);
+	if( access(certpath,R_OK) == 0 && access(keypath,R_OK) == 0 ){
+		rcode = 0;
+	}else{
+		EVP_PKEY *pk;
+		X509 *cert;
+		if( sslway_selfsigned(NULL,&pk,&cert) == 0 ){
+			if( savePem(keypath,pk,NULL) == 0 && savePem(certpath,NULL,cert) == 0 )
+				rcode = 0;
+			EVP_PKEY_free(pk);
+			X509_free(cert);
+		}
+	}
+	flock(lfd,LOCK_UN);
+	close(lfd);
+	return rcode;
+}
+/// Uses the generated server certificate when no certificate is configured.
+static int set_autocert(SSL_CTX *ctx,int clnt){
+	IStr(certpath,1100);
+	IStr(keypath,1100);
+	EVP_PKEY *pk;
+	X509 *cert;
+	int ok;
+
+	if( clnt ){
+		ERROR("-- no client certificate");
+		return 0;
+	}
+	if( certdir && sslway_autocertFiles(certdir,certpath,keypath,sizeof(certpath)) == 0 ){
+		if( setcert1(ctx,certpath,keypath,clnt) == 0 ){
+			ERROR("-- using the generated certificate %s",certpath);
+			return 0;
+		}
+	}
+	if( sslway_selfsigned(NULL,&pk,&cert) != 0 ){
+		ERROR("-- cannot generate a certificate");
+		return -1;
+	}
+	ok = SSL_CTX_use_certificate(ctx,cert) == 1 && SSL_CTX_use_PrivateKey(ctx,pk) == 1;
+	EVP_PKEY_free(pk);
+	X509_free(cert);
+	ERROR("-- using a temporary certificate, CERTDIR=%s is not usable",certdir?certdir:"");
+	return ok ? 0 : -1;
+}
+/// Accepts SSL_CERT_FILE only when it holds a certificate and a private key.
+static int certFileIsPair(PCStr(path)){
+	const int bsiz = 128*1024;
+	char *buf;
+	FILE *fp;
+	int rcc,ok;
+
+	fp = fopen(path,"r");
+	if( fp == NULL )
+		return 0;
+	buf = (char*)malloc(bsiz);
+	rcc = buf ? fread(buf,1,bsiz-1,fp) : 0;
+	fclose(fp);
+	if( rcc <= 0 ){
+		free(buf);
+		return 0;
+	}
+	buf[rcc] = 0;
+	ok = strstr(buf,"-----BEGIN CERTIFICATE-----") != 0
+	  && strstr(buf,"PRIVATE KEY-----") != 0;
+	free(buf);
+	return ok;
 }
 
 static int setcerts(SSL_CTX *ctx,CertKeyV *certv,int clnt)
@@ -2103,19 +1999,20 @@ static int setcerts(SSL_CTX *ctx,CertKeyV *certv,int clnt)
 	CertKey1 *cert1;
 
 	IStr(path,1024);
+	SSL_CTX_set_dh_auto(ctx,1);
 	if( findcert("dhparam.pem",AVStr(path),0)
 	 || findcert("dhparam.der",AVStr(path),0)
 	){
-		BIO *Bp;
-		DH *dh;
 		DEBUG("-- loading DH PARAMS: %s",path);
-		if( Bp = BIO_new_file(path,"r") ){
-			if( dh = PEM_read_bio_DHparams(Bp,NULL,NULL,NULL) ){
-				SSL_CTX_set_tmp_dh(ctx,dh);
-				DH_free(dh);
+		dgssl::BioPtr Bp(BIO_new_file(path,"r"));
+		if( Bp ){
+			EVP_PKEY *dh = PEM_read_bio_Parameters(Bp.get(),NULL);
+			if( dh && SSL_CTX_set0_tmp_dh_pkey(ctx,dh) == 1 ){
 				TRACE("-- loaded DH PARAMS: %s",path);
+			}else{
+				EVP_PKEY_free(dh);
+				ERROR("-- bad DH PARAMS: %s",path);
 			}
-			BIO_free(Bp);
 		}
 	}
 
@@ -2134,7 +2031,7 @@ static int setcerts(SSL_CTX *ctx,CertKeyV *certv,int clnt)
 			}
 			if( cert_opts == 0 ){
 				/* if not specified explicitly */
-				return set_dfltcerts(ctx);
+				return set_autocert(ctx,clnt);
 			}
 			if( SSL_fatalCB ){
 				(*SSL_fatalCB)("bad cert/key: [%s][%s]\n",
@@ -2146,17 +2043,6 @@ static int setcerts(SSL_CTX *ctx,CertKeyV *certv,int clnt)
 	return 0;
 }
 
-static RSA *tmprsa_key;
-static RSA *tmprsa_callback(SSL *ctx,int exp,int bits)
-{
-	if( bits != 512 && bits != 1024 ){
-		bits = 512;
-	}
-	if( tmprsa_key == NULL ){
-		tmprsa_key = RSA_generate_key(bits,0x10001,NULL,NULL);
-	}
-	return tmprsa_key;
-}
 static int verify_callback(int ok,X509_STORE_CTX *ctx)
 {	int err,depth;
 	const char *errsym;
@@ -2178,13 +2064,10 @@ static int verify_callback(int ok,X509_STORE_CTX *ctx)
 	return ok;
 }
 
-#define SSL_ERROR_WANT_READ        2
-#define SSL_ERROR_WANT_WRITE       3
-#define SSL_ERROR_WANT_X509_LOOKUP 4
-
 static int SSL_rdwr(int wr,SSL *ssl,void *buf,int siz)
 {	int i,xcc,err;
 
+	ERR_clear_error();
 	if( wr )
 		xcc = SSL_write(ssl,buf,siz);
 	else	xcc = SSL_read(ssl,buf,siz);
@@ -2217,6 +2100,26 @@ static int SSL_rdwr(int wr,SSL *ssl,void *buf,int siz)
 #undef	SSL_write
 #define SSL_read(ss,bf,sz)	SSL_rdwr(0,ss,bf,sz)
 #define SSL_write(ss,bf,sz)	SSL_rdwr(1,ss,(char*)bf,sz)
+
+#define SSL_AGAIN	(-2)
+/// Reads once; a record without application data (session ticket, key update) gives SSL_AGAIN.
+static int SSL_relayRead(SSL *ssl,void *buf,int siz)
+{	int xcc,err;
+
+	ERR_clear_error();
+	xcc = (SSL_read)(ssl,buf,siz);
+	if( 0 < xcc )
+		return xcc;
+	err = SSL_get_error(ssl,xcc);
+	if( err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE ){
+		return SSL_AGAIN;
+	}
+	if( err != SSL_ERROR_ZERO_RETURN && LDEBUG <= loglevel ){
+		DEBUG("SSL_read()=%d ERR=%d",xcc,err);
+		ERR_print_errors_fp(stderr);
+	}
+	return 0;
+}
 
 /*
 static void writes(PCStr(what),SSL *ssl,int confd,void *buf,int rcc)
@@ -2308,6 +2211,11 @@ static void ssl_relay(SSLwayCTX *Sc,SSL *accSSL,int accfd,SSL *conSSL,int confd)
 	fdv[0] = accfd;
 	fdv[1] = confd;
 
+	if( accSSL )
+		SSL_clear_mode(accSSL,SSL_MODE_AUTO_RETRY);
+	if( conSSL )
+		SSL_clear_mode(conSSL,SSL_MODE_AUTO_RETRY);
+
 	if( cl_nego_FTPDATA )
 		nego_FTPDATAcl(conSSL,"",0);
 
@@ -2368,8 +2276,9 @@ static void ssl_relay(SSLwayCTX *Sc,SSL *accSSL,int accfd,SSL *conSSL,int confd)
 		rem = 0;
 		if( rfdv[0] ){
 			if( accSSL )
-				rcc = SSL_read(accSSL,buf,sizeof(buf));
+				rcc = SSL_relayRead(accSSL,buf,sizeof(buf));
 			else	rcc = read(accfd,buf,sizeof(buf));
+			if( rcc != SSL_AGAIN ){
 			if( rcc <= 0 )
 			{
 				TRACE("C-S EOF from the client");
@@ -2382,11 +2291,13 @@ static void ssl_relay(SSLwayCTX *Sc,SSL *accSSL,int accfd,SSL *conSSL,int confd)
 				rcc = nego_FTPDATAsv(accSSL,buf,rcc);
 			rem +=
 			writes("C-S",conSSL,confd,buf,rcc);
+			}
 		}
 		if( rfdv[1] ){
 			if( conSSL )
-				rcc = SSL_read(conSSL,buf,sizeof(buf));
+				rcc = SSL_relayRead(conSSL,buf,sizeof(buf));
 			else	rcc = read(confd,buf,sizeof(buf));
+			if( rcc != SSL_AGAIN ){
 			if( rcc <= 0 )
 			{
 				TRACE("S-C EOF from the server");
@@ -2399,6 +2310,7 @@ static void ssl_relay(SSLwayCTX *Sc,SSL *accSSL,int accfd,SSL *conSSL,int confd)
 				nego_FTPDATAcl(conSSL,buf,rcc);
 			rem +=
 			writes("S-C",accSSL,accfd,buf,rcc);
+			}
 		}
 		if( rem != 0 ){
 			porting_dbg("--E-SSLway relay*%d failed: %d",
@@ -2407,6 +2319,10 @@ static void ssl_relay(SSLwayCTX *Sc,SSL *accSSL,int accfd,SSL *conSSL,int confd)
 			break;
 		}
 	}
+	if( accSSL )
+		SSL_set_mode(accSSL,SSL_MODE_AUTO_RETRY);
+	if( conSSL )
+		SSL_set_mode(conSSL,SSL_MODE_AUTO_RETRY);
 	ERROR("%s S-C:%d/%d C-S:%d/%d %s",
 		accSSL?"FCL":"FSV",clen,ccnt,alen,acnt,ecase);
 }
@@ -2737,7 +2653,9 @@ static int HTTP_CAresp(int fd,PCStr(certfile))
 	in = BIO_new_fp(cfp,BIO_NOCLOSE);
 	cert = PEM_read_bio_X509(in,NULL,NULL,NULL);
 	out = BIO_new_fp(tc,BIO_NOCLOSE);
-	i2d_X509_bio(out,cert);
+	if( cert )
+		i2d_X509_bio(out,cert);
+	X509_free(cert);
 
 	BIO_free(in);
 	BIO_free(out);
@@ -2820,6 +2738,13 @@ static int cl_passwd(char buf[],int siz,int vrfy)
 	return _passwd("CLIENT",cl_pass,cl_key,buf,siz,vrfy);
 }
 
+static int sv_passwd_cb(char *buf,int siz,int rwflag,void *u){
+	return sv_passwd(buf,siz,rwflag);
+}
+static int cl_passwd_cb(char *buf,int siz,int rwflag,void *u){
+	return cl_passwd(buf,siz,rwflag);
+}
+
 static SSL_SESSION *get_session_cb(SSL *ssl,unsigned char *id,int len,int *copy){
 	DEBUG("--CB-- GET SESSION %d [%2X]",len,id[0]);
 	return 0;
@@ -2847,7 +2772,7 @@ static int gen_session_cb(const SSL *ssl,unsigned char *id,unsigned int *id_len)
 static void put_help()
 {
 	syslog_ERROR("SSLway in %s/%s (%s)\r\n",NAME,VERSION,DATE);
-	syslog_ERROR("SSLlib %s\r\n",SSLeay_version(0));
+	syslog_ERROR("SSLlib %s\r\n",OpenSSL_version(OPENSSL_VERSION));
 }
 
 void initSSLwayCTX(SSLwayCTX *Sc){
@@ -2881,8 +2806,8 @@ static void finalize(SSLwayCTX *Sc,PCStr(msg),int client,int server,int accfd,in
 static SSL_CTX *ssl_newsv(){
 	SSL_CTX *ctx;
 	ctx = ssl_new(1);
-	SSL_CTX_set_default_passwd_cb(ctx,(pem_password_cb*)sv_passwd);
-	SSL_CTX_set_tmp_rsa_callback(ctx,tmprsa_callback);
+	if( ctx )
+	SSL_CTX_set_default_passwd_cb(ctx,sv_passwd_cb);
 	/*
 	if( cl_vrfy ){
 		SSL_CTX_set_verify(ctx,cl_vrfy,verify_callback);
@@ -2892,7 +2817,6 @@ static SSL_CTX *ssl_newsv(){
 	return ctx;
 }
 static int saveCtx;
-int dl_isstab(void*);
 const char *GetEnv(PCStr(name));
 
 int IsConnected(int fd,const char **reason);
@@ -2907,6 +2831,7 @@ static void doShutdown(int clsv,SSL *ssl,int fd){
 	int rdy = 0;
 	double St = Time();
 
+	ERR_clear_error();
 	sd = sd0 = SSL_get_shutdown(ssl);
 	wh = *whpeer;
 	TRACE("%c>> shutdown from %s: %X",wh,whpeer,sd0);
@@ -2981,6 +2906,7 @@ int sslway_mainY(SSLwayCTX *Sc,int ac,char *av[],int client,int server,int bi,SS
 	const char *arg;
 	int accfd,confd;
 	SSL_CTX *ctx;
+	SSL_CTX *conCtx = NULL;
 	SSL *accSSL,*conSSL;
 	const char *env;
 	int fdv[2],rfdv[2];
@@ -3088,8 +3014,11 @@ int sslway_mainY(SSLwayCTX *Sc,int ac,char *av[],int client,int server,int bi,SS
 
 	if( env = GetEnv("SSL_CIPHER") ) cipher_list = env;
 
-	if( env = GetEnv("SSL_CERT_FILE") )
-		sv_cert = sv_key = cl_cert = cl_key = env;
+	if( env = GetEnv("SSL_CERT_FILE") ){
+		if( certFileIsPair(env) )
+			sv_cert = sv_key = cl_cert = cl_key = env;
+		else	ERROR("SSL_CERT_FILE=%s ignored: no certificate and private key pair",env);
+	}
 
 	if( env = GetEnv("SSL_SERVER_KEY_FILE" ) ) sv_key  = env;
 	if( env = GetEnv("SSL_SERVER_CERT_FILE") ) sv_cert = env;
@@ -3246,7 +3175,7 @@ int sslway_mainY(SSLwayCTX *Sc,int ac,char *av[],int client,int server,int bi,SS
 		}
 		else
 		if( strcmp(arg,"-bugs") == 0 ){
-			ctrlopt = 0x000FFFFFL; /* SSL_OP_ALL */
+			ctrlopt = SSL_OP_ALL;
 		}
 		else
 		if( strcmp(arg,"-nocache") == 0 ){
@@ -3324,10 +3253,6 @@ int sslway_mainY(SSLwayCTX *Sc,int ac,char *av[],int client,int server,int bi,SS
 	if( atstart ){
 		syncReady(Sc,"START",do_acc,do_con);
 	}
-	if( dl_isstab((void*)SSL_CTX_set_generate_session_id) ){
-		/* session cache is bad on Vine4 and KURO-BOX */
-		do_cache &= ~((1<<XACC)|(1<<XCON));
-	}
 	if( gotsigTERM("SSLway init") ){
 	}
 
@@ -3336,10 +3261,14 @@ int sslway_mainY(SSLwayCTX *Sc,int ac,char *av[],int client,int server,int bi,SS
 	if( do_conSSL ){
 	*/
 	if( do_con ){
-		ctx = ssl_new(0);
-		SSL_CTX_set_default_passwd_cb(ctx,(pem_password_cb*)cl_passwd);
-		if( cipher_list )
-			SSL_CTX_set_cipher_list(ctx,cipher_list);
+		ctx = conCtx = ssl_new(0);
+		if( ctx == NULL ){
+			ErrFin("ssl_new() failure");
+			return -1;
+		}
+		SSL_CTX_set_default_passwd_cb(ctx,cl_passwd_cb);
+		if( cipher_list && !SSL_CTX_set_cipher_list(ctx,cipher_list) )
+			ERROR("bad cipher list: %s",cipher_list);
 		getcertdflt(ctx,1);
 		if( cl_cert != cl_cert_default || LIBFILE_IS(cl_cert,VStrNULL) )
 			setcerts(ctx,&cl_Cert,1);
@@ -3386,6 +3315,10 @@ int sslway_mainY(SSLwayCTX *Sc,int ac,char *av[],int client,int server,int bi,SS
 		Lap("before ssl_new");
 		ctx = ssl_new(1);
 		Lap("after ssl_new");
+		if( ctx == NULL ){
+			ErrFin("ssl_new() failure");
+			return -1;
+		}
 
 		ctx_filter_id = fid;
 		ctx_cache = ctx;
@@ -3399,10 +3332,10 @@ SSL_CTX_sess_set_get_cb(ctx,get_session_cb);
 */
 
 		if( ctrlopt )
-			SSL_CTX_ctrl(ctx,32/*SSL_CTRL_OPTIONS*/,ctrlopt,NULL);
-		SSL_CTX_set_default_passwd_cb(ctx,(pem_password_cb*)sv_passwd);
-		if( cipher_list )
-			SSL_CTX_set_cipher_list(ctx,cipher_list);
+			SSL_CTX_set_options(ctx,ctrlopt);
+		SSL_CTX_set_default_passwd_cb(ctx,sv_passwd_cb);
+		if( cipher_list && !SSL_CTX_set_cipher_list(ctx,cipher_list) )
+			ERROR("bad cipher list: %s",cipher_list);
 
 		Lap("before loadContext");
 		if( loadContext(ctx,ac,av) == 0 ){
@@ -3414,7 +3347,6 @@ SSL_CTX_sess_set_get_cb(ctx,get_session_cb);
 			saveCtx = 1; /* to be saved later with 0 <= accfd */
 		}
 		Lap("after loadContext");
-		SSL_CTX_set_tmp_rsa_callback(ctx,tmprsa_callback);
 
 		if( cl_CAfile || cl_CApath )
 			ssl_setCAs(ctx,cl_CAfile,cl_CApath);
@@ -3538,107 +3470,28 @@ DEBUG("-- %f %s",laps[i]-Start,lapd[i]);
 		clearCloseOnFork("SSLend",accfd);
 		close(accfd);
 	}
+	SSL_free(conSSL);
+	SSL_free(accSSL);
+	SSL_CTX_free(conCtx);
 	return 0;
 }
-#ifdef ISDLIB /*{*/
-int dl_library(const char *libname,DLMap *dlmap,const char *mode);
-static int with_dl;
-int sslway_dl_reset(){
-	int owd = with_dl;
-	with_dl = 0;
-	return owd;
-}
-/*
+static int ssl_inited;
 int sslway_dl(){
-*/
-static int sslway_dl0(){
-	if( with_dl ){
-		if( 0 < with_dl )
-			return 1;
-		else	return 0;
+	if( ssl_inited == 0 ){
+		ssl_inited = 1;
+		OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS|OPENSSL_INIT_LOAD_CRYPTO_STRINGS,NULL);
 	}
-	if( SSLLIBS ){
-		CStr(lib1,1024);
-		const char *dp;
-		char del = '+';
-		for( dp = SSLLIBS; *dp; ){
-			dp = scan_ListElem1(dp,del,AVStr(lib1));
-			if( *lib1 == 0 )
-				break;
-			if( lDYLIB() )
-				syslog_ERROR("TSLCONF=libs:%s\n",lib1);
-			if( streq(lib1,"NOMORE") ){
-				with_dl = -1;
-				return 0;
-			}
-			if( dl_library(lib1,dlmap_ssl,"") == 0 ){
-				with_dl = 1;
-				return 1;
-			}
-		}
-	}
-	{
-		/*
-		if( dl_library("ssl",dlmap_ssl,"") == 0
-		 || dl_library("crypto",dlmap_ssl,"") == 0
-			9.6.3 libcrypto should be loaded prior to libssl
-			to avoid the error in automatic recursive loading
-			of libcrypto from libssl (on Vine and KURO-BOX).
-		*/
-		if( dl_library("crypto",dlmap_ssl,"") == 0
-		 || dl_library("ssl",dlmap_ssl,"") == 0
-		){
-			with_dl = 1;
-			return 1;
-		}
-	}
-	if( isCYGWIN() ){
-		if( dl_library("ssl",dlmap_ssl,"") == 0
-		 || dl_library("libeay32",dlmap_ssl,"") == 0
-		 || dl_library("ssleay32",dlmap_ssl,"") == 0
-		){
-			with_dl = 1;
-			return 1;
-		}
-	}
-	{
-		with_dl = -1;
-		if( !lISCHILD() ){
-			putDylibError();
-		}
-		return 0;
-	}
-}
-int sslway_dl(){
-	int ok;
-	if( with_dl ){
-		return sslway_dl0();
-	}else
-	if( ok = sslway_dl0() ){
-		InitLog("+++ loaded %s\n",SSLeay_version(0));
-		if( lDYLIB() )
-		printf("+++ loaded %s\n",SSLeay_version(0));
-		return ok;
-	}else{
-		return 0;
-	}
+	return 1;
 }
 const char *SSLVersion(){
-	if( with_dl == 0 )
-		return "Not Yet";
-	if( with_dl < 0 )
-		return "None";
-	return SSLeay_version(0);
+	return OpenSSL_version(OPENSSL_VERSION);
 }
 int putSSLverX(FILE *fp,PCStr(fmt)){
-	if( with_dl <= 0 )
-		return 0;
-	fprintf(fp,"%s",SSLeay_version(0));
+	fprintf(fp,"%s",OpenSSL_version(OPENSSL_VERSION));
 	return 1;
 }
 void putSSLver(FILE *fp){
-	if( 0 < with_dl )
-		fprintf(fp,"Loaded: %s\r\n",SSLeay_version(0));
+	fprintf(fp,"Loaded: %s\r\n",OpenSSL_version(OPENSSL_VERSION));
 }
 
 int sslway_main(int ac,const char *av[])
@@ -3646,17 +3499,12 @@ int sslway_main(int ac,const char *av[])
 	SSLwayCTX ScBuf,*Sc = &ScBuf;
 	initSSLwayCTX(Sc);
 
-	if( sslway_dl() == 0 ){
-		fprintf(stderr,"Can't link the SSL library.\n");
-		return -1;
-	}
+	sslway_dl();
 	Builtin = 1;
 	return sslway_mainX(Sc,ac,(char**)av,0,1,0);
 }
 int sslwayFilter(SSLwayCTX *Sc,int ac,char *av[],FILE *in,FILE *out,int internal){
-	if( sslway_dl() == 0 ){
-		return 0;
-	}
+	sslway_dl();
 	Builtin = 1;
 	if( in == NULL )
 		sslway_mainX(Sc,ac,av,-1,-1,1);
@@ -3664,16 +3512,13 @@ int sslwayFilter(SSLwayCTX *Sc,int ac,char *av[],FILE *in,FILE *out,int internal
 	return 1;
 }
 int sslwayFilterX(SSLwayCTX *Sc,int ac,char *av[],int clnt,int serv,int internal){
-	if( sslway_dl() == 0 ){
-		return 0;
-	}
+	sslway_dl();
 	Builtin = 1;
 	if( clnt < 0 )
 		sslway_mainX(Sc,ac,av,-1,-1,1);
 	else	sslway_mainX(Sc,ac,av,clnt,serv,1);
 	return 1;
 }
-
 
 static const char *RINFO  = "////RSA -.- ////";
 static const char *ROK    = "////RSA ^_^ //// OK";
@@ -3712,7 +3557,7 @@ enum _RCF {
 } RCF;
 typedef struct _RSACtx {
 	int	rsa_flags;
-	RSA    *rsa_rsa;
+	EVP_PKEY *rsa_rsa;
 	int	rsa_bits;
 	int	rsa_exp;
 	MStr(	rsa_passb,64);
@@ -3722,17 +3567,12 @@ typedef struct _RSACtx {
 	int	rsa_intype;
 	MStr(	rsa_indata,512);
 	FILE   *rsa_pem;
-    EVP_CIPHER *rsa_cipher;
+    const EVP_CIPHER *rsa_cipher;
 } RSACtx;
 #define RxFlags	Rc->rsa_flags
 
 int _RSA_init(RSACtx *Rc){
-	if( sslway_dl() == 0 ){
-		fprintf(stderr,"%s no SSL library\r\n",RERROR);
-		return -1;
-	}
-	ERR_load_crypto_strings();
-	OPENSSL_add_all_algorithms_conf();
+	sslway_dl();
 
 	bzero(Rc,sizeof(RSACtx));
 	Rc->rsa_bits = 1024;
@@ -3750,7 +3590,7 @@ RSACtx *_RSA_new(){
 }
 int _RSA_free(RSACtx *Rc){
 	if( Rc->rsa_rsa ){
-		RSA_free(Rc->rsa_rsa);
+		EVP_PKEY_free(Rc->rsa_rsa);
 	}
 	free(Rc);
 	return 0;
@@ -3788,22 +3628,49 @@ static int passwd_cb(char buf[],int size,int rwflag,void *vRc){
 		return strlen(buf);
 	}
 }
-static void genkey_cb(int x,int y,void *vRc){
-	RSACtx *Rc = (RSACtx*)vRc;
+/// Writes the public key as a PKCS#1 "RSA PUBLIC KEY" PEM.
+static int writeRSAPublicKey(FILE *fp,EVP_PKEY *pkey){
+	dgssl::BioPtr out(BIO_new_fp(fp,BIO_NOCLOSE));
+	OSSL_ENCODER_CTX *ec;
+	int ok;
 
-	if( RxFlags & RC_VERBOSE ){
-		fprintf(stderr,"{%d %d}",x,y);
-		fflush(stderr);
-	}
+	ec = OSSL_ENCODER_CTX_new_for_pkey(pkey,OSSL_KEYMGMT_SELECT_PUBLIC_KEY,"PEM","type-specific",NULL);
+	if( ec == NULL )
+		return 0;
+	ok = OSSL_ENCODER_to_bio(ec,out.get());
+	OSSL_ENCODER_CTX_free(ec);
+	return ok;
 }
-int _RSA_output(RSACtx *Rc,RSA *rsa,FILE *pem){
+/// Reads a PKCS#1 "RSA PUBLIC KEY" PEM, or a SubjectPublicKeyInfo PEM as fallback.
+static EVP_PKEY *readRSAPublicKey(FILE *fp){
+	dgssl::BioPtr in(BIO_new_fp(fp,BIO_NOCLOSE));
+	EVP_PKEY *pkey = NULL;
+	OSSL_DECODER_CTX *dc;
+	long pos = ftell(fp);
+
+	dc = OSSL_DECODER_CTX_new_for_pkey(&pkey,"PEM","type-specific","RSA",OSSL_KEYMGMT_SELECT_PUBLIC_KEY,NULL,NULL);
+	if( dc != NULL ){
+		if( !OSSL_DECODER_from_bio(dc,in.get()) )
+			pkey = NULL;
+		OSSL_DECODER_CTX_free(dc);
+	}
+	if( pkey == NULL ){
+		fseek(fp,pos,0);
+		clearerr(fp);
+		in.reset(BIO_new_fp(fp,BIO_NOCLOSE));
+		pkey = PEM_read_bio_PUBKEY(in.get(),NULL,NULL,NULL);
+	}
+	return pkey;
+}
+int _RSA_output(RSACtx *Rc,EVP_PKEY *pkey,FILE *pem){
 	int rcode = 0;
 
 	if( RxFlags & RC_VERBOSE ){
-		RSA_print_fp(stderr,rsa,0);
+		dgssl::BioPtr eo(BIO_new_fp(stderr,BIO_NOCLOSE));
+		EVP_PKEY_print_private(eo.get(),pkey,0,NULL);
 	}
 	if( 1 ){
-		EVP_CIPHER *cipher;
+		const EVP_CIPHER *cipher;
 		cipher = Rc->rsa_cipher;
 		if( RxFlags & RC_NOPASS ){
 			cipher = 0;
@@ -3814,13 +3681,14 @@ int _RSA_output(RSACtx *Rc,RSA *rsa,FILE *pem){
 				return -1;
 			}
 		}
-		rcode = PEM_write_RSAPrivateKey(pem,rsa,cipher,
+		dgssl::BioPtr out(BIO_new_fp(pem,BIO_NOCLOSE));
+		rcode = PEM_write_bio_PrivateKey_traditional(out.get(),pkey,cipher,
 			(unsigned char*)Rc->rsa_pass,Rc->rsa_plen,NULL,0);
 		bzero(Rc->rsa_passb,sizeof(Rc->rsa_passb));
 		fflush(pem);
 	}
 	if( 1 ){
-		rcode = PEM_write_RSAPublicKey(pem,rsa);
+		rcode = writeRSAPublicKey(pem,pkey);
 	}
 	return rcode;
 }
@@ -3848,8 +3716,7 @@ int _RSA_perror(RSACtx *Rc,int rcode){
 	return 0;
 }
 int _RSA_newkey(RSACtx *Rc){
-	RSA *rsa;
-	char *bn;
+	EVP_PKEY *rsa;
 	int rcode = 0;
 	FILE *pem;
 	IStr(path,256);
@@ -3867,9 +3734,10 @@ int _RSA_newkey(RSACtx *Rc){
 	if( RxFlags & RC_VERBOSE ){
 		fprintf(stderr,"generating: ");
 	}
-	rsa = RSA_generate_key(Rc->rsa_bits,Rc->rsa_exp,genkey_cb,Rc);
+	rsa = EVP_RSA_gen(Rc->rsa_bits);
 	if( rsa == 0 ){
-		fprintf(stderr," %s RSA_generate_key() FAILED\r\n",RERROR);
+		fprintf(stderr," %s EVP_RSA_gen() FAILED\r\n",RERROR);
+		fclose(pem);
 		return -1;
 	}
 	if( RxFlags & RC_VERBOSE ){
@@ -3878,7 +3746,7 @@ int _RSA_newkey(RSACtx *Rc){
 	eout = _RSA_output(Rc,rsa,pem) < 0;
 	_RSA_perror(Rc,rcode);
 
-	RSA_free(rsa);
+	EVP_PKEY_free(rsa);
 	fflush(pem);
 	Ftruncate(pem,0,1);
 	_RSA_showpem(Rc,pem);
@@ -3892,7 +3760,7 @@ int _RSA_newkey(RSACtx *Rc){
 }
 static int _RSA_loadkey(RSACtx *Rc,int whkey){
 	FILE *pem;
-	RSA *rsa = 0;
+	EVP_PKEY *rsa = 0;
 
 	if( Rc->rsa_rsa != 0 ){
 		return 1;
@@ -3902,19 +3770,23 @@ static int _RSA_loadkey(RSACtx *Rc,int whkey){
 		fprintf(stderr,"%s cannot open %s\r\n",RERROR,Rc->rsa_file);
 		return -1;
 	}
-	rsa = PEM_read_RSAPrivateKey(pem,&rsa,passwd_cb,Rc);
+	rsa = PEM_read_PrivateKey(pem,NULL,passwd_cb,Rc);
 	if( rsa != NULL ){
 		Rc->rsa_flags |= RC_PRV_KEY;
 	}
 	if( rsa == NULL ){
 		fseek(pem,0,0);
 		clearerr(pem);
-		rsa = PEM_read_RSAPublicKey(pem,&rsa,passwd_cb,Rc);
+		rsa = readRSAPublicKey(pem);
 	}
 	_RSA_perror(Rc,0);
 	fclose(pem);
 
 	if( rsa == 0 ){
+		return -1;
+	}
+	if( !EVP_PKEY_is_a(rsa,"RSA") ){
+		EVP_PKEY_free(rsa);
 		return -1;
 	}
 	Rc->rsa_rsa = rsa;
@@ -3925,7 +3797,7 @@ int _RSA_chpass(RSACtx *Rc){
 	IStr(nfile,256);
 	FILE *opem;
 	FILE *npem;
-	RSA *rsa = 0;
+	EVP_PKEY *rsa = 0;
 	int err = 0;
 
 	opem = fopen(file,"r");
@@ -3940,7 +3812,7 @@ int _RSA_chpass(RSACtx *Rc){
 		fclose(opem);
 		return -1;
 	}
-	rsa = PEM_read_RSAPrivateKey(opem,&rsa,passwd_cb,Rc);
+	rsa = PEM_read_PrivateKey(opem,NULL,passwd_cb,Rc);
 	_RSA_perror(Rc,0);
 	if( rsa ){
 		_RSA_showpem(Rc,opem);
@@ -3950,7 +3822,7 @@ int _RSA_chpass(RSACtx *Rc){
 		}else{
 			_RSA_showpem(Rc,npem);
 		}
-		RSA_free(rsa);
+		EVP_PKEY_free(rsa);
 	}else{
 		fprintf(stderr,"%s cannot load RSA %s\r\n",RERROR,file);
 		err = 1;
@@ -3990,8 +3862,6 @@ int _RSA_verify(RSACtx *Rc,PCStr(data),int dlen,PCStr(sig),int slen){
 	return -1;
 }
 
-#define RSA_PKCS1_PADDING  1
-#define RSA_NO_PADDING     3
 int _RSA_avail(RSACtx *Rc){
 	if( Rc->rsa_bits <= 0 ){
 		return 0;
@@ -4002,7 +3872,6 @@ int _RSA_avail(RSACtx *Rc){
 	return 1;
 }
 int _RSA_encrypt(RSACtx *Rc,PCStr(data),int dlen,PVStr(edata),int esiz,int hex){
-	int padding = RSA_PKCS1_PADDING;
 	int elen;
 
 	if( _RSA_loadkey(Rc,1) < 0 ){
@@ -4011,9 +3880,9 @@ int _RSA_encrypt(RSACtx *Rc,PCStr(data),int dlen,PVStr(edata),int esiz,int hex){
 	if( (Rc->rsa_flags & RC_PRV_KEY) == 0 ){
 		return -2;
 	}
-	elen = RSA_private_encrypt(dlen,
-		(unsigned char*)data,
-		(unsigned char*)edata,Rc->rsa_rsa,padding);
+	elen = privateEncryptRSA(Rc->rsa_rsa,
+		(unsigned char*)data,dlen,
+		(unsigned char*)edata,esiz);
 	_RSA_perror(Rc,0);
 	if( 0 < elen ){
 		return elen;
@@ -4021,15 +3890,14 @@ int _RSA_encrypt(RSACtx *Rc,PCStr(data),int dlen,PVStr(edata),int esiz,int hex){
 	return -3;
 }
 int _RSA_decrypt(RSACtx *Rc,PCStr(edata),int elen,PVStr(ddata),int dsiz,int hex){
-	int padding = RSA_PKCS1_PADDING;
 	int dlen;
 
 	if( _RSA_loadkey(Rc,1) < 0 ){
 		return -1;
 	}
-	dlen = RSA_public_decrypt(elen,
-		(unsigned char*)edata,
-		(unsigned char*)ddata,Rc->rsa_rsa,padding);
+	dlen = publicDecryptRSA(Rc->rsa_rsa,
+		(unsigned char*)edata,elen,
+		(unsigned char*)ddata,dsiz);
 	_RSA_perror(Rc,0);
 	if( 0 < dlen ){
 		return dlen;
@@ -4168,21 +4036,8 @@ int rsa_main(int ac,const char *av[]){
 				dlen,dec);
 		}
 	}
+	EVP_PKEY_free(Rc->rsa_rsa);
+	Rc->rsa_rsa = 0;
 	return 0;
 }
 
-#else /*}{*/
-int (*DELEGATE_MAIN)(int ac,const char *av[]);
-void (*DELEGATE_TERMINATE)();
-extern int RANDSTACK_RANGE;
-int main(int ac,char *av[])
-{
-	randtext(-1);
-	RANDSTACK_RANGE = 256;
-	av = move_envarg(ac,(const char**)av,NULL,NULL,NULL);
-	return randstack_call(1,(iFUNCP)sslway_mainX,ac,av,0,1,0);
-}
-int sslway_dl(){
-	return 1;
-}
-#endif /*}*/

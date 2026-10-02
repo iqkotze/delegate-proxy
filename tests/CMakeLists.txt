@@ -3,11 +3,21 @@ include(GoogleTest)
 
 file(GLOB dg_test_srcs CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/unit/test_*.cpp)
 add_executable(dg_unit_tests ${dg_test_srcs} $<TARGET_OBJECTS:dg_app_objs>)
-target_include_directories(dg_unit_tests PRIVATE ${DG_GEN_DIR} ${DG_ROOT}/include ${DG_ROOT}/pds/md5)
-target_compile_definitions(dg_unit_tests PRIVATE QS)
+target_include_directories(dg_unit_tests PRIVATE ${DG_GEN_DIR} ${DG_ROOT}/include ${DG_ROOT}/pds/md5 ${DG_ROOT}/filters)
+target_compile_definitions(dg_unit_tests PRIVATE QS OPENSSL_API_COMPAT=30000 OPENSSL_NO_DEPRECATED)
 target_link_libraries(dg_unit_tests PRIVATE GTest::gtest_main
   dg_core dg_resolvy dg_teleport dg_md5 dg_cfi dg_rary dg_gates dg_mimekit dg_fsx
   ${DG_SYSLIBS} dg_subst ${DG_SYSLIBS})
 gtest_discover_tests(dg_unit_tests DISCOVERY_MODE PRE_TEST)
 
 add_test(NAME param-check COMMAND ${DG_PYTHON} ${DG_ROOT}/../tools/check-params.py --root ${DG_ROOT}/..)
+
+set(DG_TLS_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/tls/tls-tests.sh)
+set(DG_TLS_CASES tls13 tls12 old-protocols legacy-tls1 sslway-options origin-ca-ok origin-ca-bad origin-no-check
+    sni abort origin-abort generated-cert cert-env parallel large cipher-list)
+if(EXISTS ${DG_TLS_SCRIPT})
+  foreach(case IN LISTS DG_TLS_CASES)
+    add_test(NAME tls-${case} COMMAND ${DG_TLS_SCRIPT} $<TARGET_FILE:delegated> ${case})
+    set_tests_properties(tls-${case} PROPERTIES LABELS tls TIMEOUT 120 SKIP_RETURN_CODE 77)
+  endforeach()
+endif()

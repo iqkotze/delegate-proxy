@@ -58,22 +58,15 @@ int dl_main(int ac,char *av[]){
 #define LDPATHENV	"LD_LIBRARY_PATH"
 
 static const char *libpat[16] = {
-	"dglib%s.so",
-	"lib%s.so.0.9.8",    /* 9.2.5 for a while */
 	"lib%s.so",
-	"lib%s.so.1.0.0",    /* 9.9.9 mod-140602e OpenSSL nowadays in 2014 */
-	"lib%s.so.10", /* 9.9.10 mod-140630c for CentOS/6.5_64 */
-	"lib%s.so.6", /* 9.9.5 for CentOS/5.3_64 */
-	"lib%s.so.4", /* 9.9.2 for Vine4 */
-	"lib%s.so.1",
 	"lib%s.so.0",
-	"lib%s.so.0.9.7", /* 9.2.2 for OpenSSL, for a while ... */
+	"lib%s.so.1",
 	"%s",
 	0
 };
 
 /* DYLIB="lib*.so,lib*.dylib,lib*.so.1" */
-DG_PARAM(DYLIB, "DYLIB=libfilePattern[,libfilePattern]*", "dglib%s.so,lib%s.so.0.9.8,lib%s.so,lib%s.so.1.0.0,lib%s.so.10,lib%s.so.6,lib%s.so.4,lib%s.so.1,lib%s.so.0,lib%s.so.0.9.7,%s", "File name patterns for dynamic libraries; + stands for the default list", "DYLIB=\"+,lib*.so.0.9.7\"")
+DG_PARAM(DYLIB, "DYLIB=libfilePattern[,libfilePattern]*", "lib%s.so,lib%s.so.0,lib%s.so.1,%s", "File name patterns for the dynamic libraries of PAM, m17n and regex; + stands for the default list", "DYLIB=\"+,lib*.so.2\"")
 void scan_DYLIB(PCStr(conf)){
 	CStr(pats,2048);
 	CStr(pat1,256);

@@ -75,6 +75,7 @@ foreach(m IN LISTS DG_CFI_STUBS)
 endforeach()
 add_library(dg_cfi STATIC ${cfi_srcs} ${cfi_stubs})
 dg_configure_target(dg_cfi SRC_INC)
+target_link_libraries(dg_cfi PUBLIC OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB)
 
 dg_files(subst_srcs maker ${DG_SRCS_SUBST})
 add_library(dg_subst STATIC ${subst_srcs})

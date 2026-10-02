@@ -204,7 +204,7 @@ Syntax: `CERTDIR=dir`
 
 Default: `${ETCDIR}/certs`
 
-Directory with the certificates and keys used by SSLway
+Directory with the certificates and keys of SSLway, also the generated default certificate
 
 ```
 CERTDIR=/etc/delegate/certs
@@ -566,12 +566,12 @@ Source: `delegate/src/env.cpp`
 
 Syntax: `DYLIB=libfilePattern[,libfilePattern]*`
 
-Default: `dglib%s.so,lib%s.so.0.9.8,lib%s.so,lib%s.so.1.0.0,lib%s.so.10,lib%s.so.6,lib%s.so.4,lib%s.so.1,lib%s.so.0,lib%s.so.0.9.7,%s`
+Default: `lib%s.so,lib%s.so.0,lib%s.so.1,%s`
 
-File name patterns for dynamic libraries; + stands for the default list
+File name patterns for the dynamic libraries of PAM, m17n and regex; + stands for the default list
 
 ```
-DYLIB="+,lib*.so.0.9.7"
+DYLIB="+,lib*.so.2"
 ```
 
 Source: `delegate/filters/dl.cpp`
@@ -2173,11 +2173,22 @@ Syntax: `TLSCONF=tlsConf[,tlsConf]*`
 
 Default: `scache:do,xcache:do`
 
-TLS settings such as session caches, log detail and libraries
+TLS settings such as session caches, shutdown alert and log detail
 
 ```
-TLSCONF="libs:crypto+ssl"
+TLSCONF="scache:no,shutdown"
 ```
+
+| Option | Syntax | Default | Description | Example |
+|---|---|---|---|---|
+| `cache` | `cache:[do\|no]` | `scache:do,xcache:do` | Enables or disables all caches | `TLSCONF=cache:no` |
+| `context` | `context:string` | `SSLway` | Session id context of the server | `TLSCONF=context:dg1` |
+| `debug` | `debug` | `off` | Reports the use of the session and certificate caches on stderr | `TLSCONF=debug` |
+| `libs` | `libs:libname[+libname]` | `ignored` | Obsolete; OpenSSL is linked directly and the setting is ignored | `TLSCONF=libs:crypto+ssl` |
+| `scache` | `scache:[do\|no\|acc\|con]` | `do` | Enables or disables the session caches for accepted (acc) and outgoing (con) connections | `TLSCONF=scache:no` |
+| `shutdown` | `shutdown[:none\|flush\|wait[.ms]\|acc\|con]` | `flush` | Shutdown alert (close notify): flush answers the alert of the peer, wait also sends it | `TLSCONF=shutdown:wait.300` |
+| `sni` | `sni:[only\|warn]` | `none` | Refuses (only) or warns (warn) when no certificate exists for the requested server name | `TLSCONF=sni:only` |
+| `xcache` | `xcache:[do\|no]` | `do` | Enables or disables the cache of the certificate context | `TLSCONF=xcache:no` |
 
 Source: `delegate/src/filter.cpp`
 
