@@ -18,11 +18,11 @@ foreach(name IN LISTS DG_FUZZ_TARGETS)
     ${DG_SYSLIBS} dg_subst ${DG_SYSLIBS})
   set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-  # Stored crash inputs replay once; WILL_FAIL until the defect is fixed
+  # Stored crash inputs replay once and must pass
   file(GLOB crashes CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/crashes/${name}/*)
   foreach(crash IN LISTS crashes)
     get_filename_component(cname ${crash} NAME)
     add_test(NAME fuzz-regress-${name}-${cname} COMMAND ${target} ${crash})
-    set_tests_properties(fuzz-regress-${name}-${cname} PROPERTIES LABELS fuzz-regress WILL_FAIL TRUE TIMEOUT 60)
+    set_tests_properties(fuzz-regress-${name}-${cname} PROPERTIES LABELS fuzz-regress TIMEOUT 60)
   endforeach()
 endforeach()

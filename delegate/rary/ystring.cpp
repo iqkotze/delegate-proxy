@@ -635,6 +635,7 @@ struct VStrOut {
 static void putvstr(char *dst,int siz,PVStr(d)){
 	int di,ch;
 	const char *dp = nullptr;
+	const char *lo;
 
 	if( siz <= 0 )
 		return;
@@ -663,7 +664,8 @@ static void putvstr(char *dst,int siz,PVStr(d)){
 		o.hex("[%X]",p2i(dTAIL-32));
 		o.put('"');
 	}
-	for( dp = dTAIL-32; dp < dTAIL+16; dp++ ){
+	lo = dTAIL-32 < dBASE ? dBASE : dTAIL-32;
+	for( dp = lo; dp <= dTAIL; dp++ ){
 		ch = 0xFF & *dp;
 		if( ch == 0 && d <= dp )
 			break;

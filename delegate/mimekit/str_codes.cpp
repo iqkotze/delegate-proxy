@@ -53,16 +53,17 @@ void _toqp(FILE *in,FILE *out);
 void _fromqp(FILE *in,FILE *out);
 
 static
-int str_callfunc(iFUNCP func,PCStr(in),int isize,PVStr(out),int osize,int arg3,int arg4)
+int str_callfunc(void (*func)(FILE*,FILE*),PCStr(in),int isize,PVStr(out),int osize)
 {	FILE *In,*Out;
-	int rcode;
 	int len;
 
 	In = str_fopen((char*)in,isize,"r");
 	Out = str_fopen((char*)out,osize,"w");
 setVStrEnd(out,0);
-	rcode = (*func)(In,Out,arg3,arg4);
+	(*func)(In,Out);
 	len = str_ftell(Out);
+	if( osize <= len )
+		len = osize < 1 ? 0 : osize-1; /* truncate, keep room for NUL */
 	setVStrEnd(out,len);
 	str_fflush(Out);
 	str_fclose(In);
@@ -71,18 +72,18 @@ setVStrEnd(out,0);
 }
 int str_to64(PCStr(in),int isize,PVStr(out),int osize,int pnl)
 {	int len;
-	len = str_callfunc((iFUNCP)_to64,in,isize,AVStr(out),osize,pnl,0);
+	len = str_callfunc(_to64,in,isize,AVStr(out),osize);
 	return len;
 }
 int str_from64(PCStr(in),int isize,PVStr(out),int osize)
 {	int len;
 
-	return str_callfunc((iFUNCP)_from64,in,isize,AVStr(out),osize,0,0);
+	return str_callfunc(_from64,in,isize,AVStr(out),osize);
 }
 int str_toqp(PCStr(in),int isize,PVStr(out),int osize)
 {	int len;
 
-	len = str_callfunc((iFUNCP)_toqp,in,isize,AVStr(out),osize,0,0);
+	len = str_callfunc(_toqp,in,isize,AVStr(out),osize);
 	if( 2 < len && out[len-2] == '=' && out[len-1] == '\n' ){
 		setVStrEnd(out,len-2);
 		len -= 2;
@@ -91,7 +92,7 @@ int str_toqp(PCStr(in),int isize,PVStr(out),int osize)
 }
 int str_fromqp(PCStr(in),int isize,PVStr(out),int osize)
 {
-	return str_callfunc((iFUNCP)_fromqp,in,isize,AVStr(out),osize,0,0);
+	return str_callfunc(_fromqp,in,isize,AVStr(out),osize);
 }
 
 /**************************************/
