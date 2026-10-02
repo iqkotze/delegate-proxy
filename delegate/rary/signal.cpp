@@ -85,7 +85,7 @@ static jmp_buf ps_env;
 static void sigSEGV(int sig){
 	longjmp(ps_env,-1);
 }
-int blockSEGVBUS(int (*func)(void*,...), void *a,void *b,void *c,void *d)
+int blockSEGVBUS(IFUNCP func, void *a,void *b,void *c,void *d)
 {	int rcode;
 
 	vfuncp sSEGV,sBUS;

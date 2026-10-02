@@ -1,10 +1,11 @@
 #ifndef _YALLOCA_H
 #define _YALLOCA_H
+#include "yarg.h"
 
 typedef struct {
 	char   *s_sp0;
   const	char   *s_what;
-	int   (*s_func)(const void*,...);
+	iFUNCP s_func;
 	char   *s_av[6];
 	int	s_size;
 	int	s_unit;

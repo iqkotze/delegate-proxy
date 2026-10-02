@@ -86,7 +86,7 @@ typedef struct {
   const	char   *l_port;
 	defQStr(l_path);
 } Lock;
-typedef void (*vcFUNCP)(const char*,const void*);
+typedef vFUNCP vcFUNCP;
 typedef struct {
   const	char	*x_what;
 	vcFUNCP	 x_func;

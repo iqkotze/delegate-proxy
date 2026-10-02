@@ -211,7 +211,7 @@ typedef struct DGCtx *DGCp;
 typedef void scanPFunc(DGCp Conn,PCStr(param));
 typedef void scanVFunc(void *Conn,PCStr(param));
 typedef int iscanPFunc(DGCp Conn,PCStr(param));
-typedef void (*scanPFUNCP)(DGCp Conn,PCStr(param));
+typedef iFUNCP scanPFUNCP;
 int (DELEGATE_scanEnv)(DGCp Conn,PCStr(name),scanPFUNCP func,...);
 
 int scan_HTMLCONV(void*,PCStr(conv));

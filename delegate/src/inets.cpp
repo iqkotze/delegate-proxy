@@ -778,7 +778,7 @@ static scanListFunc order1(PCStr(typespec),PVStr(order)){
 	return 0;
 }
 
-extern int (*RES_log)(int,...);
+extern iFUNCP RES_log;
 static void res_log(int which,int byname,PCStr(name),char *rv[],PCStr(cname))
 {	double Now;
 
@@ -860,7 +860,7 @@ void init_resolv(PCStr(resolv),PCStr(conf),PCStr(ns),PCStr(af),PCStr(verify),PCS
 	if( log != NULL ){
 		if( res_logf = fopen(log,"a") ){
 			setCloseOnExec(fileno(res_logf));
-			RES_log = (int(*)(int,...))res_log;
+			RES_log = (iFUNCP)res_log;
 		}
 	}
 	scan_RES_EXPIRE(DELEGATE_getEnv("RES_EXPIRE"));

@@ -19,7 +19,7 @@ extern pthread_t main_tid;
  */
 const void *toThd(int tid,int del,int *ser);
 
-static int _Thread_kill(unsigned int tidi,int sig){
+static int _Thread_kill(int tidi,int sig){
 	pthread_t tid;
 	/*
 	tid = (pthread_t)tidi;
@@ -39,12 +39,12 @@ static int _Thread_kill(unsigned int tidi,int sig){
 	}
 	return pthread_kill(tid,sig);
 }
-int (*ThreadKill)(int,int) = (int(*)(int,int))_Thread_kill;
+int (*ThreadKill)(int,int) = _Thread_kill;
 
-static int thread_destroy(unsigned int tidi){
+static int thread_destroy(int tidi){
 	return _Thread_kill(tidi,999);
 }
-int (*ThreadDestroy)(int) = (int(*)(int))thread_destroy;
+int (*ThreadDestroy)(int) = thread_destroy;
 
 static int thread_sigmask(const char *show,SigMaskInt nmaski,SigMaskInt *omaski){
 	int how = 0;

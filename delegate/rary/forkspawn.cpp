@@ -45,7 +45,7 @@ void endhostent(void);
 */
 
 int doTracePid;
-int (*doTraceLog)(const void*,...);
+iFUNCP doTraceLog;
 #define TraceLog	doTraceLog==0? 0 : (*doTraceLog)
 
 int MyPID;

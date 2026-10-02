@@ -19,10 +19,11 @@ History:
 	961029	extracted from service.c
 //////////////////////////////////////////////////////////////////////#*/
 
+#include "yarg.h"
 #include "dgctx.h"
 typedef struct DGCtx *DGCP;
 typedef int servFunc(DGCP Conn);
-typedef int (*servFuncP)(DGCP Conn);
+typedef iFUNCP servFuncP;
 typedef int servFunc2(DGCP Conn,int,int);
 typedef int servFuncX(DGCP Conn,int,int,int fromC,int toC,PCStr(dST_PROTO),PCStr(dST_HOST),int dST_PORT,PCStr(d_SELECTOR));
 

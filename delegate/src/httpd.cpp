@@ -174,7 +174,7 @@ UTag *ut = (UTag*)buf;
 	strcat(ut->ut_addr,file);
 	return 0;
 }
-void scanIcons(PCStr(name),int (*func)(const void*,...),PCStr(arg1),PCStr(arg2));
+void scanIcons(PCStr(name),iFUNCP func,PCStr(arg1),PCStr(arg2));
 static int putIconList(Connection *Conn,FILE *tc,int vno,PCStr(iconhp))
 {	CStr(buf,0x10000);
 	refQStr(bp,buf); /**/
@@ -187,7 +187,7 @@ static int putIconList(Connection *Conn,FILE *tc,int vno,PCStr(iconhp))
 	Xsprintf(TVStr(bp),"<BODY bgcolor=#E0E0E0>\n");
 	Xsprintf(TVStr(bp),"<MENU>\n");
 
-	scanIcons(icon_relative,(int(*)(const void*,...))put1,(char*)&ut,iconhp);
+	scanIcons(icon_relative,(iFUNCP)put1,(char*)&ut,iconhp);
 	Xsprintf(TVStr(bp),"</MENU>\n");
 	leng = strlen(buf);
 

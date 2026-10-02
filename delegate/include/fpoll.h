@@ -99,6 +99,7 @@ extern RelayCtrl *relayCtrlG;
 #define RELAY_setxfd(f)	(RELAY_ctrl|=RELAY_EXITFD),(RELAY_exitfd=f)
 
 #include <unistd.h>
+#include "yarg.h"
 
 int top_fd(int fd,int rw);
 int file_issock(int fd);
@@ -143,7 +144,7 @@ int simple_relayf(FILE *src,FILE *dst);
 int simple_relay(int src,int dst);
 void frelay(int timeout,int s1,int d1,int s2,int d2,int (*relayfunc)(FILE*,FILE*));
 void usleep_bypoll(int usec);
-void relay2_cntl(int timeout,int s1,int d1,int s2,int d2,int s3,int d3,int (*cntlfunc)(void*,...),void *arg);
+void relay2_cntl(int timeout,int s1,int d1,int s2,int d2,int s3,int d3,iFUNCP cntlfunc,void *arg);
 
 #ifndef NO_INC_IO
 #endif

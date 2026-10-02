@@ -1250,9 +1250,11 @@ static int mtabcomp(Mtab **mt1p,Mtab **mt2p)
 		else	return S2_S1;
 	}
 }
+/// Bsort comparator with the type Bsort calls.
+static int mtabcomp1(const char *p1,const char *p2){ return mtabcomp((Mtab**)p1,(Mtab**)p2); }
 static void sort_mtab()
 {
-	Bsort((char*)mtab,mtabN,sizeof(Mtab*),(int (*)(const char*,const char*))mtabcomp);
+	Bsort((char*)mtab,mtabN,sizeof(Mtab*),mtabcomp1);
 }
 static void dump_mtab()
 {	int mi;

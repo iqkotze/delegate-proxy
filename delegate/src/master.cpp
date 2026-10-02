@@ -335,7 +335,7 @@ static void subProto1(char *pv[],PCStr(proto),PCStr(ports),PVStr(portb),char **p
 	pv[px] = 0;
 }
 
-typedef int (*icFUNCP)(const void*,...);
+typedef iFUNCP icFUNCP;
 int (foreach_eqproto)(PCStr(proto),icFUNCP func,...);
 static scanListFunc addProto1(PCStr(protoport),char *tv[],char *pv[],PVStr(portb),char **portp,PCStr(iproto))
 {	int pi,ti,px,match0,match;
