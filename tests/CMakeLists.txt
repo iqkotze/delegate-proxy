@@ -31,6 +31,11 @@ if(EXISTS ${DG_SESSION_SCRIPT})
   endforeach()
 endif()
 
+foreach(case install-check install-run)
+  add_test(NAME ${case} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/install/${case}.sh ${CMAKE_BINARY_DIR})
+  set_tests_properties(${case} PROPERTIES LABELS install TIMEOUT 120 SKIP_RETURN_CODE 77)
+endforeach()
+
 option(DG_LOAD_TESTS "Register the load test (needs wrk, runs about one minute)" OFF)
 if(DG_LOAD_TESTS)
   add_test(NAME load COMMAND ${DG_ROOT}/../tools/load-test.sh --check -c 1200 -d 10 $<TARGET_FILE:delegated>)

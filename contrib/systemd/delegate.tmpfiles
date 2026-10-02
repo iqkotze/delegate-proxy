@@ -1,0 +1,5 @@
+d /etc/delegate 0755 root root -
+d /etc/delegate/certs 0750 delegate delegate -
+d /var/lib/delegate 0750 delegate delegate -
+d /var/log/delegate 0750 delegate delegate -
+d /var/cache/delegate 0750 delegate delegate -

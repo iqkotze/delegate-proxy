@@ -124,7 +124,7 @@ if(DG_BUILD_SUBIN)
   include(DgSubin)
 endif()
 
-install(TARGETS delegated DESTINATION sbin)
+include(DgInstall)
 
 include(CTest)
 add_test(NAME smoke COMMAND ${DG_ROOT}/../tools/smoke-test.sh $<TARGET_FILE:delegated>)

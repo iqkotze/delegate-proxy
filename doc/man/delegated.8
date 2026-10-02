@@ -1,0 +1,119 @@
+.TH DELEGATED 8 "" "DeleGate 9.9.13" "System Administration"
+.SH NAME
+delegated \- DeleGate multi-protocol proxy server
+.SH SYNOPSIS
+.B delegated
+.RB [ \-P\fIport\fR ]
+.RB [ \-f ]
+.RB [ \-r ]
+.RB [ \-F\fIfunc\fR ]
+.RB [ \-v[vdtsau] ]
+.RB [ +=\fIconfigfile\fR ]
+.RI [ name = value ]...
+.SH DESCRIPTION
+.B delegated
+relays HTTP, FTP, SMTP, NNTP, POP, Telnet, SOCKS and other protocols.
+It runs as a forward proxy, a reverse proxy, a gateway between protocols or a TLS terminator.
+Behaviour is set by parameters of the form
+.IR name = value
+on the command line, in the environment or in a file loaded with
+.BR += .
+.SH OPTIONS
+.TP
+.BI \-P port
+Entrance port or ports, for example
+.BR \-P8080 .
+Required unless a
+.B \-F
+function is used.
+.TP
+.B \-f
+Stay in the foreground and keep the current directory.
+.TP
+.B \-r
+Stop a DeleGate that runs on the same port before starting.
+.TP
+.BI \-F func
+Run a built-in function and exit, for example
+.B \-Fver
+(version and libraries),
+.B \-Fparam
+(parameter help) or
+.B \-Fkill
+(stop the server of a port).
+.TP
+.B \-v
+Run in the foreground and write the log to the terminal.
+.TP
+.BI += file
+Load parameters and options from
+.IR file .
+.TP
+.IB name = value
+Set a parameter.
+.B DGROOT
+must be given on the command line.
+.SH FILES
+.TP
+.I /etc/delegate/delegated.conf
+Configuration loaded with
+.BR += .
+The package installs
+.I delegated.conf.example
+next to it.
+.TP
+.I /etc/delegate/certs
+Certificates and keys for TLS (CERTDIR).
+A self-signed certificate is generated here when none exists.
+.TP
+.I /var/lib/delegate
+DGROOT with administration files, work and temporary files.
+.TP
+.I /var/log/delegate
+Log files (LOGDIR).
+.TP
+.I /var/cache/delegate
+Cache files (CACHEDIR).
+.TP
+.I /run/delegate
+Files of active servers (ACTDIR).
+.TP
+.I /usr/share/doc/delegate/reference/parameters.md
+Parameter reference.
+.SH SYSTEMD
+The unit
+.B delegated.service
+starts
+.B delegated
+as user
+.B delegate
+in the foreground:
+.PP
+.RS
+.nf
+systemd-sysusers
+systemd-tmpfiles \-\-create
+cp /etc/delegate/delegated.conf.example /etc/delegate/delegated.conf
+systemctl enable \-\-now delegated
+.fi
+.RE
+.SH EXAMPLES
+HTTP proxy on port 8080:
+.PP
+.RS
+.nf
+delegated \-P8080 SERVER=http ADMIN=root@example.com
+.fi
+.RE
+.PP
+Reverse proxy for an origin server:
+.PP
+.RS
+.nf
+delegated \-P8080 SERVER=http "MOUNT=/* http://origin.example.com/*"
+.fi
+.RE
+.SH SEE ALSO
+.BR systemd.service (5),
+.BR sysusers.d (5),
+.BR tmpfiles.d (5)

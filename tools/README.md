@@ -133,6 +133,35 @@ Meldet Parameter, die der Code liest und die kein `DG_PARAM` haben. Es meldet au
 
     tools/check-params.py
 
+## Installation
+
+CMake installiert `delegated` nach FHS (GNUInstallDirs). Für Pakete gilt der Prefix `/usr`. Dann liegen die Dateien so.
+
+* `/usr/sbin/delegated`
+* `/usr/lib/delegate/` mit den Hilfsprogrammen aus `subin/`, nur mit `-DDG_BUILD_SUBIN=ON`. Mit `-DDG_INSTALL_SETUID=ON` erhalten `dgbind`, `dgchroot` und `dgpam` das setuid und setgid Bit. Standard ist OFF.
+* `/etc/delegate/delegated.conf.example`
+* `/usr/lib/systemd/system/delegated.service`, `/usr/lib/sysusers.d/delegate.conf`, `/usr/lib/tmpfiles.d/delegate.conf`
+* `/usr/share/man/man8/delegated.8`
+* `/usr/share/doc/delegate/` mit `CHANGELOG.md`, `reference/` und, falls vorhanden, `README.md` und `examples/`
+* leere Verzeichnisse `/var/lib/delegate`, `/var/log/delegate` und `/var/cache/delegate`
+
+CMake überschreibt keine vorhandene Konfiguration. Deshalb heißt die Datei `delegated.conf.example`. Der Administrator kopiert sie nach `delegated.conf`. Die Unit ist auf den Prefix `/usr` und diese Pfade festgelegt.
+
+    cmake --install build/debug --prefix /tmp/dg-inst
+    systemd-sysusers && systemd-tmpfiles --create
+    cp /etc/delegate/delegated.conf.example /etc/delegate/delegated.conf
+    systemctl enable --now delegated
+
+Die Unit startet `delegated -f DGROOT=/var/lib/delegate +=/etc/delegate/delegated.conf` als Benutzer `delegate`. `DGROOT` muss auf der Kommandozeile stehen. Die Beispielkonfiguration setzt `-P8080`, `ETCDIR`, `CERTDIR`, `LOGDIR`, `CACHEDIR` und `ACTDIR`. Der Dienst darf nur in `/var/lib/delegate`, `/var/log/delegate`, `/var/cache/delegate` und `/etc/delegate/certs` schreiben. `/run/delegate` legt systemd an.
+
+`ctest` führt zwei Tests mit dem Label `install` aus. Beide installieren in ein temporäres Verzeichnis.
+
+* `install-check` vergleicht die Dateiliste, prüft Rechte (kein setuid) und die Pfade in Unit und Beispielkonfiguration und ruft `systemd-analyze verify` auf.
+* `install-run` startet das installierte `delegated` mit der installierten Beispielkonfiguration (Port und Pfade ersetzt) und sendet einen Proxy-Request.
+
+    tests/install/install-check.sh build/debug
+    tests/install/install-run.sh build/debug --keep
+
 ## TLS-Tests
 
 Die Skripte `tests/tls/tls-tests.sh`, `tests/tls/session-tests.sh` und `tests/tls/lib.sh` prüfen `delegated` mit dem OpenSSL des Systems. Ein Aufruf führt einen Fall aus. `ctest` registriert jeden Fall als Test `tls-<fall>` mit dem Label `tls`. Der Exit-Code 77 bedeutet übersprungen.
