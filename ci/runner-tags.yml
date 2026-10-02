@@ -1,0 +1,4 @@
+# Included only when the variable DG_RUNNER_TAG is set.
+default:
+  tags:
+    - $DG_RUNNER_TAG

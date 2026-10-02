@@ -1,6 +1,7 @@
+.git
 build/
-tools/.cache/
 .ccache/
 .apt-cache/
 fuzz-work/
 public/
+tools/.cache/
