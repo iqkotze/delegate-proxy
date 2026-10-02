@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 int main(int ac,char *av[]){
 	char line[1024];
@@ -168,5 +169,9 @@ else
 printf("/*DLST*/ {\"%s\",&%s_PTR_},\n",name1,name1);
 	}
 printf("/*DLST*/ 0};\n");
+	for( i = 0; i < namex; i++ ){
+		free(names[i]);
+		free(opts[i]);
+	}
 	return 0;
 }

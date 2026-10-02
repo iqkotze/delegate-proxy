@@ -30,6 +30,15 @@ int main(int ac,char *av[])
 	return 0;
 }
 
+#if defined(__SANITIZE_ADDRESS__)
+/// Start-up allocations that are kept until process exit.
+extern "C" const char *__lsan_default_suppressions(){
+	return "leak:move_envarg\nleak:setLIBPATH\nleak:Xdupv\n"
+	       "leak:scan_CMAPX\nleak:set_MOUNT\nleak:scan_commaListL\n"
+	       "leak:NotifyPltfrmHosts\nleak:scan_RELIABLE\nleak:setOWNER\n";
+}
+#endif
+
 #ifndef BUILT_SRCSIGN
 #define BUILT_SRCSIGN ""
 #endif

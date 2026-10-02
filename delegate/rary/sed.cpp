@@ -60,7 +60,17 @@ SedEnv *sed_new()
 	return se;
 }
 void sed_free(SedEnv *se)
-{
+{	SedCom *sc,*next;
+
+	if( se == 0 )
+		return;
+	for( sc = se->s_com1; sc; sc = next ){
+		next = sc->c_next;
+		if( sc->c_matchrex ) frex_free(sc->c_matchrex);
+		if( sc->c_srcrex ) frex_free(sc->c_srcrex);
+		free(sc);
+	}
+	free(se);
 }
 static char *scan_pat(PCStr(str),int delch,PVStr(pat),int rexp,int skip)
 {	const char *sp;
