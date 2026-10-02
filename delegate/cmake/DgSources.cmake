@@ -42,7 +42,7 @@ set(DG_SRCS_CFI
     dl cfi cafe backup dping swft pdft)
 set(DG_CFI_STUBS sslway gzip regex m17nccx)
 
-# Members of libsubst.a that the legacy link actually uses (tools/legacy-linkmap.sh)
+# Compatibility functions linked into delegated and the helper programs
 set(DG_SRCS_SUBST
     FMODE _-fcloseFILE2 _-fgetpos _-forkpty _-fseeko _-getrusage _-mkfifo _-mutex
     _-poll2 _-recv _-regex _-select _-setferror _-sgTTy _-statvfs __alloca __fchmod
