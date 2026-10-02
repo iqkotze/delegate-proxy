@@ -106,6 +106,7 @@ Die Fälle
 * `legacy-tls1` prüft die Option `-tls1` mit `SSL_CIPHER=ALL:@SECLEVEL=0`.
 * `sslway-options` prüft die Optionen `-ssl2` und `-ssl3` (Warnung, Standard bleibt) und `-bugs`.
 * `origin-ca-ok`, `origin-ca-bad` und `origin-no-check` prüfen die Zertifikatsprüfung zum Ursprung mit `-Vrfy -CAfile`. Eine fremde CA und fehlende CAs lehnt `delegated` ab.
+* `origin-host-name-ok`, `origin-host-ip-ok`, `origin-host-name-bad` und `origin-host-ip-bad` prüfen mit `-Vrfy` auch den Hostnamen. Das Zertifikat muss zum Ziel der MOUNT-Regel passen, als Name oder als IP-Adresse. Bei einem falschen Namen lehnt `delegated` die Verbindung ab.
 * `sni` prüft die Auswahl der Datei `sn.<name>.pem` nach dem Servernamen.
 * `abort` und `origin-abort` brechen Clients und den Ursprung mitten in der Verbindung ab. `delegated` muss danach weiter antworten.
 * `generated-cert` prüft das selbst erzeugte Zertifikat (EC P-256, SHA-256, SAN, 825 Tage, Schlüssel mit Rechten 0600) und dessen Wiederverwendung.

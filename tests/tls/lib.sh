@@ -122,11 +122,11 @@ mk_ca() {
 	chmod 644 "$1-key.pem" "$1.pem"
 }
 
-# Issues a server certificate for localhost: mk_issued <ca-prefix> <prefix>
+# Issues a server certificate: mk_issued <ca-prefix> <prefix> [san]
 mk_issued() {
 	openssl req -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes \
 		-keyout "$2-key.pem" -out "$2.csr" -subj /CN=localhost >/dev/null 2>&1
-	printf 'subjectAltName=DNS:localhost,IP:127.0.0.1\nbasicConstraints=CA:FALSE\n' > "$2.ext"
+	printf 'subjectAltName=%s\nbasicConstraints=CA:FALSE\n' "${3:-DNS:localhost,IP:127.0.0.1}" > "$2.ext"
 	openssl x509 -req -in "$2.csr" -CA "$1.pem" -CAkey "$1-key.pem" -CAcreateserial \
 		-out "$2-cert.pem" -days 2 -extfile "$2.ext" >/dev/null 2>&1
 	chmod 644 "$2-key.pem" "$2-cert.pem"

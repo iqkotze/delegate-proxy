@@ -1725,6 +1725,21 @@ static int got_vhost(SSL *ssl,int *ad,void *arg){
 	}
 	return SSL_TLSEXT_ERR_OK;
 }
+/// Binds the certificate check of the origin connection to the target host name or IP address.
+static void setVerifyHost(SSL *ssl,const char *host){
+	X509_VERIFY_PARAM *param = SSL_get0_param(ssl);
+	char ip[sizeof(struct in6_addr)];
+	int ok;
+
+	if( inet_pton(AF_INET,host,ip) == 1 || inet_pton(AF_INET6,host,ip) == 1 )
+		ok = X509_VERIFY_PARAM_set1_ip_asc(param,host);
+	else{
+		X509_VERIFY_PARAM_set_hostflags(param,X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+		ok = X509_VERIFY_PARAM_set1_host(param,host,0);
+	}
+	if( !ok )
+		ERROR("cannot set the host name to verify: %s",host);
+}
 static void set_vhost(SSL *conSSL,SslEnv *env){
 	const char *vhost;
 	if( (vhost = getv(env->se_av,"SNIHOST")) /* MOUNTed */
@@ -1733,6 +1748,8 @@ static void set_vhost(SSL *conSSL,SslEnv *env){
 	){
 		TRACE("-- TLSxSNI: send %s",vhost);
 		SSL_set_tlsext_host_name(conSSL,vhost);
+		if( sv_vrfy )
+			setVerifyHost(conSSL,vhost);
 	}
 }
 int VSA_gethostname(int sock,PVStr(addr));

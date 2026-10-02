@@ -14,7 +14,7 @@ add_test(NAME param-check COMMAND ${DG_PYTHON} ${DG_ROOT}/../tools/check-params.
 
 set(DG_TLS_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/tls/tls-tests.sh)
 set(DG_TLS_CASES tls13 tls12 old-protocols legacy-tls1 sslway-options origin-ca-ok origin-ca-bad origin-no-check
-    sni abort origin-abort generated-cert cert-env parallel large cipher-list)
+    origin-host-name-ok origin-host-ip-ok origin-host-name-bad origin-host-ip-bad sni abort origin-abort generated-cert cert-env parallel large cipher-list)
 if(EXISTS ${DG_TLS_SCRIPT})
   foreach(case IN LISTS DG_TLS_CASES)
     add_test(NAME tls-${case} COMMAND ${DG_TLS_SCRIPT} $<TARGET_FILE:delegated> ${case})

@@ -165,6 +165,27 @@ case_origin_ca_bad() {
 	! body "$out"
 }
 
+# Verifies the origin certificate against the host of the MOUNT target: case_origin_host <san> <host> <expected: ok|bad>
+origin_host() {
+	local san=$1 host=$2 want=$3 out
+	mk_ca "$tmp/ca" test-ca
+	mk_issued "$tmp/ca" "$tmp/origin" "$san"
+	start_tls_origin "$tmp/origin" || return 1
+	new_port; P=$PORT
+	start_dg "$P" SERVER=http "MOUNT=/* https://$host:$O/*" "STLS=fsv,sslway -Vrfy -CAfile $tmp/ca.pem" || return 1
+	out=$(curl -s -m 10 "http://127.0.0.1:$P/index.html")
+	if [ "$want" = ok ]; then
+		[ "$out" = smoke-ok ]
+	else
+		! body "$out" && grep -rq 'Hostname mismatch\|hostname mismatch\|IP address mismatch' "$tmp"/root/log "$tmp/dg-$P.log"
+	fi
+}
+
+case_origin_host_name_ok() { origin_host DNS:localhost localhost ok; }
+case_origin_host_ip_ok() { origin_host IP:127.0.0.1 127.0.0.1 ok; }
+case_origin_host_name_bad() { origin_host DNS:other.test localhost bad; }
+case_origin_host_ip_bad() { origin_host DNS:localhost,IP:127.0.0.2 127.0.0.1 bad; }
+
 case_origin_no_check() {
 	local out
 	mk_cert "$tmp/origin" localhost
@@ -356,7 +377,7 @@ case_cipher_list() {
 	grep -q 'Ciphersuite: ECDHE-ECDSA-AES128-GCM-SHA256' <<<"$out" && body "$out"
 }
 
-cases="tls13 tls12 old-protocols legacy-tls1 sslway-options origin-ca-ok origin-ca-bad origin-no-check sni abort origin-abort generated-cert cert-env parallel large cipher-list"
+cases="tls13 tls12 old-protocols legacy-tls1 sslway-options origin-ca-ok origin-ca-bad origin-no-check origin-host-name-ok origin-host-ip-ok origin-host-name-bad origin-host-ip-bad sni abort origin-abort generated-cert cert-env parallel large cipher-list"
 fn=case_${testcase//-/_}
 if [ "$testcase" = list ]; then echo "$cases"; exit 0; fi
 declare -F "$fn" >/dev/null || { echo "unknown case: $testcase (known: $cases)" >&2; exit 2; }
