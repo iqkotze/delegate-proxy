@@ -49,6 +49,24 @@
       "cacheVariables": {
         "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer"
       }
+    },
+    {
+      "name": "clang",
+      "displayName": "C++20, Debug with clang",
+      "inherits": "debug",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "fuzz",
+      "displayName": "libFuzzer targets with ASan and UBSan (clang)",
+      "inherits": "clang",
+      "cacheVariables": {
+        "DG_BUILD_FUZZ": "ON",
+        "DG_BUILD_TESTS": "OFF",
+        "CMAKE_CXX_FLAGS": "-fsanitize=fuzzer-no-link,address,undefined -fno-omit-frame-pointer"
+      }
     }
   ],
   "buildPresets": [
@@ -67,6 +85,14 @@
     {
       "name": "asan",
       "configurePreset": "asan"
+    },
+    {
+      "name": "clang",
+      "configurePreset": "clang"
+    },
+    {
+      "name": "fuzz",
+      "configurePreset": "fuzz"
     }
   ],
   "testPresets": [
@@ -94,6 +120,20 @@
     {
       "name": "asan",
       "configurePreset": "asan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang",
+      "configurePreset": "clang",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "fuzz",
+      "configurePreset": "fuzz",
       "output": {
         "outputOnFailure": true
       }

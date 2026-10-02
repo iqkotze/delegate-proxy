@@ -112,8 +112,8 @@ add_custom_command(TARGET delegated POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:delegated>.signer
   VERBATIM)
 
-# Application objects with main renamed, linked into the unit tests
-if(DG_BUILD_TESTS AND EXISTS ${DG_ROOT}/../tests/CMakeLists.txt)
+# Application objects with main renamed, linked into the unit tests and fuzz targets
+if((DG_BUILD_TESTS AND EXISTS ${DG_ROOT}/../tests/CMakeLists.txt) OR DG_BUILD_FUZZ)
   add_library(dg_app_objs OBJECT ${delegated_srcs})
   dg_configure_target(dg_app_objs DEFS main=dg_delegated_main)
   add_dependencies(dg_app_objs dg_builtin_gen dg_params_gen)
@@ -130,4 +130,7 @@ add_test(NAME smoke COMMAND ${DG_ROOT}/../tools/smoke-test.sh $<TARGET_FILE:dele
 set_tests_properties(smoke PROPERTIES TIMEOUT 300)
 if(DG_BUILD_TESTS AND EXISTS ${DG_ROOT}/../tests/CMakeLists.txt)
   add_subdirectory(${DG_ROOT}/../tests tests)
+endif()
+if(DG_BUILD_FUZZ)
+  add_subdirectory(${DG_ROOT}/../tests/fuzz tests/fuzz)
 endif()

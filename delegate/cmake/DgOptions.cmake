@@ -13,6 +13,7 @@ set(IMPSIZE "10000" CACHE STRING "Size limit for embedded files")
 option(DG_BUILD_SUBIN "Build the subin helper programs" OFF)
 option(DG_EXTRA_WARNINGS "Enable additional compiler warnings" OFF)
 option(DG_WERROR "Treat compiler warnings as errors" OFF)
+option(DG_BUILD_FUZZ "Build the libFuzzer targets (needs clang)" OFF)
 
 find_package(GTest QUIET)
 option(DG_BUILD_TESTS "Build the GoogleTest unit tests" ${GTest_FOUND})
