@@ -4511,9 +4511,7 @@ void backseek(FILE *in, int disp){
 	int soff = ftell(in);
 	int diff;
 
-#ifndef _MSC_VER
 	fflush(in); /* to avoid loop on Linux */
-#endif
 	fseek(in,-disp,1);
 
 	diff = soff - ftell(in);

@@ -67,9 +67,6 @@ int dl_library(const char *libname,DLMap *dlmap,const char *mode){
 	return -1;
 }
 */
-#ifdef _MSC_VER
-int pubDecyptRSA(PCStr(pubkey),int len,PCStr(enc),PVStr(dec)){ return -1; }
-#endif
 
 /*
 int inGzip;

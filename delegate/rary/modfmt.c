@@ -28,22 +28,13 @@ TODO:
  * it is replaced with "%d" when FileSize is not long long
  */
 
-#if defined(__FreeBSD__) && __FreeBSD__ <= 4
-#define useQuad 1
-#else
 #define useQuad 0
-#endif
 
-#ifdef _MSC_VER
-#define isWin 1
-#else
 #define isWin 0
-#endif
 
 #define LongFileSize	(sizeof(int) < sizeof(FileSize))
 
-#if NO_LL_FMT \
- || defined(__osf__) && defined(__alpha) && defined(_LONGLONG)
+#if NO_LL_FMT
 #define NO_ll_FMT 1
 #else
 #define NO_ll_FMT 0

@@ -22,14 +22,6 @@ History:
 #include "vsocket.h"
 #include "fpoll.h"
 
-/*
-#if defined(_MSC_VER)
-#else
-#undef bind
-#undef accept Xaccept
-#undef connect
-#endif
-*/
 
 int connectA(PCStr(host),int port,int timeout){
 	VSAddr sa;

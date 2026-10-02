@@ -1,6 +1,3 @@
-#ifdef __osf__
-OSF/1 does not have it, but -DNONCPLUS lets this file be compled successfully
-#endif
 
 #include "ystring.h"
 

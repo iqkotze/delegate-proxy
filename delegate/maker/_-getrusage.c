@@ -1,10 +1,8 @@
 #include "ystring.h"
 #include <ctype.h>
 
-#ifndef _MSC_VER
 #include <sys/time.h>
 #include <sys/resource.h>
-#endif
 
 #define RUSAGE_SELF 0
 #define RUSAGE_CHILDREN -1

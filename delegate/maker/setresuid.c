@@ -1,13 +1,9 @@
 int SUBST_setresuid = 1; /* */
 
-#if defined(__hpux__)
-#include <unistd.h>
-#else
 int setuid(int);
 int seteuid(int);
 int setgid(int);
 int setegid(int);
-#endif
 
 int setresuid(int ruid,int euid,int suid)
 {

@@ -32,3 +32,20 @@ Zählt Fehler und Warnungen aus `build.log` nach Kategorie und nach Datei.
 
     tools/warnstats.sh /tmp/dg-legacy-gcc
     tools/warnstats.sh /tmp/dg-legacy-gcc 30
+
+## cleanup-unifdef.sh
+
+Entfernt mit `unifdef` den Code für andere Plattformen als Linux amd64 aus allen `.c` und `.h` Dateien unter `delegate/`. Das Verzeichnis `delegate/pds/` bleibt unberührt. Die Makroliste steht im Skript. Features und Sprachmakros wie `QS` oder `NONC99` werden nicht gesetzt.
+
+    tools/cleanup-unifdef.sh --dry-run
+    tools/cleanup-unifdef.sh
+
+`--dry-run` listet nur die Dateien, die sich ändern würden. Dateien, die `unifdef` nicht verarbeiten kann (Exit-Code 2), werden am Ende aufgelistet und bleiben unverändert. Das betrifft zum Beispiel `#if` Zeilen mit Zeilenfortsetzung und Kommentar. Teilweise bekannte Ausdrücke wie `defined(_MSC_VER) || defined(NONC99)` vereinfacht `unifdef` nicht.
+
+## compare-linkmap.sh
+
+Vergleicht zwei Builds anhand von `linkmap.txt` und den exportierten Symbolen von `delegated` (`nm --defined-only -g`). Das Skript zeigt Einträge, die nur im alten oder nur im neuen Build vorkommen.
+
+    tools/compare-linkmap.sh /tmp/dg-baseline /tmp/dg-e1
+
+Jedes Verzeichnis enthält `linkmap.txt` und entweder `delegated` oder `delegate/src/delegated`.

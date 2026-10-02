@@ -420,12 +420,6 @@ int dump_hostidX(PVStr(out),int verb){
 	int rcode;
 
 	rcode = dump_hostid(BVStr(out),verb);
-#if defined(_MSC_VER) && !isWindowsCE()
-	if( isWindows() ){
-		Xsprintf(TVStr(out)," (tz=%d db=%d dl=%d)",
-			_timezone/3600,_dstbias/3600,_daylight);
-	}
-#endif
 	return rcode;
 }
 int hostid_main(int ac,const char *av[]){

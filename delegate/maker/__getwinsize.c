@@ -1,12 +1,6 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 
-#ifdef sun
-#include <sys/termios.h>
-#ifdef __cplusplus
-extern "C" { int ioctl(int fildes, int request,...); }
-#endif
-#endif
 
 int getwinsize(int fd,int *row,int *col){
 	struct winsize ws;

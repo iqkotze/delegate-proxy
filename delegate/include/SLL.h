@@ -32,11 +32,7 @@ typedef struct _state {
 } SLLRule;
 
 #define ISRULE(s)	extern SLLRule s[]
-#ifdef _AIX
 #define RULE(s)		SLLRule s[] =
-#else
-#define RULE(s)		SLLRule s[] =
-#endif
 #define ALT(s)		RULE(s){ {"s",0,0,ISALT},
 #define SEQ(s)		RULE(s){ {"s",0,0,ISSEQ},
 #define END		0};

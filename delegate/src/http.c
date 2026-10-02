@@ -33,12 +33,7 @@ History:
 #include "http.h"
 #include "vsignal.h"
 
-#if defined(_AIX) || defined(__hpux)
-#define AVAIL_alloca 0
-#define alloca(z) malloc(z)
-#else
 #define AVAIL_alloca 1
-#endif
 
 #define fcloseTIMEOUT(fp) fcloseTIMEOUT_FL(__FILE__,__LINE__,fp)
 #define fflushTIMEOUT(fp) fflushTIMEOUT_FL(FL_ARG,fp)
@@ -1569,12 +1564,6 @@ fflush after the header is put makes separated header/body and let
 the server on Solaris2.X be slower...  But, this is necessary in
 BSDI-1.x to avoid the header from being put after the body X-<
 */
-#ifdef __bsdi__
-#include <sys/param.h>
-#if !defined(_BSDI_VERSION) || _BSDI_VERSION < 199501
-#define HeadFlush 1
-#endif
-#endif
 #ifndef HeadFlush
 #define HeadFlush 0
 #endif
@@ -2307,9 +2296,6 @@ static int putDGC_ROUTE(Connection *Conn,FILE *tc){
  * do something before ending response header
  * with empty CRLF line
  */
-#if defined(UNDER_CE)
-int XfputsCRLF(PVStr(str),FILE *fp);
-#else
 int XfputsCRLF(PVStr(str),FILE *fp){
 	int err = 0;
 	int ch;
@@ -2343,7 +2329,6 @@ int XfputsCRLF(PVStr(str),FILE *fp){
 	}
 	return 0;
 }
-#endif
 
 static void endRespHead(Connection *Conn,ResponseContext *RX){
 	/*

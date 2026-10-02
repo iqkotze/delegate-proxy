@@ -120,7 +120,7 @@ XSRC3 =		../maker/strcasecmp.c
 XSRC4 =		../maker/_-select.c
 XSRC5 =		../rary/file.c
 XSRC7 =		../rary/syslog.c
-XSRC8 =		../rary/windows.c
+XSRC8 =		../rary/nonwin.c
 XSRC9 =		../rary/windows0.c
 XSRCA =		../rary/hostaddr.c
 XSRCB =		../rary/socks5.c
@@ -137,7 +137,7 @@ XSRCS =		vsocket.h ysocket.h vsignal.h log.h config.h ystring.h fpoll.h \
 		_-select.c file.c syslog.c
 
 XOBJS =		String.o bcopy.o strcasecmp.o \
-		_-select.o file.o syslog.o windows.o hostaddr.o \
+		_-select.o file.o syslog.o nonwin.o hostaddr.o \
 		socks5.o timer.o nbio.o gendom.o
 
 FILES =		$(LOCALFILES) $(XSRCS)
@@ -196,7 +196,7 @@ _-select.c:;	-$(LKFILE) $(XSRC4) $@
 syslog.c:;	-$(LKFILE) $(XSRC7) $@
 
 file.c:		$(XSRC5); -$(LKFILE) $(XSRC5) $@
-windows.c:	$(XSRC8); -$(LKFILE) $(XSRC8) $@
+nonwin.c:	$(XSRC8); -$(LKFILE) $(XSRC8) $@
 windows0.c:	$(XSRC9); -$(LKFILE) $(XSRC9) $@
 hostaddr.c:	$(XSRCA); -$(LKFILE) $(XSRCA) $@
 socks5.c:	$(XSRCB); -$(LKFILE) $(XSRCB) $@
@@ -204,7 +204,7 @@ timer.c:	$(XSRCC); -$(LKFILE) $(XSRCC) $@
 nbio.c:		$(XSRCD); -$(LKFILE) $(XSRCD) $@
 gendom.c:	$(XSRCF); -$(LKFILE) $(XSRCF) $@
 
-windows.o:	windows.c windows0.c
+nonwin.o:	nonwin.c
 
 clean:;		-$(RM) *.o $(XSRCS)
 

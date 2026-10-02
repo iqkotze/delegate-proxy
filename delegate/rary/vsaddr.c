@@ -303,13 +303,7 @@ if(0)
 	return sip->sin_family;
 }
 
-#ifdef _MSC_VER
-#define NO_INET_NTOP 1
-#undef inet_ntop
-#define inet_ntop
-#else
 #define NO_INET_NTOP 0
-#endif
 
 /*
 static char ntoa_buf[64];

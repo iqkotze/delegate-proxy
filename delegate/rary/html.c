@@ -33,14 +33,10 @@ History:
 #include <stdio.h>
 #include <ctype.h>
 
-#ifdef _MSC_VER
-typedef unsigned __int64 SymIdInt;
-#else
 #ifdef __LONG_LONG_MAX__
 typedef unsigned long long int SymIdInt;
 #else
 typedef unsigned long int SymIdInt;
-#endif
 #endif
 
 /*

@@ -7,11 +7,7 @@
 #define X_SA struct sockaddr
 
 #ifndef X_SAL
-#if defined(__hpux__) && defined(_XOPEN_SOURCE_EXTENDED)
-#define X_SAL socklen_t
-#else
 #define X_SAL int
-#endif
 #endif
 
 int Xgetsockopt(int s,int e,int n,void *v,int *l){

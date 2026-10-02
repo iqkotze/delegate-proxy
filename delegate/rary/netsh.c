@@ -78,7 +78,6 @@ int fpollins(int fpn,FILE *fpv[],int rdv[]){
 
 #ifndef DGFORKPTY /*{ ---------------*/
 #else /*}{*/
-#ifndef _MSC_VER
 
 int SocketOf(int fd){
 	return fd;
@@ -159,7 +158,6 @@ int FMT_porting_dbg(PCStr(fmt),...){
 	fprintf(stderr,"\n");
 	return 0;
 }
-#endif
 #endif /*} ---------------*/
 
 /*---- minimum Telent ----*/
@@ -570,31 +568,6 @@ int sudoForkpty(int *rttyfd,int *rttypid,int *rttyph,int flags,PVStr(name),PCStr
 		return -1;
 	}
 }
-#if defined(_MSC_VER) /*{*/
-static int setHOME(PCStr(home));
-static int forksh(Netsh *Nsh,PCStr(shell),char*const sav[],char*const sev[]){
-	IStr(name,1024);
-	int ph;
-	int pid;
-	int cpid;
-
-	clearVStr(name);
-	Nsh->ns_tty = -1;
-	Nsh->ns_cpid = -1;
-
-	if( Nsh->ns_stat & NS_SUTTY ){
-		setHOME(getenv("YYHOME"));
-		pid = sudoForkpty(&Nsh->ns_tty,&cpid,&ph,Nsh->ns_stat,AVStr(name),shell,sav,sev);
-		if( 0 < pid ){
-			Nsh->ns_ph = ph;
-			Nsh->ns_pid = pid;
-			Nsh->ns_cpid = cpid;
-			return 0;
-		}
-	}
-	return -1;
-}
-#else /*}{*/
 
 #include <unistd.h>
 #include <termios.h>
@@ -648,9 +621,6 @@ static int forksh(Netsh *Nsh,PCStr(shell),char*const sav[],char*const sev[]){
 		}
 	}
 	if( Nsh->ns_pid == 0 ){
-#if defined(__osf__)
-		system("stty sane");
-#endif
 		closeFds(Nsh->ns_inheritfds);
 		rcode = Xexecve(FL_ARG,shell,(char**)sav,environ);
 		porting_dbg("--Nsh execve()=%d e%d",rcode,errno);
@@ -668,7 +638,6 @@ static int forksh(Netsh *Nsh,PCStr(shell),char*const sav[],char*const sev[]){
 		return 0;
 	}
 }
-#endif /*}*/
 
 int fpollinsX(int timeout,int fpc,FILE *fpv[],int rdv[]){
 	int fi;
@@ -1055,16 +1024,9 @@ int netsh_main(int ac,const char *av[]){
 	return 0;
 }
 
-#if defined(_MSC_VER)
-typedef void ttyStat;
-ttyStat *windumpTTyStat(FILE *infp,PVStr(stat),int ssiz);
-int winsetTTyStat(FILE *infp,ttyStat *stat,const char *strstat);
-int winrestoreTTyStat(FILE *infp,ttyStat *stat);
-#else
 #define windumpTTyStat(infp,stat,ssiz) 0
 #define winsetTTyStat(inff,stat,strstat) 0
 #define winrestoreTTyStat(inff,stat) 0
-#endif
 
 int getpass0(FILE *in,FILE *out,PVStr(pass),PCStr(xpass),PCStr(echoch));
 int getpass1(FILE *in,FILE *out,PVStr(pass),PCStr(xpass),PCStr(echoch)){
@@ -1394,7 +1356,6 @@ int dgforkpty_main(int ac,char *av[]){
 	int wcc = -1;
 	int xend;
 
-#if !defined(UNDER_CE) /*{*/
 	if( isCYGWIN() ){
 		int ofd = fileno(stderr);
 		FILE *fp;
@@ -1405,7 +1366,6 @@ int dgforkpty_main(int ac,char *av[]){
 			fprintf(stderr,"[%d] %d\n",getpid(),(int)time(0));
 		}
 	}
-#endif /*}*/
 	if( ac < 3 ){
 		fprintf(stderr,"ERROR: Usage: %s fd# path [arg] ...\n",av[0]);
 		fflush(stderr);

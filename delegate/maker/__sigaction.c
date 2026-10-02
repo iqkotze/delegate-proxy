@@ -1,17 +1,6 @@
 #include <signal.h>
-#ifdef _MSC_VER
-void bzero(void *b,unsigned int length);
-#else
 #include <strings.h>
-#endif
 
-#ifdef sun
-/* an executalbe compiled on SunOS may be executed on Solaris,
- * therefore SA_RESTART must be selected at run-time.
- */
-#undef SA_RESTART
-#define SA_RESTART	(IsSolaris() ? 4 : 0)
-#endif
 
 #if defined(SA_RESTART)
 typedef void (*VFunc)(int);

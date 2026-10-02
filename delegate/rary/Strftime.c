@@ -29,9 +29,7 @@ History:
 #include "log.h"
 #include <time.h>
 
-#if !defined(__KURO_BOX__)
 time_t timegm(struct tm *tm);
-#endif
 int Timegm(struct tm *tm);
 int Timelocal(struct tm *tm);
 long Gettimeofday(int *usec);

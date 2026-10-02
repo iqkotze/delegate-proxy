@@ -684,17 +684,6 @@ int Peek1(int sock){
 			return 1; /* no MSG_PEEK on WinCE */
 		}
 	}
-#ifdef __APPLE__
-	/*
-	 * MacOSX (Darwin7) do recv(PIPE) without failure
-	 * MacOSX (Darwin8) do recv(PIPE,MSG_PEEK) ignoring MSG_PEEK
-	 */
-	if( file_issock(sock) < 0 ){
-		fprintf(stderr,"[%d]## Peek1(%d) NOT SOCKET\n",getpid(),sock);
-		syslog_ERROR("## Peek1(%d) NOT SOCKET\n",sock);
-		return -1;
-	}
-#endif
 
 	return recv(sock,buf,1,MSG_PEEK);
 }
@@ -1523,11 +1512,7 @@ void relay2_cntl(int timeout,int s1,int d1,int s2,int d2,int s3,int d3,IFUNCP cn
 
 
 
-#if defined(sun) && !defined(NC_TPI_CLTS)
-#define SunOS4bin 1 /* this binary is compiled on SunOS4.X */
-#else
 #define SunOS4bin 0
-#endif
 int Getsockopt(int s,int level,int optname,char optval[],int *optlen)
 {
 	int rcode;
@@ -1793,13 +1778,8 @@ void set_linger(int sock,int secs)
 		sl.l_onoff = 1;	/* on */
 		sl.l_linger = secs;	/* seconds */
 	}else{
-#if defined(hpux) || defined(__hpux__)
-		sl.l_onoff = 1;
-		sl.l_linger = 0;
-#else
 		sl.l_onoff = 0;
 		sl.l_linger = 0;
-#endif
 	}
 	rcode = SETsockopt(sock, SOL_SOCKET, SO_LINGER, &sl, sizeof(sl));
 	if( rcode != 0 ){
@@ -1838,11 +1818,7 @@ int BrokenSocket(FL_PAR,int fd){
 	return 0;
 }
 
-#ifdef sun
-#define SUNBUG ENAMETOOLONG
-#else
 #define SUNBUG -1
-#endif
 
 int IsConnected(int sock,const char **reason)
 {	int nready,rcc;
@@ -2054,12 +2030,7 @@ int exceptionReady(int sock){
 	ready = PollInsOuts(0,1,fv,qv,rv);
 	return ready;
 }
-#if defined(__APPLE__) || defined(_MSC_VER) || defined(__Free_BSD__)
-/* this should be tested detecting RESET on a socketpair with PS_PRI */
-#define withoutPoll() 1
-#else
 #define withoutPoll() 0
-#endif
 int pollIY(const char *wh,double timeout,int in,int ex,int exin);
 int pollIX(const char *wh,double timeout,int in,int ex){
 	int nrdy;
@@ -2104,20 +2075,3 @@ int receiverReset(const char *wh,double timeout,int in,int out){
 }
 
 #undef recv
-#ifdef __APPLE__
-/*
- * recv(PEEK) for pipe on Darwin returns success just doing recv() without PEEK
- */
-int recvDarwin(int sock,void *buf,int len,int flags,FL_PAR){
-	int rcc;
-
-	if( flags & MSG_PEEK )
-	if( file_issock(sock) < 0 ){
-		porting_dbg("## Non-Socket recv(%d,%d,PEEK) <= %s:%d",
-			sock,len,FL_BAR);
-		return -1;
-	}
-	rcc = recv(sock,buf,len,flags);
-	return rcc;
-}
-#endif

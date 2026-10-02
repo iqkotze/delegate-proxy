@@ -2188,12 +2188,7 @@ Description:
 History:
 	071126	created
 //////////////////////////////////////////////////////////////////////#*/
-#if defined(__KURO_BOX__)
-#include <pty.h>
-#define Forkpty(pty,name) forkpty(pty,name,NULL,NULL)
-#else
 int Forkpty(int *pty,char *name);
-#endif
 int Stty(int fd,const char *mode);
 int Gtty(int fd,const char *mode);
 

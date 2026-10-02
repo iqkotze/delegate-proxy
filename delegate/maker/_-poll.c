@@ -1,7 +1,7 @@
 /*
  *	@poll.c: this file will be used in systems with poll()
  */
-#if defined(_nec_ews) || defined(BUGGY_POLL)
+#if defined(BUGGY_POLL)
 DO NOT USE ITS BUGGY POLL
 #endif
 

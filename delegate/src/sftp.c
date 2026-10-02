@@ -31,12 +31,7 @@ static int ErrorResp = 0;
 #define DEBUG	(lGATEWAY()==0 && ErrorResp==0)?0:sv1log
 #define Error	sv1log
 
-#if defined(__KURO_BOX__)
-#include <pty.h>
-#define Forkpty(pty,name) forkpty(pty,name,NULL,NULL)
-#else
 int Forkpty(int *pty,char *name);
-#endif
 int Stty(int fd,const char *mode);
 
 int CC_connect(PCStr(proto),PCStr(host),int port,PCStr(user));
@@ -703,12 +698,6 @@ static void PASV(FILE *tc,int *vsockp){
 	if( 0 <= vsock ){
 		balen = sizeof(ba);
 		getsockname(vsock,(SAP)&ba,&balen);
-#if defined(__CYGWIN__)
-		if( VSA_addrisANY(&ba) ){
-		    /*connection to 0.0.0.0 fails on CYGWIN?*/
-		    VSA_atosa(&ba,VSA_port(&ba),"127.0.0.1");
-		}
-#endif
 		VSA_prftp(&ba,AVStr(mport));
 		putresp(tc,227,"Enterning Passive Mode (%s)",mport);
 		*vsockp = vsock;
@@ -970,12 +959,6 @@ continue; /* to return normal resp. for following commands... */
 			if( 0 <= vsock ){
 				balen = sizeof(ba);
 				getsockname(vsock,(SAP)&ba,&balen);
-#if defined(__CYGWIN__)
-				if( VSA_addrisANY(&ba) ){
-				    /*connection to 0.0.0.0 fails on CYGWIN?*/
-				    VSA_atosa(&ba,VSA_port(&ba),"127.0.0.1");
-				}
-#endif
 				VSA_prftp(&ba,AVStr(mport));
 			putresp(tc,227,"Enterning Passive Mode (%s)",mport);
 			}else{

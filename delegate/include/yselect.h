@@ -4,13 +4,9 @@
 #ifndef FD_SETSIZE
 #include <sys/types.h>
 #ifndef FD_SETSIZE
-#ifdef _MSC_VER
-#include "ywinsock.h"
-#else
 #include <sys/time.h>
 #ifndef FD_SETSIZE
 #include <sys/select.h>
-#endif
 #endif
 #endif
 #endif

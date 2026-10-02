@@ -25,11 +25,6 @@ rm resolvy/.cksum.ntod.c
 
 ./mkmake.exe -cksum maker/mkmake.c  ##for XCC without compilation of mkmake.c
 
-sed -n '1,/DIGEST-OFF/p' rary/windows.c|$XDG -Fcksum > rary/.cksum.windows.c
-sed -n '1,/DIGEST-OFF/p' rary/wince.c  |$XDG -Fcksum > rary/.cksum.wince.c
-sed -n '1,/DIGEST-OFF/p' rary/winmo.c  |$XDG -Fcksum > rary/.cksum.winmo.c
-sed -n '1,/DIGEST-OFF/p' rary/winnat.c |$XDG -Fcksum > rary/.cksum.winnat.c
-sed -n '1,/DIGEST-OFF/p' rary/winsspi.c|$XDG -Fcksum > rary/.cksum.winsspi.c
 sed -n '1,/DIGEST-OFF/p' rary/pilsner.c|$XDG -Fcksum > rary/.cksum.pilsner.c
 
 sed -n '1,/DIGEST-OFF/p' src/spinach.c |$XDG -Fcksum >  src/.cksum.spinach.c

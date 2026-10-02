@@ -83,10 +83,8 @@ void minit_reshost()
 	}
 }
 
-#if !defined(_MSC_VER)
 struct hostent *gethostbyname2X(const char *name,int af);
 #define gethostbyname2(n,a) gethostbyname2X(n,a)
-#endif
 int with_gethostbyname2(){
 	struct hostent *ht;
 	ht = gethostbyname2("::",AF_INET6);

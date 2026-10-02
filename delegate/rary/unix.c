@@ -62,18 +62,7 @@ static int tmpLogFd = -1;
 #define DBGWRITE	write
 #define SYST		"UNIX"
 
-#ifdef __EMX__
-#undef SYST
-#define SYST		"OS/2"
-#include <os2emx.h>
-#endif
 
-#ifdef _MSC_VER /*{*/
-#include "vsocket.h"
-#undef SYST
-#define SYST		"WIN"
-
-#else /*}{*/
 int DELEGATE_PAUSE;
 int SPAWN_TIMEOUT = 10*1000;
 int MIN_DGSPAWN_WAIT = 100; /* expecting when a child is a DeleGate */
@@ -196,89 +185,6 @@ int setInheritance(int ifd,int inherit){ return -1; }
 int setInheritHandle(int fd,int on){ return -1; }
 int getParentSock(){ return -1; }
 
-#ifdef __EMX__ /*{*/
-int putenv_sockhandle(int fd,PVStr(env))
-{	int shandle;
-
-	shandle = _getsockhandle(fd);
-	if( shandle != -1 ){
-		sprintf(env,"EMX_SOCKHANDLE%d=%d",fd,shandle);
-		putenv(env);
-	}
-	return shandle;
-}
-
-int getenv_sockhandle(int fd){
-	CStr(name,32);
-	const char *env;
-	int shandle,fdx;
-
-	sprintf(name,"EMX_SOCKHANDLE%d",fd);
-	if( (env = getenv(name)) && *env ){
-		shandle = atoi(env);
-		if( 0 <= shandle ){
-			for( fdx = 0; fdx < 32; fdx++ ){
-				if( _getsockhandle(fdx) == shandle ){
-					dup2(fdx,fd);
-					return fd;
-				}
-			}
-			fdx = _impsockhandle(shandle,0);
-			if( fdx != fd ){
-				dup2(fdx,fd);
-				close(fdx);
-			}
-			return fd;
-		}
-	}
-	return -1;
-}
-
-void DO_FINALIZE(int code){
-	fcloseall();
-	deltmpfiles();
-	_rmtmp();
-}
-
-void DO_STARTUP(int ac,const char *av[])
-{
-	STARTED = 1;
-}
-void DO_INITIALIZE(int ac,const char *av[])
-{	int fd;
-	unsigned long rel = 0, cur;
- 
-	MAIN_argc = ac;
-	MAIN_argv = av;
-	DosSetRelMaxFH(&rel, &cur);
-	if( cur < 48 ){
-		LV("increase MaxFH: %d -> %d",cur,48);
-		DosSetMaxFH(48);
-	}
-
-	for( fd = 0; fd < 32; fd++ )
-		getenv_sockhandle(fd);
-
-	setBinaryIO();
-}
-extern int SPAWN_P_WAIT;
-int execvp(PCStr(path),char *const argv[])
-{	int stat;
-	int fd;
-	char envs[32][32]; /**/
-
-	for( fd = 0; fd < 32; fd++ )
-		putenv_sockhandle(fd,envs[fd]);
-
-	stat = spawnvp(SPAWN_P_WAIT,path,argv);
-	if( stat == -1 )
-		return -1;
-	else	exit(stat);
-}
-int WithSocketFile(){ return 0; }
-int getsockHandle(int fd){ return _getsockhandle(fd); }
-
-#else /*}{*/
 
 void DO_STARTUP(int ac,const char *av[])
 {
@@ -298,7 +204,6 @@ void DO_FINALIZE(int code){
 int WithSocketFile(){ return 1; }
 int getsockHandle(int fd){ return -1; }
 
-#endif /*}*/
 
 
 int Fork(PCStr(what));
@@ -555,13 +460,10 @@ void dumpsockets(FILE *out,PCStr(wh)){
 int testLogin(PCStr(user),PCStr(pass)){
 	return -1;
 }
-#ifndef _MSC_VER
 const char *myExePath(){
 	return "";
 }
-#endif
 int isWindows95(){ return 0; }
-#endif /*}*/
 
 int getAnswerYNtty(PCStr(msg),PVStr(ans),int siz){
 	fprintf(stderr,"-------- DeleGate --------\n");
@@ -763,14 +665,9 @@ int setNonblockingIO(int fd,int on)
 	if( on )
 		flags |=  O_NDELAY;
 	else	flags &= ~O_NDELAY;
-#ifdef _MSC_VER
-	return fcntl(fd,F_SETFL,(void*)flags);
-#else
 	return fcntl(fd,F_SETFL,flags);
-#endif
 }
 
-#if !defined(_MSC_VER)
 int setDeleteOnClose(FILE *fp,int fd,const char *path){
 	return -1;
 }
@@ -780,4 +677,3 @@ int doDeleteOnClose(int fd,int fh){
 int doDeleteOnExit(){
 	return -1;
 }
-#endif

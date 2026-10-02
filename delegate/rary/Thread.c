@@ -574,13 +574,7 @@ int thread_sigmask(PCStr(show),SigMaskInt nmask,SigMaskInt *omask){
 	return -1;
 }
 
-#if defined(_MSC_VER) \
- || defined(__APPLE__) \
- || defined(__FreeBSD__)
-#define SuppThreadSignal() 1
-#else
 #define SuppThreadSignal() 0
-#endif
 
 int thread_start(const char *name,void *ta){
 	int ix;
@@ -907,10 +901,6 @@ EXIT:
 #undef sigmask
 #undef sigsetmask
 #undef sigblock
-#ifdef _MSC_VER
-int sigsetmask(int);
-int sigblock(int);
-#endif
 int sigmask(int sig);
 int proc_sigblock(int mask){
 	return sigblock(mask);

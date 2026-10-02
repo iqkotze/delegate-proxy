@@ -1,7 +1,7 @@
 #include "ystring.h"
 #include "sysconf.h"
 #include "log.h"
-#if defined(__cplusplus) && !defined(DG_WITH_PTHREAD) && !defined(__CYGWIN__)
+#if defined(__cplusplus) && !defined(DG_WITH_PTHREAD)
 	// and if -lpthread is not confirmed to be available
 	// then this module should not be included
 	// (as in small installation of FreeBSD 4)

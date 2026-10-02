@@ -1,4 +1,3 @@
-#ifndef _MSC_VER
 const char *type_fcloseFILE = "C";
 #include <stdio.h>
 #include "ystring.h"
@@ -16,4 +15,3 @@ int FL_fcloseFILE(FL_PAR,FILE *fp){
 	close(fdsav);
 	return fd;
 }
-#endif

@@ -627,32 +627,12 @@ static int sysLog(PCStr(fmt),...){
 }
 
 static double origTime(){ return Time(); }
-#if defined(_MSC_VER)
-#include <sys/timeb.h>
-static double myTime(){
-	struct timeb timeb;
-	nTime++;
-	if( isWindowsCE() ){
-		static double tick0s;
-		static int tick0m;
-		if( tick0s == 0 ){
-			tick0s = origTime();
-			tick0m = GetTickCount();
-		}
-		return tick0s + (GetTickCount()-tick0m)/1000.0;
-	}else{
-		ftime(&timeb);
-		return timeb.time + timeb.millitm / 1000.0;
-	}
-}
-#else
 static double myTime(){
 	struct timeval tv;
 	nTime++;
 	gettimeofday(&tv,NULL);
         return tv.tv_sec + tv.tv_usec / 1000000.0;
 }
-#endif
 #define Time()	myTime()
 
 static int withoutSyslog = 0;
@@ -2396,24 +2376,8 @@ static int gotConn(ConnReq *cr1,int svsock){
 	return -1;
 }
 
-#if defined(_MSC_VER)
-static void setSendError(PCStr(wh),ConnReq *cr,FDesc oSock,int len,int wcc){
-	int xerr;
-
-	xerr = WSAGetLastError();
-	TRACE("##{%d} %s send [%d/%d] %d/%d err=%d/%d",cr->cr_id,wh,
-		oSock.fd_fd,oSock.fd_handle,wcc,len,errno,xerr);
-	if( xerr == WSAEWOULDBLOCK ){
-		errno = EAGAIN;
-	}else
-	if( xerr == WSAECONNRESET || xerr == WSAECONNABORTED ){
-		errno = EPIPE;
-	}
-}
-#else
 static void setSendError(PCStr(wh),ConnReq *cr,FDesc oSock,int len,int wcc){
 }
-#endif
 
 static int xaccept(ConnReq *cr,FDesc acSock,VSAddr *vsa,int *len){
 	int clsock;
@@ -2495,42 +2459,20 @@ static int xwrite(FDesc oSock,const void *buf,int len){
 	int wcc;
 	unsigned long uwcc;
 
-#ifdef _MSC_VER
-	if( WriteFile((HANDLE)oSock.fd_handle,buf,len,&uwcc,NULL) ) wcc = uwcc; else wcc = -2;
-	if( wcc < 0 ){
-		TRACE("-- xwrite([%d/%d])=%d err=%d",oSock.fd_fd,oSock.fd_handle,uwcc,GetLastError());
-	}
-#else
 	wcc = write(oSock.fd_fd,buf,len);
-#endif
 	return wcc;
 }
 static int xread(FDesc iSock,void *buf,int siz){
 	int rcc;
 	unsigned long urcc;
 
-#ifdef _MSC_VER
-        if( ReadFile((HANDLE)iSock.fd_handle,buf,siz,&urcc,NULL) ) rcc = urcc; else rcc = -2;
-	if( rcc < 0 ){
-		TRACE("-- xread([%d/%d])=%d err=%d",iSock.fd_fd,iSock.fd_handle,urcc,GetLastError());
-		msleep(200);
-	}
-#else
 	rcc = read(iSock.fd_fd,buf,siz);
-#endif
 	return rcc;
 }
-#ifdef _MSC_VER
-static int _PollInsOuts(int timeout,int nfds,FDesc _fdv[],int ev[],int _rev[]);
-#endif
 static int xPollIn(FDesc Fd,int timeout){
 	int _ev[1],_rev[1],nready;
 	_ev[0] = PS_IN|PS_PRI;
-#ifdef _MSC_VER
-	nready = _PollInsOuts(timeout,1,&Fd,_ev,_rev);
-#else
 	nready = PollInsOuts(timeout,1,&Fd.fd_fd,_ev,_rev);
-#endif
 	return nready;
 }
 
@@ -3141,61 +3083,6 @@ static int makeFdv(PollVect *Pv,int crn,ConnReq *crb){
 	return fdc;
 }
 
-#if defined(_MSC_VER)
-//#undef select
-static int _PollInsOuts(int timeout,int nfds,FDesc _fdv[],int ev[],int _rev[])
-{	fd_set rfds,wfds,xfds;
-	int fi,fd,fh,ev1,ev2;
-	int ofd;
-	int width;
-	struct timeval tv;
-	struct timeval *tvp;
-	int nready;
-
-	FD_ZERO(&rfds);
-	FD_ZERO(&wfds);
-	FD_ZERO(&xfds);
-
-	width = 0;
-	for( fi = 0; fi < nfds; fi++ ){
-		fd = _fdv[fi].fd_fd;
-		if( fd < 0 ){
-			continue;
-		}
-		fh = _fdv[fi].fd_handle;
-		if( width <= fh )
-			width = fh+1;
-		ev1 = ev[fi];
-		if( ev1 & PS_IN  ) FD_SET(fh,&rfds);
-		if( ev1 & PS_OUT ) FD_SET(fh,&wfds);
-		if( ev1 & PS_PRI ) FD_SET(fh,&xfds);
-	}
-	if( timeout < 0 ){ /* spec. of timeout of poll() */
-		tvp = NULL;
-	}else{
-		tvp = &tv;
-		tv.tv_sec = timeout / 1000;
-		tv.tv_usec = (timeout % 1000) * 1000;
-	}
-	nready = select(SELECT_WIDTH(width),&rfds,&wfds,&xfds,tvp);
-	for( fi = 0; fi < nfds; fi++ ){
-		fd = _fdv[fi].fd_fd;
-		ofd = fd;
-		if( fd < 0 ){
-			_rev[fi] = 0;
-			continue;
-		}
-		fh = _fdv[fi].fd_handle;
-		ev2 = 0;
-		if( FD_ISSET(fh,&rfds) ) ev2 |= PS_IN;
-		if( FD_ISSET(fh,&wfds) ) ev2 |= PS_OUT;
-		if( FD_ISSET(fh,&xfds) ) ev2 |= PS_PRI;
-		_rev[fi] = ev2;
-	}
-	return nready;
-}
-#define PollInsOuts(t,n,_fdv,ev,_rev) _PollInsOuts(t,n,FDv,ev,rev)
-#endif
 
 static void conntimeout(ConnReq *cr){
 	int wcc;
@@ -4727,29 +4614,6 @@ int spinach(Connection *Conn,FILE *fc,FILE *tc){
 			if( tn <= 0 ) tn = 100*1000;
 			if( 1000*1000 < tn ) tn = 1000*1000;
 
-#ifdef _MSC_VER
-			if( isWindowsCE() ){
-			double mine = myTime();
-			double orig = origTime();
-			fprintf(tc,"-- Time() = mine=%.3f orig=%.3f diff=%.03f\r\n",mine,orig,mine-orig);
-			fflush(tc);
-
-			St = Time();
-			int tk0 = GetTickCount();
-			for( ti = 0; ti < tn; ti++ ) GetTickCount();
-			fprintf(tc,"-- GetTickCount() = %.3f / %d (%d)\r\n",Time()-St,ti,GetTickCount()-tk0);
-
-			St = Time();
-			struct timeb timeb;
-			for( ti = 0; ti < tn; ti++ ) ftime(&timeb);
-			fprintf(tc,"-- ftime() = %.3f / %d\r\n",Time()-St,ti);
-
-			St = Time();
-			SYSTEMTIME gst;
-			for( ti = 0; ti < tn; ti++ ) GetSystemTime(&gst);
-			fprintf(tc,"-- GetSystemStime() = %.3f / %d\r\n",Time()-St,ti);
-			}
-#endif
 
 			St = Time();
 			for( ti = 0; ti < tn; ti++ ) Time();

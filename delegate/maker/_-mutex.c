@@ -4,7 +4,7 @@
 #include "ystring.h"
 #include "log.h"
 #include "sysconf.h"
-#if defined(__cplusplus) && !defined(DG_WITH_PTHREAD) && !defined(__CYGWIN__)
+#if defined(__cplusplus) && !defined(DG_WITH_PTHREAD)
 #else
 #include <pthread.h>
 #endif

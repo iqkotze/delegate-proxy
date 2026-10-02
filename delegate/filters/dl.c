@@ -36,8 +36,6 @@ int dlclose(void *handle);
 
 #ifdef RTLD_now
 #define RTLD_NOW RTLD_now
-#elif defined(__OpenBSD__)
-#define RTLD_NOW  0x101
 #else
 #define RTLD_NOW  1
 #endif
@@ -56,19 +54,9 @@ int dl_main(int ac,char *av[]){
 	return 0;
 }
 
-#if defined(__APPLE__)
-#define LDPATHENV	"DYLD_LIBRARY_PATH"
-#else
 #define LDPATHENV	"LD_LIBRARY_PATH"
-#endif
 
 static const char *libpat[16] = {
-#if defined(__APPLE__)
-	"dglib%s.dylib",
-	"lib%s.0.9.8.dylib", /* 9.2.5 for a while */
-	"lib%s.dylib",
-#else
-#if !defined(_MSC_VER)
 	"dglib%s.so",
 	"lib%s.so.0.9.8",    /* 9.2.5 for a while */
 	"lib%s.so",
@@ -79,16 +67,6 @@ static const char *libpat[16] = {
 	"lib%s.so.1",
 	"lib%s.so.0",
 	"lib%s.so.0.9.7", /* 9.2.2 for OpenSSL, for a while ... */
-#endif
-#endif
-#if defined(__CYGWIN__)
-	"cyg%s-0.9.8.dll", /* 9.9.10 fix-140704b */
-	"cyg%s-1.0.0.dll", /* 9.9.10 fix-140704b */
-#endif
-#if defined(_MSC_VER) || defined(__CYGWIN__)
-	"dglib%s.dll",
-	"%s.dll",
-#endif
 	"%s",
 	0
 };

@@ -7,11 +7,7 @@
 #include "yarg.h"
 
 int scan_ino;
-#if defined(__CYGWIN__)
-#define D_INO(de)	0
-#else
 #define D_INO(de)	de->d_ino
-#endif
 
 int Scandir(const char *dirpath,int(*func)(const char*,...),...)
 {	DIR *dirp;

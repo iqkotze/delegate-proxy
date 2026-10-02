@@ -38,11 +38,7 @@ char *fgetsLines(PVStr(line),int lsiz,FILE *in,int timeout);
 char *fgetsLinesX(PVStr(line),int lsiz,FILE *in,int timeout,int *rccp,int *binp);
 
 extern char **environ;
-#if defined(__FreeBSD__)
-#define safeputenv 1
-#else
 #define safeputenv (lMTSS_PUTENV()||tMTSS_PUTENV()) /* 9.9.4 MTSS force putenvs() "-Ete" */
-#endif
 
 #define getFieldValue(str,fld,buf,siz) getFieldValue2(str,fld,buf,siz)
 #define getFV(str,fld,buf)             getFieldValue2(str,fld,AVStr(buf),sizeof(buf))

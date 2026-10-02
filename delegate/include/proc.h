@@ -1,14 +1,8 @@
 #ifndef _PROC_H
 #define _PROC_H
 
-#ifndef _MSC_VER
 #include <sys/types.h>
 #include <sys/wait.h>
-#endif
-#ifdef _MSC_VER
-#define getpgrp() 0
-#define setpgid(p,g) -1
-#endif
 
 #ifndef MAX_THREADS
 #define MAX_THREADS 64
@@ -71,11 +65,6 @@ int   endthreads();
 int   threadIsAlive(int tid);
 int   dumpthreads(PCStr(wh),FILE *tc);
 
-#if defined(_MSC_VER)
-#if defined(UNDER_CE)
-#define execve(p,a,e) -1
-#endif
-#endif
 int Xexecve(FL_PAR,const char *path,char *av[],char *ev[]);
 int filterDGENV(char *ev[],char *nev[],int nec);
 int closeFds(Int64 inheritfds);

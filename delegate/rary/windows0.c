@@ -28,14 +28,9 @@ History:
 #include <string.h>
 #include <sys/types.h>
 
-#ifndef _MSC_VER
 #include <unistd.h>
-#endif
 #include "ystring.h"
 #include "log.h"
-#ifdef _MSC_VER
-#include <sys/stat.h> /* S_IREAD,S_IWRITE */
-#endif
 #include <fcntl.h>
 
 #define LE 1?0:
@@ -45,33 +40,11 @@ History:
 #define LS 1?0:
 #endif
 
-#ifdef _MSC_VER
-#define O_TEMPBIN	(O_TEMPORARY|O_BINARY)
-/*
-#define newtmp(path)	_open(path,O_CREAT|O_RDWR|O_TEMPBIN,S_IREAD|S_IWRITE)
-*/
-FILE *fopen_tmpfile(PCStr(path));
-int newtmp(PCStr(path));
-#define ACT_UNLINKABLE	0
-#define FOPEN_RWB	"w+b"
-#define closetmpf1(fd)	(0 < _get_osfhandle(fd) ? _close(fd) : -1)
-#undef fdopen
-#define fdopen		_fdopen
-#else
 #define fopen_tmpfile(path) 0
-#ifdef __EMX__
-#define newtmp(path)	open(path,O_CREAT|O_RDWR,0600)
-#define ACT_UNLINKABLE	0
-#define FOPEN_RWB	"w+b"
-#define closetmpf1(fd)	close(fd)
-FILE *tmpfile(void){ return TMPFILEX(tmpnam(NULL)); }
-#else
 #define newtmp(path)	open(path,O_CREAT|O_RDWR,0600)
 #define ACT_UNLINKABLE	1
 #define FOPEN_RWB	"w+"
 #define closetmpf1(fd)	close(fd)
-#endif
-#endif
 
 #define MAXFD_SETSIZE 512 /* should be FD_SETSIZE ... */
 typedef struct {

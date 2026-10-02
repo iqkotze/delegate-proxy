@@ -332,11 +332,7 @@ static int xproc(PCStr(what),int pid){
 	return 0;
 }
 
-#if defined(__FreeBSD__)
-#define THREADSAFE_FORK	0
-#else
 #define THREADSAFE_FORK	1
-#endif
 int threadSafeFork(){
 	if( actthreads() == 0 )
 		return 1;

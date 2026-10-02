@@ -11,81 +11,30 @@ extern INETADDRV4 _inet_addrV4(PCStr(addr));
 
 int xinet_pton(int af,const char *src,void *dst);
 
-#ifdef _MSC_VER /*{*/
-#include "ywinsock.h"
-#include "ysocket.h"
-#define SELF_AF_UNIX
-#define SELF_RESOLV_H
-
-#ifndef EISCONN /*{*/
-#define EISCONN		WSAEISCONN
-#define EALREADY	WSAEALREADY
-#define EMSGSIZE	WSAEMSGSIZE
-#define EWOULDBLOCK	WSAEWOULDBLOCK
-#define EINPROGRESS	WSAEINPROGRESS
-#define ECONNREFUSED	WSAECONNREFUSED
-#ifndef EFAULT
-#define EFAULT		WSAEFAULT
-#endif
-#define ENETUNREACH	WSAENETUNREACH
-#define EHOSTUNREACH	WSAEHOSTUNREACH
-#define ETIMEDOUT	WSAETIMEDOUT
-#define EADDRNOTAVAIL	WSAEADDRNOTAVAIL
-#define EADDRINUSE	WSAEADDRINUSE
-#endif /*}*/
-
-#else /*}else (UNIX){*/
 
 #include <unistd.h>
 #include <sys/types.h>
 #include <netdb.h>
-/*
-#ifdef __osf__
-*/
-#if defined(__osf__) || defined(sun)
-#define gethostbyname2(name,af) ((af==AF_INET)?gethostbyname(name):NULL)
-#define WITHOUT_GETHOSTBYNAME2 1
-#endif
-
-#ifdef __EMX__ /*{*/
-#define TCPIPV4
-#ifndef MAXSOCKETS
-#define MAXSOCKETS 2048
-#endif
-#define SELECT_WIDTH(fd)	(fd+3)
-#endif /*}*/
 
 
-#if defined(__CYGWIN__) || defined(__MINGW32__) /*{*/
-#define SO_SNDBUF	0x1001
-#define SO_RCVBUF	0x1002
-#define SO_TYPE		0x1008
-#define SELF_AF_UNIX
-#define SELF_RESOLV_H
-#else /*}{*/
+
 #ifndef IPPROTO_TCP
 #include <sys/param.h>
 #endif
-#endif /*}*/
 
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
 #include "ysocket.h" /* must be after <sys/socket.h> */
 
-#ifdef NeXT
-#include <netinet/in_systm.h>
-#endif
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#if !(defined(__CYGWIN__) || defined(__MINGW32__))
 #include <netinet/tcp.h>
 #include <sys/un.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
-#endif
 
 /*#######################################################*/
 int Xgetsockopt(int,int,int,void*,int*);
@@ -100,7 +49,6 @@ int Xaccept(int s,struct sockaddr *a,int *l);
 #define recvfrom	Xrecvfrom
 /*#######################################################*/
 
-#endif /* } _MSC_VER */
 
 #ifdef SELF_AF_UNIX
 struct sockaddr_un {
@@ -115,7 +63,6 @@ struct sockaddr_un {
 #define sin6_scope_id sin6_flowinfo /* without scope_id */
 #endif
 
-#if !defined(_MSC_VER) || _MSC_VER < 1400 /* before VC2005 {*/
 /*
 #if !defined(AF_INET6) || !defined(IPPROTO_IPV6)
 */
@@ -160,7 +107,6 @@ struct addrinfo *ai_next;
 #define NI_NUMERICHOST 1 /* 2 on BSD, but ignored anyway */
 #endif
 
-#endif /*}*/
 
 #ifndef IPV6_V6ONLY
 #define IPV6_V6ONLY -1

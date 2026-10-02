@@ -1157,22 +1157,12 @@ gwputXferlog(Conn,ruser,rpass,path,(int)GetStartTime(),0,totalc);
 
 	    fclose(svdata);
 
-#ifndef WIN32_FCLOSE_TEST
 		/* Close(fileno(fp)) even after fclose(fp) is effective for
 		 * disconnection, although it returns -1 with errno=EBADF.
 		 * It seems to implies fclose(fp) does incomplete closing...
 		 */
 		rcode = close(svdatafd);
 		Verbose("## confirm data-conn close(%d)=%d\n",svdatafd,rcode);
-#else
-		if( IsConnected(svdatafd,NULL) ){
-		/* this part seems not to be executed maybe because
-		 * getpeername() in IsConnected() make the connection close.
-		 */
-			rcode = close(svdatafd);
-			sv1log("## retry data-conn close(%d)=%d\n",svdatafd,rcode);
-		}
-#endif
 	    }
 	}
 EXIT_0:

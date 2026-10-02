@@ -43,7 +43,7 @@ int VSA_comp(VSAddr *sa1,VSAddr *sa2);
 
 int DNS_debug;
 
-#if defined(sgi) || defined(__RES) && (19931104 <= __RES)
+#if defined(__RES) && (19931104 <= __RES)
 #define _RSTATE 1
 #else
 #define _RSTATE 0
@@ -61,11 +61,7 @@ typedef struct __res_state State;
 typedef struct state State;
 #endif
 
-#if defined(ultrix)
-#define NSLIST(sx)	ns_list[sx].addr
-#else
 #define NSLIST(sx)	nsaddr_list[sx]
-#endif
 
 State _RES = {0};
 int MIN_ABSNDOTS = 1;

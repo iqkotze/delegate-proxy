@@ -967,14 +967,8 @@ int FD_showall(PCStr(where)){
 int bgexecX(PCStr(mode),PCStr(path),char *av[],char *ev[],int *ph);
 int bgwait(int pid,int ph,double timeout);
 
-#ifdef _MSC_VER
-#if isWindowsCE()
-static char **environ = {0};
-#endif
-#else
 #define _cwait(stat,ph,act) 0
 extern char **environ;
-#endif
 
 static const char *yy_origDISP;
 static int yy_origDISP_isset;
@@ -11405,11 +11399,7 @@ static int scanYyshQ(MuxCtx *Mc,yyshCtx *Yc,FILE *fc){
 	}
 	return 0;
 }
-#if _MSC_VER
-int getcuser(PVStr(name),int size,PVStr(group),int gsiz);
-#else
 #define getcuser(name,size,group,gsiz) -1
-#endif
 
 const char *ZlibVersion();
 const char *SSLVersion();
@@ -11659,11 +11649,6 @@ static void sock2pipe(int isock,int opipe,int raw){
 }
 
 int setInheritance(int ifd,int inherit);
-#if defined(_MSC_VER) /*{*/
-#if UNDER_CE
-#define spawnve(m,p,a,e) -1
-#endif
-#else
 #define _P_NOWAIT 1
 #define GetLastError() errno
 int spawnve(int mode,PCStr(path),const char *av[],char *ev[]){
@@ -11680,7 +11665,6 @@ int spawnve(int mode,PCStr(path),const char *av[],char *ev[]){
 	}
 	return 0;
 }
-#endif
 
 static int unixsystem(yyshCtx *Yc,FILE *fc,FILE *tc){
 	int pid,ph,xpid;

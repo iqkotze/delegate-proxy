@@ -34,15 +34,6 @@ void on_fork(int pid);
 int InFinish;
 int DontFork;
 
-#ifdef __osf__
-#ifdef __cplusplus
-extern "C" {
-#endif
-extern pid_t wait3(int *status, int options, struct rusage *rusage);
-#ifdef __cplusplus
-}
-#endif
-#endif
 /*
 pid_t wait3(int *status, int options, struct rusage *rusage);
 int killpg(pid_t pgrp, int sig);
@@ -280,7 +271,6 @@ int Forkpty(int *pty,char *name){
 extern int SPAWN_P_NOWAIT;
 int spawnvp(int pmode,PCStr(path),const char *const argv[]);
 static const char *SpawnWhat = "";
-#if !defined(_MSC_VER)
 int spawnvp(int pmode,PCStr(path),const char *const argv[]){
 	int pid;
 
@@ -293,7 +283,6 @@ int spawnvp(int pmode,PCStr(path),const char *const argv[]){
 	exit(-1);
 	return -1;
 }
-#endif
 
 int Spawnvp(PCStr(what),PCStr(path),const char *const av[])
 {	int pid;

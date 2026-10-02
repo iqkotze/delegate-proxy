@@ -83,11 +83,7 @@ int SRCIFfor(DGC*Conn,PCStr(proto),PCStr(rhost),int rport,PVStr(lhost),int *lpor
 
 #define CONNECT_POLLOUT
 
-#ifdef UNDER_CE
-#define NHOSTS 1024 /* single persistent process with slow external cache */
-#else
 #define NHOSTS 256
-#endif
 typedef struct {
 	int	hc_index;
 	int	hc_freeable;

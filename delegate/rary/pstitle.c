@@ -30,32 +30,6 @@ int   pstitle_size;
 int   pstitle_leng;
 int   pstitle_lengmax = 2048;
 
-#if defined(__hpux__)
-#include <sys/pstat.h>
-static int p_title(PCStr(buf)){
-	union pstun un;
-	un.pst_command = (char*)buf;
-	pstat(PSTAT_SETCMD,un,strlen(buf),0,0);
-	return 0;
-}
-#else
-#if defined(hpux)
-#include <sys/pstat.h>
-static int p_title(PCStr(buf))
-{
-	pstat(PSTAT_SETCMD,buf,0,0,0);
-	return 0;
-}
-#else
-#if defined(__sony_news) && defined(_SYSTYPE_SYSV)
-#include <sys/sysnews.h>
-#include <sys/sysmips.h>
-static int p_title(PCStr(buf))
-{
-	sysmips(SONY_SYSNEWS,NEWS_SETPSARGS,buf);
-	return 0;
-}
-#else
 int IsMacOSX();
 static int p_title(PCStr(buf))
 {
@@ -74,9 +48,6 @@ static int p_title(PCStr(buf))
 		return 0;
 	}else	return -1;
 }
-#endif
-#endif
-#endif
 
 int FMT_proc_title(PCStr(fmt),...)
 {	CStr(buf,2048);

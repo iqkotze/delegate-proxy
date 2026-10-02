@@ -24,19 +24,7 @@ typedef struct stat64 FileStat;
 #define lseek(f,o,w)	lseek64(f,o,w)
 #define ftruncate(F,z)	ftruncate64(F,z)
 #else
-#ifdef _MSC_VER /*{*/
-typedef struct _stati64 FileStat;
-__int64 stati64(const char *path,struct _stati64 *buff);
-#define stat(p,b)	Xstat(p,b)
-#define statX(p,b)	stati64(p,b)
-int Xstat(PCStr(path),FileStat *st);
-extern __int64 lstati64(const char *p,struct _stati64 *b);
-#define lstat(p,b)	lstati64(p,b)
-#define fstat(d,b)	_fstati64(d,b)
-#define lseek(f,o,w)	_lseeki64(f,o,w)
-#else /*}{*/
 typedef struct stat FileStat;
-#endif /*}*/
 #endif /*}*/
 #endif /*}*/
 
