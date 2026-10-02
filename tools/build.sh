@@ -9,5 +9,5 @@ root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 dir=${BUILD_DIR:-$root/build/$preset${CC:+-$CC}}
 
 cmake -S "$root/delegate" --preset "$preset" -B "$dir" "$@"
-cmake --build "$dir"
+cmake --build "$dir" 2>&1 | tee "$dir/build.log"
 ctest --test-dir "$dir" --output-on-failure -j"$(nproc)"

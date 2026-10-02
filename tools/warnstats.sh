@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Counts compiler errors and warnings in <builddir>/build.log by category and by file.
+# Counts compiler errors and warnings in <builddir>/build.log (written by tools/build.sh) by category and by file.
 # Usage: tools/warnstats.sh <builddir> [top-files]   (default 15 files)
 set -euo pipefail
 
