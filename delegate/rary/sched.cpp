@@ -239,7 +239,7 @@ static char *scan_timeform2(PCStr(cronspec),const char *tf[],PVStr(cronspecb))
 
 	tf[CSEC] = "0";
 	strcpy(cronspecb,cronspec);
-	nc = stoV(cronspecb,8,tfx,':');
+	nc = stoV((char*)cronspecb,8,tfx,':');
 	if( 7 < nc ){
 		/*
 		 * min hour mday mon wday [action]
@@ -252,7 +252,7 @@ static char *scan_timeform2(PCStr(cronspec),const char *tf[],PVStr(cronspecb))
 		else	action = tfx[7];
 	}else{
 		strcpy(cronspecb,cronspec);
-		nc = stoV(cronspecb,6,tfx,' ');
+		nc = stoV((char*)cronspecb,6,tfx,' ');
 		if( nc < 5 ){
  syslog_ERROR("SCHED ERROR %s ? USAGE=w:y:m:d:H:M:D:action\n",cronspec);
 			return NULL;

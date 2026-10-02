@@ -1,7 +1,8 @@
 #include "dg_test.hpp"
+#include <limits>
+#include <type_traits>
 
 char *strtailstr(PCStr(str1), PCStr(str2));
-char *strip_spaces(PCStr(value));
 int scan_period(PCStr(period), int dfltunit, int dflt);
 const char *scanint(PCStr(str), int *valp);
 char *numscanX(PCStr(str), PVStr(val), int siz);
@@ -48,8 +49,15 @@ TEST(String, KmxatoiAppliesSizeSuffixes) {
 }
 
 TEST(String, KmxatoiHandlesValuesAboveIntRange) {
-	GTEST_SKIP() << "known bug: kmxatoi() uses atoi(), so \"5000000000\" yields 705032704";
 	EXPECT_EQ(5000000000LL, kmxatoi("5000000000"));
+	EXPECT_EQ(5000000000LL * 1024, kmxatoi("5000000000k"));
+}
+
+TEST(String, KmxatoiSaturatesOnOverflow) {
+	const long long kMax = std::numeric_limits<long long>::max();
+	EXPECT_EQ(kMax, kmxatoi("99999999999999999999"));
+	EXPECT_EQ(kMax, kmxatoi("9223372036854775807g"));
+	EXPECT_EQ(-kMax - 1, kmxatoi("-99999999999999999999"));
 }
 
 TEST(String, ScanIntStopsAtFirstNonDigit) {
@@ -60,10 +68,16 @@ TEST(String, ScanIntStopsAtFirstNonDigit) {
 }
 
 TEST(String, ScanIntDetectsOverflow) {
-	GTEST_SKIP() << "known bug: scanint() overflows int, \"4294967297\" yields 1";
 	int v = 0;
-	scanint("4294967297", &v);
-	EXPECT_NE(1, v);
+	const char *rest = scanint("4294967297x", &v);
+	EXPECT_EQ(std::numeric_limits<int>::max(), v);
+	EXPECT_STREQ("x", rest);
+}
+
+TEST(String, ScanIntKeepsLargestInt) {
+	int v = 0;
+	scanint("2147483647", &v);
+	EXPECT_EQ(2147483647, v);
 }
 
 TEST(String, SubstituteReplacesAllOccurrences) {
@@ -134,7 +148,6 @@ TEST(String, WordScanSkipsLeadingBlanks) {
 }
 
 TEST(String, WordScanTruncatesLongWords) {
-	GTEST_SKIP() << "known bug: wordscanX() aborts via FORTIFY in putvstr() (rary/ystring.c) when the word fills the buffer";
 	CStr(w, 16);
 	wordscanX("abcdefghijklmnopqrstuvwxyz", AVStr(w), sizeof(w));
 	EXPECT_STREQ("abcdefghijklmno", w);
@@ -207,4 +220,41 @@ TEST(String, PeriodUnits) {
 	EXPECT_EQ(30, scan_period("30", 's', 0));
 	EXPECT_EQ(5400, scan_period("90", 'm', 0));
 	EXPECT_EQ(7, scan_period("", 's', 7));
+}
+
+TEST(String, StripSpacesAndStoVRequireWritableInput) {
+	static_assert(!std::is_invocable_v<decltype(&strip_spaces), const char *>);
+	static_assert(!std::is_invocable_v<decltype(&stoV), const char *, int, const char **, int>);
+}
+
+TEST(String, StoVSplitsInPlace) {
+	char buf[] = "a,b,c";
+	const char *av[4];
+	EXPECT_EQ(3, stoV(buf, 4, av, ','));
+	EXPECT_STREQ("a", av[0]);
+	EXPECT_STREQ("c", av[2]);
+}
+
+TEST(String, RexpMatchStarInTheMiddleRequiresTheTail) {
+	EXPECT_EQ(1, rexpmatch("www.*.org", "www.example.org"));
+	EXPECT_EQ(0, rexpmatch("www.*.org", "www.example.com"));
+	EXPECT_EQ(0, rexpmatch("ab*cd", "abxyz"));
+	EXPECT_EQ(1, rexpmatch("ab*cd", "abcd"));
+	EXPECT_EQ(1, rexpmatch("a*b*c", "aXXbYYc"));
+}
+
+TEST(String, RexpMatchKeepsPrefixAndPostfixWildcards) {
+	EXPECT_EQ(1, rexpmatch("*.com", "www.example.com"));
+	EXPECT_EQ(0, rexpmatch("*.com", "www.example.org"));
+	EXPECT_EQ(1, rexpmatch("www.*", "www.example.org"));
+	EXPECT_EQ(0, rexpmatch("www.*", "ftp.example.org"));
+	EXPECT_EQ(1, rexpmatch("*", ""));
+	EXPECT_EQ(1, rexpmatch("*mid*", "a-mid-b"));
+	EXPECT_EQ(1, rexpmatch("exact", "exact"));
+	EXPECT_EQ(0, rexpmatch("exact", "exactly"));
+}
+
+TEST(String, RexpMatchOptionIgnoresCase) {
+	EXPECT_EQ(1, rexpmatchX("*.COM", "www.example.com", "c"));
+	EXPECT_EQ(0, rexpmatchX("*.COM", "www.example.com", ""));
 }

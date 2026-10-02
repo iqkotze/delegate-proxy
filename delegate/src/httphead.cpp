@@ -142,8 +142,8 @@ int getMountExpires(Connection *Conn,PVStr(date),int size){
 	CStr(mexpire,32);
 	const char *mexp;
 	int rel;
-	int expire;
-	int from;
+	time_t expire;
+	time_t from;
 	int disp;
 
 	if( MountOptions == 0 )
@@ -1962,7 +1962,7 @@ int HTTP_selfExpiredX(FILE *cachefp,PCStr(head))
 	const char *found;
 	CStr(sdate,256);
 	CStr(pragma,256);
-	int expires,now;
+	time_t expires,now;
 	CStr(stat,32);
 	int statcode;
 
@@ -1990,7 +1990,7 @@ int HTTP_selfExpiredX(FILE *cachefp,PCStr(head))
 		expires = scanHTTPtime(sdate);
 		if( expires <= now )
 			expired = 1;
-		sv1log("EXPIRES: %d > %d ? %s\n",now,expires,sdate);
+		sv1log("EXPIRES: %lld > %lld ? %s\n",(long long)now,(long long)expires,sdate);
 	}
 
 	if( expired )

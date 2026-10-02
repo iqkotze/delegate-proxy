@@ -84,8 +84,8 @@ typedef struct {
 	int	bp_port;
 	int	bp_hold;
 	int	bp_sock;
-	int	bp_made;
-	int	bp_last;
+	time_t	bp_made;
+	time_t	bp_last;
 	int	bp_nref; /* active reference count */
 	int	bp_nque; /* waiting before accept CSC */
     CriticalSec bp_accCSC;
@@ -188,7 +188,7 @@ int mutexACCEPT(BoundPort *Bp,int bsock,int timeout){
 static int addPort(PCStr(host),int port,int sock,int hold,BoundPort **Bpp){
 	int pi;
 	int px = -1;
-	int now = time(0);
+	time_t now = time(0);
 	BoundPort *Bp = 0;
 
 	if( hold <= 0 ){
@@ -243,7 +243,7 @@ static int getPort(PCStr(host),int port,BoundPort **Bpp){
 	int pi;
 	int px = -1;
 	int sock = -1;
-	int now = time(0);
+	time_t now = time(0);
 	BoundPort *Bp = 0;
 
 	if( port <= 0 ){
@@ -274,7 +274,7 @@ static int getPort(PCStr(host),int port,BoundPort **Bpp){
 }
 static int freePort(BoundPort *Bp,int sock){
 	int pi;
-	int now = time(0);
+	time_t now = time(0);
 
 	enterCSC(portCSC);
 	for( pi = 0; pi < elnumof(bports); pi++ ){

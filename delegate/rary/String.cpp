@@ -19,6 +19,8 @@ Description:
 History:
 	940821	extracted from DeleGate/src/misc.c
 //////////////////////////////////////////////////////////////////////#*/
+#include <charconv>
+#include <limits>
 #include <errno.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -62,17 +64,26 @@ const char *Isnumber(PCStr(str))
 	}
 	return 0;
 }
+/// Saturates at the FileSize limits on overflow.
 FileSize kmxatoi(PCStr(ai))
 {	const char *dp;
-	FileSize n;
+	const char *bp = ai;
+	FileSize n = 0;
+	FileSize unit = 1;
+	bool neg = *ai == '-';
 
 	if( dp = Isnumber(ai) ){
-		n = atoi(ai);
+		if( *bp == '+' )
+			bp++;
+		if( std::from_chars(bp,dp,n).ec == std::errc::result_out_of_range )
+			n = neg ? std::numeric_limits<FileSize>::min() : std::numeric_limits<FileSize>::max();
 		switch( *dp ){
-			case 'k': case 'K': n *= 1024; break;
-			case 'm': case 'M': n *= 1024 * 1024; break;
-			case 'g': case 'G': n *= 1024 * 1024 * 1024; break;
+			case 'k': case 'K': unit = 1024; break;
+			case 'm': case 'M': unit = 1024 * 1024; break;
+			case 'g': case 'G': unit = 1024 * 1024 * 1024; break;
 		}
+		if( __builtin_mul_overflow(n,unit,&n) )
+			n = neg ? std::numeric_limits<FileSize>::min() : std::numeric_limits<FileSize>::max();
 		return n;
 	}
 	return 0;
@@ -171,21 +182,14 @@ int rexpmatch(PCStr(rexp),PCStr(str))
 }
 #define RX_IGNCASE	2
 #define chrcaseeq(a,b)	((isupper(a)?tolower(a):a) == (isupper(b)?tolower(b):b))
+/// Glob match where "*" stands for any string at any position.
 int rexpmatchX(PCStr(rexp),PCStr(str),PCStr(ropts))
-{	int topx;
-	const char *sp;
-	const char *tp;
-	const char *rp;
-	char sc,tc,rc;
+{	const char *sp = str;
+	const char *rp = rexp;
+	const char *star = 0;
+	const char *mark = 0;
 	const char *op;
 	int opts = 0;
-
-	if( *rexp == '*' ){
-		if( rexp[1] == 0 ) /* any string */
-			return 1;
-		rexp++;
-		topx = 1;
-	}else	topx = 0;
 
 	for( op = ropts; *op; op++ ){
 		switch( *op ){
@@ -193,29 +197,25 @@ int rexpmatchX(PCStr(rexp),PCStr(str),PCStr(ropts))
 		}
 	}
 
-	sp = str;
-	for(;;){
-		tp = sp++; sc = *tp++;
-		rp = rexp; rc = *rp++;
-		/*
-		while( sc == rc ){
-		*/
-		while( sc == rc
-		 || (opts & RX_IGNCASE) && chrcaseeq(sc,rc)
+	while( *sp ){
+		if( *rp == '*' ){
+			star = rp++;
+			mark = sp;
+		}else
+		if( *rp == *sp
+		 || (opts & RX_IGNCASE) && *rp && chrcaseeq(*sp,*rp)
 		){
-			if( rc == 0 ) /* exactly matched to the end */
-				return 1;
-			sc = *tp++;
-			rc = *rp++;
-		}
-		if( rc == '*' ) /* remaining string matches with *  */
-			return 1;
-		if( sc == 0 ) /* pattern is longer than string */
-			return 0;
-		if( !topx )
-			break;
+			rp++;
+			sp++;
+		}else
+		if( star ){
+			rp = star + 1;
+			sp = ++mark;
+		}else	return 0;
 	}
-	return 0;
+	while( *rp == '*' )
+		rp++;
+	return *rp == 0;
 }
 
 int RexpMatch(PCStr(str),PCStr(rexp))
@@ -324,12 +324,12 @@ disabled the bare protoList as CMAP="sslway:FSV:ftps,https".
 	}
 	return NULL;
 }
-int stoVX(PCStr(abuf),int mac,const char *av[],int sep,int depth);
-int stoV(PCStr(abuf),int mac,const char *av[],int sep)
+int stoVX(char *abuf,int mac,const char *av[],int sep,int depth);
+int stoV(char *abuf,int mac,const char *av[],int sep)
 {
 	return stoVX(abuf,mac,av,sep,0);
 }
-int stoVX(PCStr(abuf),int mac,const char *av[],int sep,int depth)
+int stoVX(char *abuf,int mac,const char *av[],int sep,int depth)
 {	const char *ap; /* not "const" but fixed length */
 	const char *np;
 	int ac;
@@ -745,6 +745,7 @@ const char *awordscanX(PCStr(str),PVStr(word),int size)
 	return sp;
 }
 
+/// Saturates at INT_MAX on overflow.
 const char *scanint(PCStr(str),int *valp)
 {	const char *sp;
 	unsigned char ch;
@@ -754,7 +755,8 @@ const char *scanint(PCStr(str),int *valp)
 	for( sp = str; ch = *sp; sp++ ){
 		if( !isdigit(ch) )
 			break;
-		val = val*10 + (ch-'0');
+		if( __builtin_mul_overflow(val,10,&val) || __builtin_add_overflow(val,ch-'0',&val) )
+			val = std::numeric_limits<int>::max();
 	}
 	*valp = val;
 	return sp;
@@ -908,10 +910,10 @@ typedef struct {
 #define SLNEP *SLNEPp
 
 int scan_ListX(PCStr(a_list),int sep,int allocm,SLAP,scanListFuncP func, ...);
-int scan_List(PCStr(a_list),int sep,int allocm,scanListFuncP func, ...)
+int (scan_List)(PCStr(a_list),int sep,int allocm,scanListFuncP func, ...)
 {
 	int rcode;
-	VARGS(16,func);
+	VARGSE(16,func);
 	rcode = scan_ListX(a_list,sep,allocm,0,func,VA16);
 	return rcode;
 }
@@ -927,7 +929,7 @@ int scan_ListX(PCStr(a_list),int sep,int allocm,SLAP,scanListFuncP func, ...)
 	IStr(lbuf,1024);
 	int care_quote = 0;
 	int in_quote = 0;
-	VARGS(16,func);
+	VARGSE(16,func);
 
 	if( list == 0 || *list == 0 )
 		return 0;
@@ -1064,16 +1066,16 @@ int num_ListElems(PCStr(list),int sep)
 {
 	return scan_List(list,sep,0,(scanListFuncP)0);
 }
-int scan_ListLX(PCStr(list),int sep,int allocm,SLAP,scanListFuncP func, ...);
-int scan_ListL(PCStr(list),int sep,int allocm,scanListFuncP func, ...)
+int (scan_ListLX)(PCStr(list),int sep,int allocm,SLAP,scanListFuncP func, ...);
+int (scan_ListL)(PCStr(list),int sep,int allocm,scanListFuncP func, ...)
 {
-	VARGS(16,func);
+	VARGSE(16,func);
 	return scan_ListLX(list,sep,allocm,0,func,VA16);
 }
-int scan_ListLX(PCStr(list),int sep,int allocm,SLAP,scanListFuncP func, ...)
+int (scan_ListLX)(PCStr(list),int sep,int allocm,SLAP,scanListFuncP func, ...)
 {	int rcode;
 	const char *tp;
-	VARGS(16,func);
+	VARGSE(16,func);
 
 	/*
 	if( *list == '{' && (tp = strchr(list,'}')) && tp[1] == 0 ){
@@ -1165,12 +1167,12 @@ char *scan_ListElem1(PCStr(list),int sep,PVStr(e1)){
 	else	next = list+strlen(list);
 	return (char*)next;
 }
-int scan_commaList(PCStr(list),int allocm,scanListFuncP func,...)
-{	VARGS(16,func);
+int (scan_commaList)(PCStr(list),int allocm,scanListFuncP func,...)
+{	VARGSE(16,func);
 	return scan_List(list,',',allocm,func,VA16);
 }
-int scan_commaListL(PCStr(list),int allocm,scanListFuncP func,...)
-{	VARGS(16,func);
+int (scan_commaListL)(PCStr(list),int allocm,scanListFuncP func,...)
+{	VARGSE(16,func);
 	return scan_ListL(list,',',allocm,func,VA16);
 }
 
@@ -1328,7 +1330,7 @@ char *strrpbrk(PCStr(str),PCStr(brk))
 	return (char*)tp; /* the last match */
 }
 
-char *strip_spaces(PCStr(value))
+char *strip_spaces(char *value)
 {	const char *vp;
 	const char *tp;
 
@@ -1372,7 +1374,7 @@ static scanListFunc strmatch1(PCStr(pattern),PCStr(target),int *matches,LMarg *l
 	btm     = lma->l_bottom;
 	nextch  = lma->l_nextch;
 
-	for( sp = pat0 = strip_spaces(pattern); sc = *sp; sp++ ){
+	for( sp = pat0 = strip_spaces((char*)pattern); sc = *sp; sp++ ){
 		if( px <= pp )
 			break;
 		if( sc == '!' && sp == pat0 ){ negate = 1; }else

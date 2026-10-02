@@ -46,7 +46,7 @@ int setInheritHandle(int fd,int on);
 
 #define MAINTHREADID	-2
 int   thread_PollIn(int fd,int timeout);
-int   thread_fork(int size,int gtid,PCStr(what),int (*func)(void*,...),...);
+int   (thread_fork)(int size,int gtid,PCStr(what),int (*func)(void*,...),...);
 int   thread_wait(int tid,int timeout);
 int   thread_destroy(int tid);
 int   thread_priority(int pri);

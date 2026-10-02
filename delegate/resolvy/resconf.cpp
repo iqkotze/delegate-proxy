@@ -36,7 +36,7 @@ void set_nameserver(PCStr(domain),PCStr(addr));
 void minit_reshost();
 int regGetResolvConf(PVStr(buf),PVStr(where));
 int connectTO(int sock,SAP addr,int leng,int timeout);
-void *callFuncTimeout(int sec,void *xcode,void *(*func)(void*,...),...);
+void *(callFuncTimeout)(int sec,void *xcode,void *(*func)(void*,...),...);
 
 void VSA_copy(VSAddr *dst,VSAddr *src);
 int VSA_comp(VSAddr *sa1,VSAddr *sa2);

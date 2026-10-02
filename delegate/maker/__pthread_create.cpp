@@ -62,7 +62,7 @@ pthread_t main_tid;
 /*
 static pthread_t thread_fork(int ssize,const char *name,IFUNCP func,...)
 */
-static int thread_fork(int ssize,const char *name,IFUNCP func,...)
+static int (thread_fork)(int ssize,const char *name,IFUNCP func,...)
 {	pthread_t thread;
 	int tid;
 	ThreadArgs *ta;
@@ -70,7 +70,7 @@ static int thread_fork(int ssize,const char *name,IFUNCP func,...)
 	int ai;
 	void  *sadr = 0;
 	size_t ssiz = 0;
-	VARGS(7,func);
+	VARGSN(7,func);
 
 	ta = (ThreadArgs*)malloc(sizeof(ThreadArgs));
 	ta->a_name = name;

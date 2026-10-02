@@ -337,11 +337,11 @@ static int scanenv1(SvArg *sva,PCStr(val))
 		return 0;
 	else	return (*sva->sv_func)(sva->sv_Conn,val,sva->sv_arg);
 }
-int DELEGATE_scanEnv(Connection *Conn,PCStr(name),scanPFUNCP func,...)
+int (DELEGATE_scanEnv)(Connection *Conn,PCStr(name),scanPFUNCP func,...)
 {	int nhit;
 	SvArg sva;
 	const char *arg;
-	VARGS(1,func);
+	VARGSE(1,func);
 	arg = va[0];
 
 	nhit = 0;

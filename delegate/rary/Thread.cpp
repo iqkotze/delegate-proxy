@@ -471,12 +471,12 @@ int newthreads(){
 	return NewThreads;
 }
 static int actTid();
-int thread_fork(int size,int gtid,PCStr(what),IFUNCP func,...)
+int (thread_fork)(int size,int gtid,PCStr(what),IFUNCP func,...)
 {
 	int tid;
 	int ix;
 	int smask,nmask;
-	VARGS(8,func);
+	VARGSE(8,func);
 
 	if( main_thread == 0 ){
 		main_thread = getthreadid();
@@ -541,7 +541,7 @@ int thread_fork(int size,int gtid,PCStr(what),IFUNCP func,...)
 	return -1;
 }
 unsigned int trand1(unsigned int max);
-int allocaCall(PCStr(what),int size,iFUNCP func,...);
+int (allocaCall)(PCStr(what),int size,iFUNCP func,...);
 typedef void *thchFunc(void *thcharg);
 void *thread_child(thchFunc func,void *arg){
 	int size;

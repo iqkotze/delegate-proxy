@@ -1308,7 +1308,7 @@ FILE *curLogFp()
 
 int logTimeout()
 {	int timeout = 0;
-	int now = time(0);
+	time_t now = time(0);
 	int to;
 	int li;
 	Logfile *Logf;

@@ -77,7 +77,7 @@ int randstack_call(int strg,iFUNCP func, ...)
 {	AllocaArg arg;
 	unsigned int size;
 	int rcode;
-	VARGS(8,func);
+	VARGSE(8,func);
 
 	if( RANDSTACK_RANGE == 0 )
 		size = 0;
@@ -97,10 +97,10 @@ int randstack_call(int strg,iFUNCP func, ...)
 	delStrBuffer(strg);
 	return rcode;
 }
-int allocaCall(PCStr(what),int size,iFUNCP func,...){
+int (allocaCall)(PCStr(what),int size,iFUNCP func,...){
 	AllocaArg aa;
 	int rcode;
-	VARGS(8,func);
+	VARGSE(8,func);
 
 	aa.s_what = (char*)what;
 	aa.s_sp0 = (char*)&func;

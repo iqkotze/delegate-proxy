@@ -181,7 +181,7 @@ int protoeq(PCStr(proto1),PCStr(proto2))
 	s2 = servicex(proto2);
 	return services[s1].s_client == services[s2].s_client;
 }
-int foreach_eqproto(PCStr(proto),int (*func)(const void*,...),...)
+int (foreach_eqproto)(PCStr(proto),int (*func)(const void*,...),...)
 {	int sn,sx,si;
 	servFuncP svfunc;
 	const char *name;
@@ -189,7 +189,7 @@ int foreach_eqproto(PCStr(proto),int (*func)(const void*,...),...)
 	sn = 0;
 	if( sx = servicex(proto) )
 	if( svfunc = services[sx].s_client ){
-		VARGS(16,func);
+		VARGSE(16,func);
 		for( si = 1; name = services[si].s_name; si++ ){
 			if( services[si].s_client == svfunc ){
 				(*func)(name,VA16);

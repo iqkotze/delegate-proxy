@@ -235,7 +235,7 @@ static void sigTERM(int sig)
 	Finish(0);
 }
 
-void beBoundProxy(Connection *Conn,PCStr(user),int timeout,iFUNCP func,...)
+void (beBoundProxy)(Connection *Conn,PCStr(user),int timeout,iFUNCP func,...)
 {	int svsock,svport,clsock,clport;
 	CStr(path,1024);
 	CStr(stime,128);
@@ -245,7 +245,7 @@ void beBoundProxy(Connection *Conn,PCStr(user),int timeout,iFUNCP func,...)
 	int ccc,start,done;
 	int startSerno;
 	int fdv[3],rfdv[3];
-	VARGS(8,func);
+	VARGSE(8,func);
 
 	if( ServViaCc )
 		return;

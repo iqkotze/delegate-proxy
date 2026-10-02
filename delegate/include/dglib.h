@@ -258,7 +258,7 @@ int   ACCEPT1(int sock,int isServer,int lockfd,int timeout,PVStr(sockname));
 void  returnAckCANTCON(DGCTX,FILE *tc,PCStr(host));
 void  returnAckDENIED(DGCTX,FILE *tc,PCStr(reason));
 void  returnAckOK(DGCTX,FILE *tc,PCStr(reason));
-void  beBoundProxy(DGCTX,PCStr(user),int timeout,iFUNCP func,...);
+void  (beBoundProxy)(DGCTX,PCStr(user),int timeout,iFUNCP func,...);
 int   connectToCache(DGCTX,PCStr(user),int *svsockp);
 int   isHelloRequest(PCStr(req));
 void  beGeneralist(DGCTX,FILE *fc,FILE *tc,PCStr(hello));

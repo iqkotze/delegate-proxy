@@ -18,4 +18,5 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Code und Build-Dateien für alle Plattformen außer Linux amd64, rund 25.000 Zeilen (`feature/remove-non-linux-code`)
 
 ### Behoben
+- Varargs-Überlesen, Zahlenüberläufe, Pufferlängen, Schreiben in const-Eingaben, Zeiten nach 2038, Regex-Treffer und `*` in Hostmustern (`bugfix/vargs-strings-time-regex`)
 - Legacy-Build mit glibc ab 2.28 und gcc 14 lauffähig (`bugfix/build-glibc-gcc14`)

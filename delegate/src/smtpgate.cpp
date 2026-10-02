@@ -642,7 +642,7 @@ static int scan_options(PCStr(opts),PVStr(gwt),FILE *log)
 	else	oc = stoV(optb,32,ov,'.');
 
 	for( oi = 0; oi < oc; oi++ ){
-		o1 = strip_spaces(ov[oi]);
+		o1 = strip_spaces((char*)ov[oi]);
 
 		if( strcaseeq(o1,"res") ){
 			sprintf(msg,"Reject-Empty-Subject");
@@ -2280,11 +2280,11 @@ static int tobe_rejected(FILE *tc,PCStr(what),PCStr(addr),PCStr(acli),FILE *log)
 	aclb = stralloc(acli);
 	setQStr(aclc,(char*)malloc(strlen(acli)+1),strlen(acli)+1);
 	cpyQStr(aclp,aclc);
-	ac = stoV(acla,256,av,',');
+	ac = stoV((char*)acla,256,av,',');
 
 	for( ai = 0; ai < ac; ai++ ){
 		acl1 = av[ai];
-		acl1 = acl0 = strip_spaces(acl1);
+		acl1 = acl0 = strip_spaces((char*)acl1);
 		if( negate = (*acl1 == '!') )
 			acl1++;
 

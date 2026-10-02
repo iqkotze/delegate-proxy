@@ -65,7 +65,7 @@ FILE *reusableTMPFILE(PCStr(what),iFUNCP where);
 typedef int (*scanDirCallP)(PCStr(elem),...);
 #define scanDirFunc int
 #define scanDirCall (scanDirCallP)
-int   Scandir(PCStr(dirpath),scanDirCallP,...);
+int   (Scandir)(PCStr(dirpath),scanDirCallP,...);
 
 int   Ftruncate(FILE *fp,FileSize offset,int whence);
 char *FileModes(int);

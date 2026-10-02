@@ -220,7 +220,7 @@ typedef void scanPFunc(DGCp Conn,PCStr(param));
 typedef void scanVFunc(void *Conn,PCStr(param));
 typedef int iscanPFunc(DGCp Conn,PCStr(param));
 typedef void (*scanPFUNCP)(DGCp Conn,PCStr(param));
-int DELEGATE_scanEnv(DGCp Conn,PCStr(name),scanPFUNCP func,...);
+int (DELEGATE_scanEnv)(DGCp Conn,PCStr(name),scanPFUNCP func,...);
 
 int scan_HTMLCONV(void*,PCStr(conv));
 int scan_URICONV(void*,PCStr(conv));
