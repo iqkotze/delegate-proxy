@@ -95,6 +95,7 @@ const char *OPT_RSERV    = _OPT_RSERV;
 #define FILE void
 #endif
 #include "log.h"
+#include "dgparam.h"
 #define debug	((LOG_type&L_MOUNT)==0)?0:putLog0
 
 #ifndef MTAB_SIZE
@@ -844,6 +845,7 @@ int MountedConditional()
 	return mn;
 }
 void set_MOUNT(DGC*Conn,PCStr(src),PCStr(dst),PCStr(opts));
+DG_PARAM(MOUNT, "MOUNT=\"vURL rURL [MountOptions]\"", "/* SERVER_URL*", "Map the virtual URL vURL to and from the real URL rURL", "MOUNT=\"/abc/* http://host/*\"")
 void scan_MOUNT(DGC*Conn,PCStr(spec))
 {	CStr(src,1024);
 	CStr(dst,1024);

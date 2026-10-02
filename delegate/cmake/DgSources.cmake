@@ -53,4 +53,4 @@ set(DG_SRCS_SUBST
     pendingcc sendFd1 setproctitle sigmask socklen_u spawnvp_ stdio strcasestr
     strrcasestr sysctl yp_match)
 
-set(DG_SRCS_DELEGATED builtin delegated commands croncom remote)
+set(DG_SRCS_DELEGATED builtin delegated commands croncom remote paramhelp)

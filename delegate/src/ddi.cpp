@@ -27,6 +27,7 @@ History:
 #include "auth.h"
 #include "url.h"
 #include "param.h"
+#include "dgparam.h"
 #define PEEKSIZE 0x2000
 
 int DDI_readyCbuf(Connection *Conn);
@@ -1087,6 +1088,7 @@ void set_BASEURL(Connection *Conn,PCStr(url))
 			Conn->my_vbase.u_port,Conn->my_vbase.u_path);
 	}
 }
+DG_PARAM(BASEURL, "BASEURL=URL", "none", "Base of the virtual URL of this server, embedded in generated absolute URLs", "BASEURL=http://wwwserver/news")
 void scan_BASEURL(Connection *Conn,PCStr(url))
 {
 	xmem_push(Conn->cl_baseurl,strlen(Conn->cl_baseurl)+1,"BASEURLs",NULL);

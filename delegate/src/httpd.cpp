@@ -25,6 +25,7 @@ History:
 #include "proc.h"
 #include "http.h"
 #include "auth.h"
+#include "dgparam.h"
 
 #define ME_7bit		((char*)0)
 #define ME_binary	"binary"
@@ -1679,6 +1680,7 @@ static void replaceH(PCStr(field),int what){
 	addGen(field,what,0);
 }
 
+DG_PARAM(HTTPCONF, "HTTPCONF=what:conf", "welcome:welcome.{dgp,shtml,html,cgi},index.{dgp,shtml,html,cgi},-dir.html", "HTTP specific settings: welcome files, timeouts (tout-), limits (max-), header rules", "HTTPCONF=max-cka:100")
 void scan_HTTPCONF(Connection *Conn,PCStr(conf))
 {	CStr(what,128);
 	CStr(value,2048);

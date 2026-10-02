@@ -25,6 +25,7 @@ History:
 #include "file.h"
 #include "delegate.h"
 #include "param.h"
+#include "dgparam.h"
 
 char *getcachedir(PVStr(path),int size);
 void DELEGATE_execmain(PCStr(command));
@@ -104,6 +105,7 @@ int DELEGATE_cronExit(int pid)
 	}
 	return 0;
 }
+DG_PARAM(EXPIRELOG, "EXPIRELOG=LogFilename", "${LOGDIR}/expire.log", "Log file of the expiration by -Fexpire or the -expire action of CRON", "EXPIRELOG=expire.log")
 static int internal_actions(PCStr(action),PCStr(act),PCStr(arg))
 {	int pid;
 	const char *av[32]; /**/
@@ -213,6 +215,7 @@ int DELEGATE_sched_execute(int now,iFUNCP callback,void *Conn)
 	next = sched_eval(Cron,now,callback,Conn);
 	return next;
 }
+DG_PARAM(CRON, "CRON=\"minute hour day month dayOfWeek action\"", "none", "Run an action at times given in crontab(5) format", "CRON=\"0 3 * * * -expire 3\"")
 void scan_CRON(DGC*Conn,PCStr(cronspec))
 {
 	if( Cron == NULL )
@@ -230,6 +233,7 @@ int DELEGATE_session_sched_execute(int now,iFUNCP callback,void *Conn)
 	next = sched_eval(SubCron,now,callback,Conn);
 	return next;
 }
+DG_PARAM(CRONS, "CRONS=\"minute hour day month dayOfWeek action\"", "none", "[ungeprüft] Like CRON, but appended to the schedule evaluated per session", "CRONS=\"0 3 * * * -expire 3\"")
 void scan_CRONS(DGC*Conn,PCStr(cronspec))
 {
 sv1log("#### SESSION SCHED[%s]\n",cronspec);

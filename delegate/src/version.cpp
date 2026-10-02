@@ -16,6 +16,7 @@ OR IMPLIED WARRANTIES.
 #include "ystring.h"
 #include "dglib.h"
 #include "log.h"
+#include "dgparam.h"
 
 #define NAME	"DeleGate"
 #define VERSION	"9.9.13"
@@ -38,6 +39,7 @@ static char _VERSION[32] = VERSION;
 static char _DATE[32] = DATE;
 static char DGSIGN_default[] = "VRPYMD";
 /* DGSIGN="V.R.P/Y.M.D" */
+DG_PARAM(DGSIGN, "DGSIGN=signatureSpec", "V.R.P/Y.M.D", "Form of the version signature shown to clients and servers; x hides a part", "DGSIGN=V.x.x/Y.x.x")
 void scan_DGSIGN(DGC*Conn,const char *mysig){
 	if( mysig ){
 		char vf[8];

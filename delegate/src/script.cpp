@@ -33,6 +33,7 @@ History:
 #include "log.h"
 #include "config.h"
 #include "param.h" /* ArgComp */
+#include "dgparam.h"
 
 FILE* fopenLIB(PCStr(file),PCStr(mode),PVStr(xpath));
 
@@ -79,6 +80,7 @@ static scanListFunc inspath(PCStr(path1))
 	return 0;
 }
 extern const char *DELEGATE_DGPATH;
+DG_PARAM(DGPATH, "DGPATH=dirPath[:dirPath]*", "+:.:${HOME}/delegate:${EXECDIR}:${ETCDIR}", "Search path of parameter files; + stands for the directory of the calling file", "DGPATH=\"+:.:${HOME}/delegate\"")
 void scan_DGPATH(PCStr(path))
 {	CStr(home,1024);
 	CStr(xpath,2048);

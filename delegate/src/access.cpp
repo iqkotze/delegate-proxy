@@ -43,6 +43,7 @@ History:
 #include "credhy.h"
 #include "auth.h"
 #include "param.h"
+#include "dgparam.h"
 
 HostList *ReliableHosts();
 HostList *ReachableHosts();
@@ -109,6 +110,7 @@ void minit_access()
 #define Authv		Auth.a_authv
 #define Authx		Auth.a_authx
 
+DG_PARAM(AUTH, "AUTH=what:authProto:who", "none", "Authorize who to do what, with authentication by authProto", "AUTH=admin:-pam:user")
 void scan_AUTH(Connection *Conn,PCStr(auth))
 {
 	int ai;
@@ -840,6 +842,7 @@ scanListFunc scan_RELAY1(PCStr(relay1),Connection *Conn)
 	scan_CMAP2(Conn,"relay",relay1);
 	return 0;
 }
+DG_PARAM(RELAY, "RELAY=relayTypeList[:connMap]", "delegate,nojava:*:*:.localnet;vhost,nojava:http:{*:80}:.localnet;proxy", "Proxying mode of the DeleGate as HTTP server: proxy, delegate, vhost, no, nojava, noapplet", "RELAY=\"proxy:*:*:*\"")
 void scan_RELAY(Connection *Conn,PCStr(relay))
 {
 	scan_List(relay,';',0,scanListCall scan_RELAY1,Conn);
@@ -1235,6 +1238,7 @@ const char *MAP_AUTHSERV = AUTHSERV_MAP;
 #define I_ANY		"*"
 #define AUTH_VDOM	"-AUTH"
 
+DG_PARAM(AUTHORIZER, "AUTHORIZER=authServList[@realmValue][:connMap]", "none", "Authentication server; access requires a valid user name and password", "AUTHORIZER=-anonftp")
 void scan_AUTHORIZER(Connection *Conn,PCStr(authserv))
 {	CStr(vauthserv,MaxHostNameLen);
 	CStr(aserv,MaxHostNameLen);
@@ -1959,6 +1963,7 @@ extern int START_TIME;
 extern const char *PAMbaseurl;
 extern const char *PAMurl;
 int PAMport;
+DG_PARAM(PAMCONF, "PAMCONF=name:value", "none", "[ungeprüft] Settings of PAM authentication: baseurl, url and port", "PAMCONF=port:8000")
 void scan_PAMCONF(Connection *Conn,PCStr(conf))
 {	CStr(name,64);
 	CStr(value,64);
@@ -3005,6 +3010,7 @@ void CTX_pushClientInfo(Connection *Conn)
  * generating my (DeleGate's) authorization as a client of server/proxy
  */
 int isHTTP(PCStr(proto));
+DG_PARAM(MYAUTH, "MYAUTH=username:password[:connMap]", "none", "User name and password sent to an upstream server or proxy", "MYAUTH=user:pass:socks")
 void scan_MYAUTH(Connection *Conn,PCStr(myauth))
 {	CStr(myauthx,256);
 	CStr(user,256);
@@ -3134,6 +3140,7 @@ static struct {
 	int ac_ok;
 	int ac_err;
 } SAC;
+DG_PARAM(SAC, "SAC=clientHost[/port][:user:pass[@host]]", "none", "[ungeprüft] Simulate an access of a client for the access control check", "SAC=192.168.1.5/1024")
 static void scan_SAC(Connection *Conn,PCStr(acscl)){
 	CStr(clhost,MaxHostNameLen);
 	refQStr(cp,clhost);

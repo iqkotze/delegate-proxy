@@ -33,6 +33,7 @@ History:
 #include "delegate.h"
 #include "auth.h"
 #include "filter.h" /* STLS */
+#include "dgparam.h"
 
 int SOCKS_startV5(int sock,int command,PCStr(host),int port,PCStr(user),PCStr(pass),PVStr(rhost),int *rport);
 int SOCKS_serverV5(DGC*ctx,int fromcl,int tocl,int timeout_ms);
@@ -351,6 +352,7 @@ int VSA_getViaSocksX(DGC*Conn,PCStr(host),int port,VSAddr *vserv,AuthInfo *auth,
 	Verbose("##NOT ViaSocks-B## %s:%d\n",host,port);
 	return 0;
 }
+DG_PARAM(SOCKS, "SOCKS=host[:[port][/socksOpt][:dstHostList[:srcHostList]]]", "none", "Connect via a Socks server (version 5; -4 selects version 4, -r remote name resolution)", "SOCKS=\"sockshost:1080:!.localnet,!*.my.domain\"")
 void scan_SOCKS(DGC*_,PCStr(socks))
 {	CStr(socksb,1024);
 	const char *sv[4]; /**/

@@ -38,6 +38,7 @@ History:
 #include "ystring.h"
 #include "dglib.h"
 #include "fpoll.h"
+#include "dgparam.h"
 void packComArg(PVStr(command),PCStr(execpath),PCStr(args));
 int scanServPort1(PCStr(portspec));
 
@@ -136,6 +137,7 @@ int func_inetd(void *Conn,int clsock)
 	return params;
 }
 
+DG_PARAM(INETD, "INETD=\"port sockType proto waitStat uid execPath argList\"", "none", "Start a DeleGate on connection to a port, in the notation of inetd.conf", "INETD=\"8080 stream tcp nowait - /usr/sbin/delegated delegated SERVER=http\"")
 void scan_INETD(DGC*Conn,PCStr(confarg))
 {	CStr(servname,128);
 	CStr(socktype,128);

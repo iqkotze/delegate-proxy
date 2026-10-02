@@ -158,6 +158,7 @@ TODO:
 #include "fpoll.h"
 #include "file.h"
 #include "auth.h"
+#include "dgparam.h"
 
 int service_http(Connection *Conn);
 int service_ftp(Connection *Conn);
@@ -980,6 +981,7 @@ static scanListFunc vsap1(PCStr(vsap))
 	serverX++;
 	return 0;
 }
+DG_PARAM(VSAP, "VSAP=host:port", "none", "VSAP server used to accept from or connect to clients through a remote host", "VSAP=firewall:8000")
 void scan_VSAP(Connection *Conn,PCStr(vsaps))
 {
 	scan_commaListL(vsaps,0,scanListCall vsap1);

@@ -24,6 +24,7 @@ History:
 #include "file.h"
 #include "proc.h"
 #include "htadmin.h"
+#include "dgparam.h"
 
 const char *DHTML_ENC = "&'\"\\<>%{}:?|~";
 
@@ -593,6 +594,7 @@ static char *addConf1(Connection *Conn,PVStr(pbuf),int issets[],PCStr(name),PCSt
 }
 #define AddConf1(name,val)	pp = addConf1(Conn,AVStr(pp),issets,name,val)
 
+DG_PARAM(CONFOPT, "CONFOPT=type:sub", "none", "[ungeprüft] Marker line of the generated configuration form, with the form type", "CONFOPT=type:sub")
 int conf2formX(Connection *Conn,PVStr(msg),PCStr(conf),int mac,const char *av[]){
 	int ai = 0;
 	refQStr(mp,msg);

@@ -8,6 +8,7 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Quellen als C++20 (`.cpp`), Narrowing- und `register`-Altlasten behoben, kritische Warnungen als Fehler (`feature/cxx20`)
 
 ### Hinzugefügt
+- Parameterdeklaration `DG_PARAM` am Code, generierte Referenz `doc/reference/parameters.md`, Hilfe `delegated -Fparam [NAME]` und Lückenprüfung als Test (`feature/param-registry`)
 - 104 Unit-Tests mit GoogleTest, 5 bekannte Fehler als Skip markiert (`feature/unit-tests`)
 - CMake-Build mit Ninja und Presets parallel zum Legacy-Build, Docker-Builds für trixie, testing, gcc 15 und gcc 16 (`feature/cmake-build`)
 - Skripte für Legacy-Build, Linkmap, Smoke-Test und Warnungsstatistik in `tools/` (`feature/tools-baseline`)

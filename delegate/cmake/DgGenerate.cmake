@@ -72,3 +72,20 @@ function(dg_builtin out_var embed_target)
     VERBATIM)
   set(${out_var} ${out} PARENT_SCOPE)
 endfunction()
+
+# Parameter table from the DG_PARAM declarations and the Markdown reference
+find_program(DG_PYTHON python3 REQUIRED)
+file(GLOB_RECURSE _dg_param_srcs CONFIGURE_DEPENDS ${DG_ROOT}/*.cpp)
+set(DG_PARAMS_GEN ${DG_ROOT}/../tools/gen-params.py)
+set(DG_PARAMS_CPP ${DG_GEN_DIR}/dg_params_table.cpp)
+add_custom_command(OUTPUT ${DG_PARAMS_CPP}
+  COMMAND ${DG_PYTHON} ${DG_PARAMS_GEN} --root ${DG_ROOT}/.. --table ${DG_PARAMS_CPP}
+  DEPENDS ${DG_PARAMS_GEN} ${_dg_param_srcs}
+  COMMENT "Generating dg_params_table.cpp"
+  VERBATIM)
+set_source_files_properties(${DG_PARAMS_CPP} PROPERTIES GENERATED TRUE)
+add_custom_target(dg_params_gen DEPENDS ${DG_PARAMS_CPP})
+add_custom_target(param-docs
+  COMMAND ${DG_PYTHON} ${DG_PARAMS_GEN} --root ${DG_ROOT}/.. --md ${DG_ROOT}/../doc/reference/parameters.md
+  COMMENT "Generating doc/reference/parameters.md"
+  VERBATIM)

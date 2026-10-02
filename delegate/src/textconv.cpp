@@ -38,6 +38,7 @@ History:
 //////////////////////////////////////////////////////////////////////#*/
 #include "delegate.h"
 #include "fpoll.h"
+#include "dgparam.h"
 int m17n_known_code(PCStr(name));
 
 int suppress_codeconv;
@@ -197,6 +198,8 @@ const char *get_CHARCODE(Connection *Conn){
 	}
 	return 0;
 }
+DG_PARAM(CHARCODE, "CHARCODE=[inputCode/]outputCode[:[tosv][:connMap]]", "none", "Convert the character code of relayed text to outputCode (JIS, EUC, SJIS, UTF8, ASCII)", "CHARCODE=UTF8")
+DG_PARAM(CHARSET, "CHARSET=[inputCode/]outputCode[:[tosv][:connMap]]", "none", "[ungeprüft] Same as CHARCODE", "CHARSET=UTF8")
 void scan_CHARCODE(Connection *Conn,PCStr(charcodes))
 {
 	if( strchr(charcodes,':') ){
@@ -236,6 +239,7 @@ void scan_CHARCODE(Connection *Conn,PCStr(charcodes))
 	}
 }
 void scan_CHARMAPs(void *ctx,PCStr(maps));
+DG_PARAM(CHARMAP, "CHARMAP=mapType:charMap[,charMap]*[:tosv]", "none", "Map characters of relayed text to other characters", "CHARMAP=ascii:a-z/A-Z,A-Z/a-z")
 void scan_CHARMAP(Connection *Conn,PCStr(maps)){
 	scan_CHARMAPs(Conn,maps);
 }

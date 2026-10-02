@@ -28,6 +28,7 @@ History:
 #include "fpoll.h"
 #include "proc.h"
 #include "param.h"
+#include "dgparam.h"
 
 extern int DELEGATE_LISTEN;
 #define P_ADMIN	0x40
@@ -1376,6 +1377,7 @@ int IsmyselfX(Connection *Conn,PCStr(rproto),PCStr(rhost),int rport)
 }
 
 void scan_CALLBACK(PCStr(protolist));
+DG_PARAM(DELEGATE, "DELEGATE=gwHost:Port[:ProtoList]", "current host and port", "Gateway host and port written into rewritten URLs; superseded by BASEURL and RELAY", "DELEGATE=gwhost:8080")
 void scan_DELEGATE(Connection *Conn,PCStr(dhps))
 {	CStr(hostport,1024);
 	CStr(host,1024);
@@ -1539,6 +1541,7 @@ static scanListFunc scanports(PCStr(hostport))
 	}
 	return 0;
 }
+DG_PARAM(PORT, "PORT=port[,port]*", "none", "Open entrance ports in addition to the -P option", "PORT=9023")
 void scan_PORT(Connection *Conn,PCStr(ports))
 {
 	scan_commaList(ports,0,scanListCall scanports);
@@ -1817,6 +1820,7 @@ int addServPorts(PCStr(ports),PCStr(serv),Connection *Conn){
  * ENTR=proto://host:port-_-natHost:natPort-_-clntHost:clntPort
  */
 int scan_protositeport(PCStr(url),PVStr(proto),PVStr(userpasshost),PVStr(port));
+DG_PARAM(ENTR, "ENTR=proto://host:port/path", "none", "[ungeprüft] Open an entrance for a protocol on a host and port", "ENTR=http://localhost:8080/")
 void scan_ENTR(Connection *Conn,PCStr(entrance)){
 	IStr(proto,64);
 	IStr(site,64);

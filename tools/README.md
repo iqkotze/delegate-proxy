@@ -66,6 +66,31 @@ Für Rechner mit apt gibt es `ci/docker/Dockerfile.trixie` und `ci/docker/Docker
     docker build -f ci/docker/Dockerfile.trixie -t delegate-trixie .
     docker run --rm delegate-trixie
 
+## gen-params.py
+
+Liest die Deklarationen `DG_PARAM`, `DG_PARAM_SUB` und `DG_PARAM_INTERNAL` aus allen `.cpp` Dateien unter `delegate/`. Das Skript prüft Syntax und Duplikate. Es erzeugt die Tabelle `dg_params_table.cpp` für `delegated` und die Parameterreferenz `doc/reference/parameters.md`. CMake ruft es beim Build für die Tabelle auf. Die Referenz entsteht mit dem Target `param-docs` und wird eingecheckt.
+
+    tools/gen-params.py --table /tmp/dg_params_table.cpp
+    tools/gen-params.py --md doc/reference/parameters.md
+    cmake --build build/debug --target param-docs
+
+Eine Deklaration steht in einer eigenen Zeile vor der Funktion, die den Parameter auswertet. Alle Argumente außer dem Namen sind String-Literale ohne Zeilenumbruch. Die Kurzbeschreibung hat höchstens 100 Zeichen. Das Beispiel beginnt mit dem Namen und einem Gleichheitszeichen. Die Makros aus `delegate/include/dgparam.h` expandieren zu nichts.
+
+    DG_PARAM(NAME, "Syntax", "Standardwert", "Kurzbeschreibung", "Beispiel")
+    DG_PARAM_SUB(NAME, "option", "Syntax", "Standardwert", "Kurzbeschreibung", "Beispiel")
+    DG_PARAM_INTERNAL(NAME)
+
+Das Programm zeigt dieselben Daten an.
+
+    build/debug/delegated -Fparam
+    build/debug/delegated -Fparam MAXIMA
+
+## check-params.py
+
+Meldet Parameter, die der Code liest und die kein `DG_PARAM` haben. Es meldet auch Deklarationen, die der Code nicht liest. Geprüft werden die Namen aus `delegate/src/param.cpp`, die Literale in `getEnv` Aufrufen und die Unteroptionen von `MAXIMA` und `TIMEOUT` aus `delegate/src/env.cpp`. Namen mit Unterstrich am Anfang sind intern und werden ignoriert. Der Exit-Code ist 1, wenn Lücken oder ungültige Deklarationen vorliegen. `ctest` führt das Skript als Test `param-check` aus.
+
+    tools/check-params.py
+
 ## Unit-Tests
 
 Die Tests liegen in `tests/unit/` und laufen über `ctest`. Jede Datei deckt ein Quellmodul ab. Bekannte Fehler stehen als `GTEST_SKIP() << "known bug: ..."` im Test und erscheinen in `ctest` als übersprungen.

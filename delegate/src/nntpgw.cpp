@@ -27,6 +27,7 @@ History:
 #include "file.h"
 #include "http.h"
 #include "auth.h"
+#include "dgparam.h"
 
 void minit_nntp();
 const char *someGroup();
@@ -405,6 +406,7 @@ static int hide(Connection *Conn,PCStr(name),PCStr(value)){
 	}
 	return 0;
 }
+DG_PARAM(MHGWCONF, "MHGWCONF=hide:fname:vlist:users:hides", "none", "[ungeprüft] Mail header hiding rules of the mail-to-HTTP gateway", "MHGWCONF=hide:From:*:*:from")
 void scan_MHGWCONF(Connection *Conn,PCStr(conf))
 {       CStr(what,128);
         CStr(value,2048);

@@ -21,6 +21,7 @@ History:
 #include <stdio.h>
 #include "ystring.h"
 #include "log.h"
+#include "dgparam.h"
 int fullpathDYLIB(PCStr(path),PCStr(mode),PVStr(xpath));
 
 #ifdef __cplusplus
@@ -72,6 +73,7 @@ static const char *libpat[16] = {
 };
 
 /* DYLIB="lib*.so,lib*.dylib,lib*.so.1" */
+DG_PARAM(DYLIB, "DYLIB=libfilePattern[,libfilePattern]*", "dglib%s.so,lib%s.so.0.9.8,lib%s.so,lib%s.so.1.0.0,lib%s.so.10,lib%s.so.6,lib%s.so.4,lib%s.so.1,lib%s.so.0,lib%s.so.0.9.7,%s", "File name patterns for dynamic libraries; + stands for the default list", "DYLIB=\"+,lib*.so.0.9.7\"")
 void scan_DYLIB(PCStr(conf)){
 	CStr(pats,2048);
 	CStr(pat1,256);

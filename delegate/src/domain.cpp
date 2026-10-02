@@ -26,6 +26,7 @@ History:
 #include "fpoll.h"
 #include "proc.h"
 #include <errno.h>
+#include "dgparam.h"
 
 extern int CHILD_SERNO_MULTI;
 extern int CHILD_SERNO;
@@ -493,6 +494,7 @@ static scanListFunc scanconf1(PCStr(conf))
 	return 0;
 }
 
+DG_PARAM(DNSCONF, "DNSCONF=what:value", "none", "Settings of the DNS server: para, domain, origin, admin, serial, refresh, retry, mx", "DNSCONF=domain:my.domain")
 void scan_DNSCONF(Connection *Conn,PCStr(conf))
 {
 	scan_commaList(conf,0,scanListCall scanconf1);

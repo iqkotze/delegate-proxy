@@ -32,6 +32,7 @@ History:
 #include "http.h" /* OREQ_MSG */
 #include "filter.h" /* XF_FSV */
 #include "fpoll.h"
+#include "dgparam.h"
 int isinSSL(int fd);
 static int withSTLS_FCL = 0;
 static int withSTLS_FSV = 0;
@@ -65,6 +66,8 @@ double STLS_fsvim_wait(double ws){
 	return ws;
 }
 
+DG_PARAM(TLS, "TLS=stlsSpecs[,sslwayCom][:connMap]", "none", "[ungeprüft] Same as STLS", "TLS=fcl")
+DG_PARAM(STLS, "STLS=stlsSpecs[,sslwayCom][:connMap]", "none", "Start SSL/TLS by STARTTLS negotiation with client (fcl) or server (fsv)", "STLS=\"fsv,-fcl\"")
 void scan_STLS(Connection *Conn,PCStr(stls)){
 	CStr(filt,1024);
 	CStr(proto,1024);

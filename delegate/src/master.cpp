@@ -29,6 +29,7 @@ History:
 #include "filter.h"
 #include "fpoll.h"
 #include "proc.h"
+#include "dgparam.h"
 
 #define MAXPROTO	64
 /* protoV should be realized as a bit-map for screening ... */
@@ -622,6 +623,7 @@ HostList *ReliableHosts(){	return hlist(R_RELIABLE,RX_SRC); }
 HostList *ReachableHosts(){	return hlist(R_REACHABLE,RX_DST); }
 HostList *IdentHosts(){		return hlist(R_USERIDENT,RX_SRC); }
 
+DG_PARAM(RELIABLE, "RELIABLE=srcHostList", ".localnet", "Accept only requests from clients in srcHostList", "RELIABLE=\"192.168.*\"")
 void scan_RELIABLE(Connection *Conn,PCStr(rels))
 {
 	/* V8.0.1 RELIABLE="" -> RELIABLE="!*" */
@@ -630,6 +632,7 @@ void scan_RELIABLE(Connection *Conn,PCStr(rels))
 	scan_commaList(rels,1,scanListCall addHostList1,ReliableHosts());
 	putHostListTab(".RELIABLE",ReliableHosts());
 }
+DG_PARAM(REACHABLE, "REACHABLE=dstHostList", "*", "Accept only requests directed to servers in dstHostList", "REACHABLE=\"*.my.domain\"")
 void scan_REACHABLE(Connection *Conn,PCStr(list))
 {
 	/* V8.0.1 REACHABLE="" -> REACHABLE="!*" */
@@ -694,6 +697,7 @@ static scanListFunc scanmap1(PCStr(map1),int mac,const char *mapv[],int *mapc)
 	return 0;
 }
 void scan_CMAPX(Connection *Conn,PCStr(map),int reverse,int defaultOK);
+DG_PARAM(CMAP, "CMAP=resultStr:mapName:connMap", "none", "Map the current connection (protocol, destination, source) to a value for mapName", "CMAP=sslway:FSV:telnet:hostA:*")
 void scan_CMAP(Connection *Conn,PCStr(map))
 {
 	scan_CMAPX(Conn,map,0,0);
@@ -875,6 +879,7 @@ int find_CMAP(Connection *Conn,PCStr(map),PVStr(str))
  *	ROUTE=proto://host:port/path-_-{dstHostList}:{srcHostList}
  */
 #define DELMARK	"-_-"
+DG_PARAM(ROUTE, "ROUTE=proto://host:port/-_-dstHostList:srcHostList", "none", "Forward requests for dstHostList from srcHostList to a server; generalizes MASTER and PROXY", "ROUTE=delegate://masterhost:8080/-_-*:*")
 void scan_ROUTE(Connection *Conn,PCStr(forward))
 {	CStr(gateway,MaxHostNameLen);
 	const char *cmap;
@@ -964,10 +969,12 @@ error:
 	return;
 }
 void scan_FORWARDX(Connection *Conn,PCStr(forward),int withproto);
+DG_PARAM(FORWARD, "FORWARD=gatewayURL[-_-connMap]", "none", "Forward requests matching connMap to the proxy given as URL", "FORWARD=ssltunnel://user:pass@proxyhost:8080-_-https:sslhost")
 void scan_FORWARD(Connection *Conn,PCStr(forward))
 {
 	scan_FORWARDX(Conn,forward,1);
 }
+DG_PARAM(GATEWAY, "GATEWAY=gatewayURL[-_-connMap]", "none", "[ungeprüft] Same as FORWARD", "GATEWAY=socks://sockshost:1080")
 void scan_GATEWAY(Connection *Conn,PCStr(gateway)){
 	scan_FORWARD(Conn,gateway);
 }
@@ -1343,6 +1350,7 @@ static int DELEGATE_permitMX(Connection *Conn,PCStr(proto),PCStr(method),PCStr(d
 /*
  *	OWNER=owner:srcHostList
  */
+DG_PARAM(OWNER, "OWNER=user[/group][:srcHostList]", "nobody", "User and group the DeleGate runs as after start (effective for super-user only)", "OWNER=nobody/nogroup")
 int scan_OWNER(Connection *Conn,PCStr(ownerspec))
 {	CStr(user,1024);
 	CStr(from,1024);
@@ -1457,6 +1465,7 @@ int set_Owner(int real,PCStr(aowner),int file)
 /*
  * SRCIF=host[:port[:dstProto[:dstHost[:srcHost]]]]
  */
+DG_PARAM(SRCIF, "SRCIF=host[:[port][:connMap]]", "*:*:*:*:*", "Source address and port of connections to servers, and port for accepting data connections", "SRCIF=\"*:8020-8120:ftp-data\"")
 void scan_SRCIF(Connection *Conn,PCStr(ifspec))
 {	CStr(specb,1024);
 	const char *specv[5]; /**/
@@ -1662,6 +1671,7 @@ static scanListFunc connect1(PCStr(conn),Connection *Conn,connArg *Ca)
 	Ca->c_orders[Ca->orderx++] = ctype;
 	return 0;
 }
+DG_PARAM(CONNECT, "CONNECT=connSeq[:connMap]", "c,i,m,h,y,v,s,d:*:*:*", "Order of connection methods tried for the target server", "CONNECT=s,d")
 void scan_CONNECT(Connection *Conn,PCStr(connlist))
 {	const char *clist;
 	const char *proto;
@@ -2198,6 +2208,7 @@ static void scan_MASTER0(Connection *Conn,PCStr(host),int port,PCStr(route),PCSt
 		sv1log("ERROR unknown host MASTER=%s\n",host);
 
 }
+DG_PARAM(MASTER, "MASTER=host:port[/masterControl][:dstHostList]", "none", "Upstream generalist DeleGate that this DeleGate forwards requests to", "MASTER=host2:8080")
 void scan_MASTER(Connection *Conn,PCStr(master))
 {	CStr(host,1024);
 	const char *dp;
@@ -2319,6 +2330,7 @@ History:
 	940316	created
 //////////////////////////////////////////////////////////////////////#*/
 
+DG_PARAM(PROXY, "PROXY=host:port[:dstHostList]", "none", "Upstream proxy for HTTP, FTP and Telnet, optionally for dstHostList only", "PROXY=proxyhost:8080:!*.localdomain")
 void scan_PROXY(Connection *Conn,PCStr(proxy))
 {	const char *proto;
 	CStr(host,MaxHostNameLen);
@@ -2415,6 +2427,7 @@ int closeSoxSync(){
 	return 0;
 }
 
+DG_PARAM(SOCKMUX, "SOCKMUX=host:port:option[,option]*", "none", "Multiplex the connection between chained DeleGates on one persistent SockMux connection", "SOCKMUX=hostA:8000:acc")
 void scan_SOCKMUX(Connection *Conn,PCStr(conf)){
 	CStr(what,32);
 	CStr(host,MaxHostNameLen);
@@ -2480,6 +2493,7 @@ int openHTMUXproxy(Connection *Conn,PCStr(rport)){
 	return psock;
 }
 int iamServer();
+DG_PARAM(HTMUX, "HTMUX=sv[:[hostList][:portList]] | HTMUX=cl:host:port | HTMUX=px:host:port", "none", "Accept requests through a HTMUX server on another host; requires CAPSKEY", "HTMUX=cl:192.168.1.1:9876")
 void scan_HTMUX(Connection *Conn,PCStr(conf)){
 	IStr(arg,MaxHostNameLen);
 	IStr(opts,128);
@@ -2822,6 +2836,7 @@ int connectToUpper(Connection *Conn,PCStr(where),PCStr(proto),PCStr(host),int po
 
 static const char *SSLTUNNEL_HOST;
 static int SSLTUNNEL_PORT;
+DG_PARAM(SSLTUNNEL, "SSLTUNNEL=host:port", "none (port 8080 if omitted)", "HTTP proxy with the CONNECT method used as circuit level proxy for other protocols", "SSLTUNNEL=proxyhost:8080")
 void scan_SSLTUNNEL(PCStr(spec))
 {	CStr(host,MaxHostNameLen);
 	int port;

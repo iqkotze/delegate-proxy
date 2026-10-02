@@ -25,6 +25,7 @@ History:
 #define RIDENT_VER		"0.9"
 
 #include "vaddr.h"
+#include "dgparam.h"
 RidentEnv ridentEnv = {1.0,0,0};
 
 static scanListFunc rident1(PCStr(spec))
@@ -38,6 +39,7 @@ static scanListFunc rident1(PCStr(spec))
 	}
 	return 0;
 }
+DG_PARAM(RIDENT, "RIDENT=ridentType[,ridentType]*", "none", "Forward (server) or receive (client) client socket information between DeleGates", "RIDENT=server")
 void scan_RIDENT(DGC*Conn,PCStr(specs))
 {
 	if( specs != NULL )

@@ -58,6 +58,7 @@ History:
 #include "fpoll.h"
 #include "dglib.h"
 #include <ctype.h>
+#include "dgparam.h"
 
 extern int CHILD_SERNO;
 extern int CHILD_SERNO_MULTI;
@@ -869,6 +870,7 @@ int icp_select(PCStr(url),int icpopts[],const char *svaddrs[],int svports[],doub
 }
 
 #define ICPMAP	"ICPmap"
+DG_PARAM(ICPCONF, "ICPCONF={icpMaxima|icpConf}", "para:2,hitage:1d,hitobjage:1h,hitobjsize:1024,nofetch:1d,timeout:2.0", "Configuration of the DeleGate as ICP server: para, hitage, hitobjage, hitobjsize, timeout", "ICPCONF=para:4,hitage:2d")
 void scan_ICPCONF(DGC*Conn,PCStr(conf))
 {	int cc,ci;
 	CStr(confb,1024);
@@ -915,6 +917,7 @@ void scan_ICPCONF(DGC*Conn,PCStr(conf))
  *    icpServer=icpHost/icpType/proxyPort/icpPort
  *    icpType={s|p|o|n|H|D|P|O}*
  */
+DG_PARAM(ICP, "ICP=icpServerList[:icpServerSpec[:connMap]]", "none", "ICP servers asked for a cached resource when icp is in the CONNECT sequence", "ICP=icphost")
 void scan_ICP(DGC*Conn,PCStr(conf))
 {	CStr(confb,2048);
 	const char *confv[8]; /**/

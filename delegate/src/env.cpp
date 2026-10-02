@@ -25,6 +25,7 @@ History:
 #include "fpoll.h"
 #include "file.h"
 #include <stdlib.h>
+#include "dgparam.h"
 
 int  main_argc;
 const char **main_argv;
@@ -541,6 +542,7 @@ static scanListFunc delay1(PCStr(dspec),Connection *Conn)
 	}
 	return 0;
 }
+DG_PARAM(DELAY, "DELAY=what:seconds", "reject:60,unknown:60,reject_p:0,unknown_p:0,error:30", "Delay in seconds before the response to repeated rejects, unknowns or errors", "DELAY=reject:30,unknown:30")
 void scan_DELAY(Connection *Conn,PCStr(sdelay))
 {
 	scan_commaList(sdelay,0,scanListCall delay1,Conn);
@@ -625,6 +627,29 @@ static scanListFunc maxima1(PCStr(maxima),Connection *Conn)
 	}
 	return 0;
 }
+DG_PARAM(MAXIMA, "MAXIMA=what:number[,what:number]*", "listen:20,delegated:64,standby:32,ftpcc:16,...", "Maxima of resources: processes, connections, queue sizes and similar", "MAXIMA=delegated:256,listen:1024")
+DG_PARAM_SUB(MAXIMA, "randstack", "randstack:N", "64", "Randomization range of the stack base for security", "MAXIMA=randstack:32")
+DG_PARAM_SUB(MAXIMA, "randenv", "randenv:N", "1024", "Randomization range of the environment variables base", "MAXIMA=randenv:1024")
+DG_PARAM_SUB(MAXIMA, "randfd", "randfd:N", "32", "Randomization range of the client socket descriptor", "MAXIMA=randfd:32")
+DG_PARAM_SUB(MAXIMA, "listen", "listen:N", "20", "Maximum size of the queue of an entrance port", "MAXIMA=listen:1024")
+DG_PARAM_SUB(MAXIMA, "delegated", "delegated:N", "64 (adapted to the memory size at start)", "Maximum number of DeleGate processes running at a time", "MAXIMA=delegated:256")
+DG_PARAM_SUB(MAXIMA, "service", "service:N", "0 (unlimited)", "Maximum number of services per delegated process", "MAXIMA=service:1000")
+DG_PARAM_SUB(MAXIMA, "standby", "standby:N", "32", "Maximum number of standby processes", "MAXIMA=standby:16")
+DG_PARAM_SUB(MAXIMA, "conpch", "conpch:N", "0 (unlimited)", "Maximum number of connections at a time per client host", "MAXIMA=conpch:20")
+DG_PARAM_SUB(MAXIMA, "ftpcc", "ftpcc:N", "16", "Maximum number of FTP connection cache servers to a host (shared with nntpcc and svcc)", "MAXIMA=ftpcc:4")
+DG_PARAM_SUB(MAXIMA, "nntpcc", "nntpcc:N", "16", "Maximum number of NNTP connection cache processes to a host (shared with ftpcc and svcc)", "MAXIMA=nntpcc:4")
+DG_PARAM_SUB(MAXIMA, "svcc", "svcc:N", "16", "[ungeprüft] Maximum number of connection cache servers (shared with ftpcc and nntpcc)", "MAXIMA=svcc:4")
+DG_PARAM_SUB(MAXIMA, "udprelay", "udprelay:N", "32", "Maximum number of parallel UDP relay clients", "MAXIMA=udprelay:64")
+DG_PARAM_SUB(MAXIMA, "winmtu", "winmtu:N", "0", "Maximum unit of send() on Win32", "MAXIMA=winmtu:1024")
+DG_PARAM_SUB(MAXIMA, "bps", "bps:N", "0 (unlimited)", "Maximum transmission speed of HTTP and FTP data; k and m units are allowed", "MAXIMA=bps:128k")
+DG_PARAM_SUB(MAXIMA, "http-cka", "http-cka:N", "50", "Maximum requests per keep-alive connection; replaced by HTTPCONF max-cka", "MAXIMA=http-cka:50")
+DG_PARAM_SUB(MAXIMA, "http-ckapch", "http-ckapch:N", "8", "Maximum keep-alive connections per client host; replaced by HTTPCONF max-ckapch", "MAXIMA=http-ckapch:8")
+DG_PARAM_SUB(MAXIMA, "erestart", "erestart:N", "1", "[ungeprüft] Maximum number of restarts after an error, used with TIMEOUT erestart", "MAXIMA=erestart:3")
+DG_PARAM_SUB(MAXIMA, "restart", "restart:N", "0", "[ungeprüft] Restart the server after N accepted connections", "MAXIMA=restart:10000")
+DG_PARAM_SUB(MAXIMA, "fdset", "fdset:N", "64", "[ungeprüft] Base size of the descriptor set, extended by three per delegated process", "MAXIMA=fdset:128")
+DG_PARAM_SUB(MAXIMA, "sockrecv", "sockrecv:N", "65536", "[ungeprüft] Maximum size of the socket receive buffer in bytes", "MAXIMA=sockrecv:131072")
+DG_PARAM_SUB(MAXIMA, "socksend", "socksend:N", "16384", "[ungeprüft] Maximum size of the socket send buffer in bytes", "MAXIMA=socksend:32768")
+DG_PARAM_SUB(MAXIMA, "contry", "contry:N", "2", "[ungeprüft] Number of connection trials to a server", "MAXIMA=contry:3")
 void scan_MAXIMA(Connection *Conn,PCStr(maxima))
 {
 	scan_commaList(maxima,0,scanListCall maxima1,Conn);
@@ -734,6 +759,44 @@ static scanListFunc timeout1(PCStr(to),Connection *Conn)
 
 	return 0;
 }
+DG_PARAM(TIMEOUT, "TIMEOUT=what:seconds[,what:seconds]*", "dns:10,acc:10,con:10,lin:30,...", "Timeout periods in seconds; 0 means unlimited; units d, h and m are allowed", "TIMEOUT=dns:5,con:20")
+DG_PARAM_SUB(TIMEOUT, "shutout", "shutout:T", "1800", "Time until the emergency shutout set on a fatal error is disarmed", "TIMEOUT=shutout:0")
+DG_PARAM_SUB(TIMEOUT, "dns", "dns:T", "10", "DNS lookup", "TIMEOUT=dns:5")
+DG_PARAM_SUB(TIMEOUT, "dnsinv", "dnsinv:T", "6", "DNS inverse lookup", "TIMEOUT=dnsinv:3")
+DG_PARAM_SUB(TIMEOUT, "nis", "nis:T", "3", "NIS lookup", "TIMEOUT=nis:2")
+DG_PARAM_SUB(TIMEOUT, "acc", "acc:T", "10", "Accept from a client, including the FTP data connection", "TIMEOUT=acc:30")
+DG_PARAM_SUB(TIMEOUT, "con", "con:T", "10", "Connection to the server", "TIMEOUT=con:20")
+DG_PARAM_SUB(TIMEOUT, "lin", "lin:T", "30", "LINGER for output", "TIMEOUT=lin:10")
+DG_PARAM_SUB(TIMEOUT, "authorizer", "authorizer:T", "0 (unlimited)", "Expiration of an authorization by AUTHORIZER", "TIMEOUT=authorizer:600")
+DG_PARAM_SUB(TIMEOUT, "dgnonce", "dgnonce:T", "60", "Lifetime of the nonce of AUTHORIZER=-dgauth", "TIMEOUT=dgnonce:120")
+DG_PARAM_SUB(TIMEOUT, "ident", "ident:T", "1", "Connection to the Ident server", "TIMEOUT=ident:2")
+DG_PARAM_SUB(TIMEOUT, "rident", "rident:T", "1", "Receiving RIDENT=client information", "TIMEOUT=rident:2")
+DG_PARAM_SUB(TIMEOUT, "io", "io:T", "600", "General I/O without data transmission", "TIMEOUT=io:300")
+DG_PARAM_SUB(TIMEOUT, "idle", "idle:T", "600", "Same as io", "TIMEOUT=idle:300")
+DG_PARAM_SUB(TIMEOUT, "silence", "silence:T", "0 (unlimited)", "No transmission from client or server, for tcprelay only", "TIMEOUT=silence:600")
+DG_PARAM_SUB(TIMEOUT, "hello", "hello:T", "30", "HELLO negotiation with the MASTER", "TIMEOUT=hello:60")
+DG_PARAM_SUB(TIMEOUT, "login", "login:T", "60", "Login to a proxy (Telnet, FTP, SOCKS)", "TIMEOUT=login:120")
+DG_PARAM_SUB(TIMEOUT, "daemon", "daemon:T", "0 (unlimited)", "Lifetime of the delegated process", "TIMEOUT=daemon:86400")
+DG_PARAM_SUB(TIMEOUT, "restart", "restart:T", "0 (unlimited)", "Restart the server at every period", "TIMEOUT=restart:1d")
+DG_PARAM_SUB(TIMEOUT, "standby", "standby:T", "30", "Keep delegated alive on standby for the next client", "TIMEOUT=standby:60")
+DG_PARAM_SUB(TIMEOUT, "takeover", "takeover:T", "5", "Take over a download to the cache after the client disconnected", "TIMEOUT=takeover:10")
+DG_PARAM_SUB(TIMEOUT, "ftpcc", "ftpcc:T", "120", "Keep an FTP connection cache alive", "TIMEOUT=ftpcc:300")
+DG_PARAM_SUB(TIMEOUT, "nntpcc", "nntpcc:T", "300", "Keep an NNTP connection cache alive", "TIMEOUT=nntpcc:600")
+DG_PARAM_SUB(TIMEOUT, "cfistat", "cfistat:T", "1", "Status information from a filter started with -s", "TIMEOUT=cfistat:2")
+DG_PARAM_SUB(TIMEOUT, "http-cka", "http-cka:T", "10", "Keep-alive connection of HTTP; replaced by HTTPCONF tout-cka", "TIMEOUT=http-cka:10")
+DG_PARAM_SUB(TIMEOUT, "http-ckamg", "http-ckamg:T", "2", "[ungeprüft] Margin of the HTTP keep-alive timeout", "TIMEOUT=http-ckamg:3")
+DG_PARAM_SUB(TIMEOUT, "http-wait-qbody", "http-wait-qbody:T", "30", "[ungeprüft] Wait for the body of an HTTP request", "TIMEOUT=http-wait-qbody:60")
+DG_PARAM_SUB(TIMEOUT, "http-poll-qbody", "http-poll-qbody:T", "15", "[ungeprüft] Polling of the body of an HTTP request", "TIMEOUT=http-poll-qbody:30")
+DG_PARAM_SUB(TIMEOUT, "greeting", "greeting:T", "0", "[ungeprüft] Wait for the greeting message of a server", "TIMEOUT=greeting:10")
+DG_PARAM_SUB(TIMEOUT, "vsapacc", "vsapacc:T", "0", "[ungeprüft] Accept through a VSAP server", "TIMEOUT=vsapacc:60")
+DG_PARAM_SUB(TIMEOUT, "waitchild", "waitchild:T", "3", "[ungeprüft] Wait for child processes to terminate", "TIMEOUT=waitchild:5")
+DG_PARAM_SUB(TIMEOUT, "bindenter", "bindenter:T", "5", "[ungeprüft] Binding of entrance ports on restart", "TIMEOUT=bindenter:10")
+DG_PARAM_SUB(TIMEOUT, "bind", "bind:T", "0", "[ungeprüft] Binding of ports", "TIMEOUT=bind:10")
+DG_PARAM_SUB(TIMEOUT, "defreeze", "defreeze:T", "60", "[ungeprüft] Idle time after which a frozen server is revived", "TIMEOUT=defreeze:120")
+DG_PARAM_SUB(TIMEOUT, "erestart", "erestart:T", "0", "[ungeprüft] Restart after an error, used with MAXIMA erestart", "TIMEOUT=erestart:10")
+DG_PARAM_SUB(TIMEOUT, "cc", "cc:T", "180", "[ungeprüft] Keep a connection cache alive", "TIMEOUT=cc:300")
+DG_PARAM_SUB(TIMEOUT, "htmuxskew", "htmuxskew:T", "300", "[ungeprüft] Maximum time difference tolerated by HTMUX", "TIMEOUT=htmuxskew:600")
+DG_PARAM_SUB(TIMEOUT, "spawn", "spawn:T", "10000", "[ungeprüft] Spawn timeout; no use of the value found in the code", "TIMEOUT=spawn:20000")
 void scan_TIMEOUT(Connection *Conn,PCStr(timeouts))
 {
 	scan_commaList(timeouts,0,scanListCall timeout1,Conn);
@@ -1708,6 +1771,7 @@ typedef struct {
 } DefData;
 static DefData **defData;
 #define NDGDEF 64
+DG_PARAM(DGDEF, "DGDEF=name[,flags]:data", "none", "[ungeprüft] Define a named data item; flags conn, url, ei and si select the evaluation", "DGDEF=greeting:hello")
 void scan_DGDEF(Connection *Conn,PCStr(defdata)){
 	DefData *dd;
 	int di;
@@ -2289,6 +2353,7 @@ static int scanOpt1(PCStr(opt1),Connection *Conn,DYConf *DC){
 	}
 	return 0;
 }
+DG_PARAM(DYCONF, "DYCONF=[conditions]parameters", "none", "Load parameters from a file, CGI or inline list at the start of each session", "DYCONF=\"file:path.txt\"")
 void scan_DYCONF(Connection *Conn,PCStr(dyconf)){
 	DYConf *DC;
 
