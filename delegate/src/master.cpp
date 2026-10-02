@@ -335,7 +335,7 @@ static void subProto1(char *pv[],PCStr(proto),PCStr(ports),PVStr(portb),char **p
 }
 
 typedef int (*icFUNCP)(const void*,...);
-int foreach_eqproto(PCStr(proto),icFUNCP func,...);
+int (foreach_eqproto)(PCStr(proto),icFUNCP func,...);
 static scanListFunc addProto1(PCStr(protoport),char *tv[],char *pv[],PVStr(portb),char **portp,PCStr(iproto))
 {	int pi,ti,px,match0,match;
 	CStr(proto,64);
@@ -725,7 +725,7 @@ void scan_CMAPX(Connection *Conn,PCStr(map),int reverse,int defaultOK)
 			mapv[mapi] = "*";
 
 	protoV[0] = 0;
-	stoVX(mapv[M_PROTo],32,protoV,',',1);
+	stoVX((char*)mapv[M_PROTo],32,protoV,',',1);
 	/*
 	stoV(mapv[M_PROTo],32,protoV,',');
 	*/
@@ -1040,7 +1040,7 @@ void scan_FORWARDX(Connection *Conn,PCStr(forward),int withproto)
 	}
 	sv1log("FORWARD=%s://%s:%d/%s-_-{%s}:{%s}:{%s}\n",proto,host,port,path,
 		svproto,dst,src);
-	stoV(svproto,MAXPROTO,protoV,',');
+	stoV((char*)svproto,MAXPROTO,protoV,',');
 	/*
 	addRoute1(ForwardRoute,proto,host,port,path,"",protoV,dst,src);
 	*/
@@ -1477,7 +1477,7 @@ void scan_SRCIF(Connection *Conn,PCStr(ifspec))
 		sport = 0xFFFF0000;
 	else
 	sport = atoi(specv[1]);
-	stoV(specv[2],64,protov,',');
+	stoV((char*)specv[2],64,protov,',');
 	addRoute1(SrcifRoute,"",shost,sport,"","",protov,specv[3],specv[4]);
 }
 int print_SRCIF(PVStr(hostport),PCStr(host),int port){
@@ -1694,7 +1694,7 @@ void scan_CONNECT(Connection *Conn,PCStr(connlist))
 	ca.c_orders[ca.orderx] = 0;
 	Verbose("CONNECT={%s}:{%s}:{%s}:{%s}\n",orders,proto,dst,src);
 
-	stoV(proto,MAXPROTO,protoV,',');
+	stoV((char*)proto,MAXPROTO,protoV,',');
 	addRoute1(ConnectRoute,"","",0,"",orders,protoV,dst,src);
 	free((char*)clist);
 }
@@ -3233,7 +3233,7 @@ int ConnectViaICP(Connection *Conn,PCStr(dsturl))
 }
 
 int ConnectViaICP(Connection *Conn,PCStr(dsturl));
-FILE *fopen_ICP(Connection *Conn,PCStr(url),FileSize *sizep,int *datep)
+FILE *fopen_ICP(Connection *Conn,PCStr(url),FileSize *sizep,time_t *datep)
 {	int sock;
 	FILE *ts,*fs;
 	CStr(req,URLSZ);
@@ -3266,7 +3266,7 @@ FILE *fopen_ICP(Connection *Conn,PCStr(url),FileSize *sizep,int *datep)
 				*datep = scanHTTPtime(vp);
 			}
 		}
-		sv1log("#### fopen_ICP(%s) = [%d] %lld %d\n",url,sock,*sizep,*datep);
+		sv1log("#### fopen_ICP(%s) = [%d] %lld %lld\n",url,sock,*sizep,(long long)*datep);
 
 		fs = fdopen(sock,"r");
 		return fs;

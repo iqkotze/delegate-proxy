@@ -683,12 +683,12 @@ static const char *NoTmpSpaceLog = "/var/tmp/delegate-error";
 int NoTmpSpace(){
 	FILE *fp;
 	int pid = getpid();
-	int now = time(0);
+	time_t now = time(0);
 
 	putsLog("NO DISK SPACE");
-	fprintf(stderr,"[%u] %u DeleGate: NO DISK SPACE\n",pid,now);
+	fprintf(stderr,"[%u] %u DeleGate: NO DISK SPACE\n",pid,(unsigned int)now);
 	if( fp = fopen(NoTmpSpaceLog,"a") ){
-		fprintf(fp,"[%u] %u DeleGate: NO DISK SPACE\n",pid,now);
+		fprintf(fp,"[%u] %u DeleGate: NO DISK SPACE\n",pid,(unsigned int)now);
 		fclose(fp);
 	}
 	return 0;
@@ -1220,7 +1220,7 @@ int cleanup_zombis(int log)
 		dec_nproc(pid);
 	}
 	if( MAX_DELEGATE && MAX_DELEGATE + num_CC() <= NUM_CHILDREN ){
-		int start = time(0);
+		time_t start = time(0);
 
 		sv1tlog("MAX_DELEGATE: MAXIMA=delegated:%d <= %d - %d\n",
 			MAX_DELEGATE,NUM_CHILDREN,num_CC());

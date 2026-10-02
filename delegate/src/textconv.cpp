@@ -586,7 +586,7 @@ FileSize CCV_relay_textsX(Connection *Conn,FILE *ins[],FILE *out,FILE *dup,FileS
 	int do_conv,do_ccx;
 	FILE *in;
 	int inx,pending;
-	int start = time(0);
+	time_t start = time(0);
 	int leng,isbin,fromcache,remleng;
 	FileSize ototal = 0;
 	int ilen;

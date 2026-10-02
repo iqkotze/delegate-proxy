@@ -555,7 +555,7 @@ int relayFile2Fifo(FILE *fs,FILE *rfp,PCStr(regfile),PCStr(fifo)){
 	CStr(buf,8*1024);
 	int siz,rem,rcc,rcc1;
 	int start;
-	int last = time(0);
+	time_t last = time(0);
 
 	ffp = fopen(fifo,"w+");
 if( lGATEWAY() )

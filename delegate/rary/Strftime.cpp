@@ -30,8 +30,8 @@ History:
 #include <time.h>
 
 time_t timegm(struct tm *tm);
-int Timegm(struct tm *tm);
-int Timelocal(struct tm *tm);
+time_t Timegm(struct tm *tm);
+time_t Timelocal(struct tm *tm);
 long Gettimeofday(int *usec);
 
 const char *TIMEFORM_mdHMS  = "%m/%d %H:%M:%S";
@@ -347,8 +347,8 @@ int wdaytoi(PCStr(wday))
 }
 
 int TIME_NOW;
-static char *lsDate(int clock,struct tm *tm,PVStr(lsdate))
-{	int now;
+static char *lsDate(time_t clock,struct tm *tm,PVStr(lsdate))
+{	time_t now;
 
 	if( clock < 0 )
 		clock = Timegm(tm);
@@ -503,9 +503,9 @@ static int Strftime0(PVStr(atime),int size,PCStr(fmt),struct tm *tm,int usecond,
 		case 's':
 			/* seconds since the Epoch */
 			if( *precision != '.' && strchr(precision,'.') == 0 ){
-				int uclock;
+				long long uclock;
 				uclock = timegm(tm);
-				sprintf(fm1,"%%%sd",precision);
+				sprintf(fm1,"%%%slld",precision);
 				sprintf(ap,fm1,uclock);
 				ap += strlen(ap);
 				break;
@@ -567,13 +567,13 @@ int StrfTimeGMT(PVStr(atime),int size,PCStr(fmt),double T){
 		((Int64)(T*1000000))%1000000);
 }
 
-int scanftimeX(PVStr(stime),PCStr(fmt),int canon);
-int scanftime(PCStr(stime),PCStr(fmt))
+time_t scanftimeX(PVStr(stime),PCStr(fmt),int canon);
+time_t scanftime(PCStr(stime),PCStr(fmt))
 {
 	return scanftimeX(CVStr((char*)stime),fmt,0);
 }
-int scanftimeX(PVStr(stime),PCStr(fmt),int canon)
-{	int clock = -1;
+time_t scanftimeX(PVStr(stime),PCStr(fmt),int canon)
+{	time_t clock = -1;
 	char ch;
 	const char *fp;
 	const char *sp;
@@ -725,8 +725,8 @@ static char *scanint4(PCStr(s),int *num){
 	}
 	return NULL;
 }
-int scanftimeY(PCStr(stime),PCStr(fmt)){
-	int clock = -1;
+time_t scanftimeY(PCStr(stime),PCStr(fmt)){
+	time_t clock = -1;
 	char ch;
 	const char *fp;
 	const char *sp;
@@ -868,12 +868,10 @@ int scanTime(PCStr(stime))
 	return -1;
 }
 
-int scanYmdHMS_GMT(PCStr(stime))
-{	char ch;
-	struct tm tm;
+time_t scanYmdHMS_GMT(PCStr(stime))
+{	struct tm tm;
 	int v2v[8],vi;
-	int clock;
-	const char *sp;
+	char pair[3];
 
 	for( vi = 0; stime[vi*2]; vi++ ){
 		if( stime[vi*2+1] == 0 )
@@ -881,11 +879,10 @@ int scanYmdHMS_GMT(PCStr(stime))
 		if( elnumof(v2v) <= vi ){
 			break;
 		}
-		sp = (char*)stime; /* not read-only but "const" */
-		ch = sp[vi*2+2];
-		((char*)sp)[vi*2+2] = 0; /**/
-		v2v[vi] = atoi(&stime[vi*2]);
-		((char*)sp)[vi*2+2] = ch; /**/
+		pair[0] = stime[vi*2];
+		pair[1] = stime[vi*2+1];
+		pair[2] = 0;
+		v2v[vi] = atoi(pair);
 	}
 /*
 syslog_ERROR("#### %d [%d][%d][%d][%d][%d][%d][%d]\n",
@@ -900,13 +897,13 @@ vi, v2v[0], v2v[1], v2v[2], v2v[3], v2v[4], v2v[5], v2v[6], v2v[7]);
 	tm.tm_min  = v2v[5];
 	tm.tm_sec  = v2v[6];
 
-	clock = timegm(&tm);
-	return clock;
+	return timegm(&tm);
 }
-int YMD_HMS_toi(PCStr(ymdhms))
+time_t YMD_HMS_toi(PCStr(ymdhms))
 {	CStr(ymdHMSZ,64);
 	CStr(zone,16);
-	int iymd,ihms,date;
+	int iymd,ihms;
+	time_t date;
 	UTag *uv[4],ub[3];
 
 	uvinit(uv,ub,3);
@@ -925,7 +922,7 @@ int YMD_HMS_toi(PCStr(ymdhms))
 	return date;
 }
 
-static int xTimelocal(struct tm *Tx)
+static time_t xTimelocal(struct tm *Tx)
 {	struct tm *Ty;
 	time_t T1,T2;
 
@@ -1001,21 +998,21 @@ int fromclockLocal(time_t clock,int *w,int *y,int *m,int *d,int *H,int *M,int *S
 	return 0;
 }
 
-int scanANSItime(PCStr(stime)){
-	int itime;
+time_t scanANSItime(PCStr(stime)){
+	time_t itime;
 	if( 0 <= (itime = scanftime(stime,TIMEFORM_ANSI_C)) ) return itime;
 	return -1;
 }
-int scanHTTPtime(PCStr(stime))
-{	int itime;
+time_t scanHTTPtime(PCStr(stime))
+{	time_t itime;
 
 	if( 0 <= (itime = scanftime(stime,TIMEFORM_RFC822)) ) return itime;
 	if( 0 <= (itime = scanftime(stime,TIMEFORM_RFC850)) ) return itime;
 	if( 0 <= (itime = scanftime(stime,TIMEFORM_ANSI_C)) ) return itime;
 	return -1;
 }
-int scanNNTPtime(PCStr(stime))
-{	int itime;
+time_t scanNNTPtime(PCStr(stime))
+{	time_t itime;
 
 	if( 0 <= (itime = scanftime(stime,TIMEFORM_RFC822)) ) return itime;
 	if( 0 <= (itime = scanftime(stime,TIMEFORM_RFC850)) ) return itime;
@@ -1029,7 +1026,7 @@ int scanNNTPtime(PCStr(stime))
 	if( 0 <= (itime = scanftime(stime,TIMEFORM_RFC4))   ) return itime;
 	return -1;
 }
-int scanUNIXDATE(PCStr(stime))
+time_t scanUNIXDATE(PCStr(stime))
 {
 	return scanftime(stime,TIMEFORM_UXDATE);
 }
@@ -1044,8 +1041,8 @@ void canon_date(PVStr(stime))
 	if( 0 <= scanftimeX(QVStr(sp,stime),TIMEFORM_ANSI_C,1) ) return;
 	if( 0 <= scanftimeX(QVStr(sp,stime),TIMEFORM_USENET,1) ) return;
 }
-int scanUNIXFROMtime(PCStr(stime))
-{	int itime;
+time_t scanUNIXFROMtime(PCStr(stime))
+{	time_t itime;
 
 	if( 0 <= (itime = scanftime(stime,TIMEFORM_ANSI_C)) )
 		return itime - Gmtoff();
@@ -1093,12 +1090,13 @@ char *scanLsDate(PCStr(str),PVStr(date))
 
 	return NULL;
 }
-int LsDateClock(PCStr(date),time_t now)
+time_t LsDateClock(PCStr(date),time_t now)
 {	CStr(smon,128);
 	CStr(plus,128);
 	int imday;
 	struct tm tmnow,tm;
-	int monnow,clock;
+	int monnow;
+	time_t clock;
 	UTag *uv[4],ub[3];
 
 	tmnow = *gmtime(&now);
@@ -1154,9 +1152,10 @@ int tmcmp(struct tm *tm1,struct tm *tm2)
 }
 
 static int yday_base[] = { 0,31,59,90,120,151,181,212,243,273,304,334,1000 };
-int Timegm(struct tm *tm)
+time_t Timegm(struct tm *tm)
 {	struct tm *tm0;
-	int yoff,leapy,clock,yday;
+	int yoff,leapy,yday;
+	time_t clock;
 
 	yoff = tm->tm_year - 70;
 	yday = yday_base[tm->tm_mon] + (tm->tm_mday - 1);
@@ -1167,7 +1166,7 @@ int Timegm(struct tm *tm)
 		 (
 		  (
 		   (
-		    (yoff*365 + (yoff+1)/4 + yday) * 24
+		    ((time_t)yoff*365 + (yoff+1)/4 + yday) * 24
 		   ) + tm->tm_hour
 		  ) * 60
 		 ) + tm->tm_min
@@ -1179,7 +1178,7 @@ int Timegm(struct tm *tm)
  *	convert the "tm" time as if it is a local time, then detuct
  *	the Gmtoff()
  */
-int Timelocal(struct tm *tm)
+time_t Timelocal(struct tm *tm)
 {	struct tm tms;
 
 	tms = *tm;

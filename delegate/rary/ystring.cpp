@@ -615,15 +615,29 @@ char *VStrId(PVStr(wh),PVStr(vs)){
 	return (char*)wh;
 }
 
+namespace {
+/// Bounded writer over a char buffer, always keeps room for the terminator.
+struct VStrOut {
+	char *p;
+	char *end;
+	void put(char c){ if( p < end ) *p++ = c; }
+	void hex(const char *fmt,unsigned int v){
+		if( p < end ){
+			int n = snprintf(p,end-p+1,fmt,v);
+			if( 0 < n )
+				p += n < end-p ? n : end-p;
+		}
+	}
+};
+}
 static void putvstr(char *dst,int siz,PVStr(d)){
 	int di,ch;
-	const char *dp;
-	const char *vx;
-	char *vp;
-	vp = dst;
+	const char *dp = nullptr;
 
-	*vp++ = '"';
-	vx = &d[siz-1];
+	if( siz <= 0 )
+		return;
+	VStrOut o = { dst, dst+siz-1 };
+	o.put('"');
 	/*
 	if( dp == NULL ){
 	bug from 9.0.6
@@ -638,40 +652,32 @@ static void putvstr(char *dst,int siz,PVStr(d)){
 		if( ch == 0 )
 			goto END;
 		if( 0x20 <= ch && ch < 0x7F && ch != '\\' )
-			*vp++ = ch;
-		else{
-			snprintf(vp,vx-vp,"\\%02X",ch);
-			vp += strlen(vp);
-		}
+			o.put(ch);
+		else	o.hex("\\%02X",ch);
 	}
 	dp = &d[di];
 	if( dp < dTAIL-32 ){
-		*vp++ = '"';
-		snprintf(vp,vx-vp,"[%X]",p2i(dTAIL-32));
-		vp += strlen(vp);
-		*vp++ = '"';
+		o.put('"');
+		o.hex("[%X]",p2i(dTAIL-32));
+		o.put('"');
 	}
 	for( dp = dTAIL-32; dp < dTAIL+16; dp++ ){
 		ch = 0xFF & *dp;
 		if( ch == 0 && d <= dp )
 			break;
 		if( 0x20 <= ch && ch < 0x7F && ch != '\\' )
-			*vp++ = ch;
-		else{
-			snprintf(vp,vx-vp,"\\%02X",ch);
-			vp += strlen(vp);
-		}
+			o.put(ch);
+		else	o.hex("\\%02X",ch);
 		if( dp == dTAIL ){
-			*vp++ = '"';
-			*vp++ = '|';
-			*vp++ = '"';
+			o.put('"');
+			o.put('|');
+			o.put('"');
 		}
 	}
 END:
-	*vp++ = '"';
-	snprintf(vp,vx-vp,"[%X]",p2i(dp));
-	vp += strlen(vp);
-	*vp = 0;
+	o.put('"');
+	o.hex("[%X]",p2i(dp));
+	*o.p = 0;
 }
 void VStr_overflow(PCStr(where),PVStr(d),int len,int siz,PCStr(fmt),...){
 	char msg[1024]; /**/
@@ -1401,6 +1407,8 @@ int traceFiles(int what,FILE *fp,int set){
 		FD_ZERO(trace_files[what]);
 	}
 	fd = fileno(fp);
+	if( fd < 0 || FD_SETSIZE <= fd )
+		return -1;
 	oval = FD_ISSET(fd,trace_files[what]);
 	switch( set ){
 		case 0: FD_CLR(fd,trace_files[what]); break;
@@ -1427,7 +1435,7 @@ int Xfflush(FL_PAR, FILE *fp){
 	inXfflush = 1;
 	FL_F_Xfflush = FL_F;
 	FL_L_Xfflush = FL_L;
-	if( trace_files[TR_FFLUSH] && FD_ISSET(fileno(fp),trace_files[TR_FFLUSH]) ){
+	if( trace_files[TR_FFLUSH] && fileno(fp) < FD_SETSIZE && FD_ISSET(fileno(fp),trace_files[TR_FFLUSH]) ){
 		daemonlog("E","-- Xflush(%d/%X) %d\n",fileno(fp),p2i(fp),pendingcc(fp));
 	}
 	rcode = fflush(fp);

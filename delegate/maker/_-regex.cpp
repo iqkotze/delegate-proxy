@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <regex.h>
+#include <vector>
 
 const char *RegexVer(){
 	return "regex";
@@ -19,14 +20,15 @@ void *Regcomp(const char *pat,int flag){
 	return 0;
 }
 int Regexec(void *re,const char *str,int nm,int so,int eo,int flag){
-	int rcode;
-	regmatch_t rm;
+	std::vector<regmatch_t> rm(nm < 1 ? 1 : nm);
 
-	rm.rm_so = so;
-	rm.rm_eo = eo;
-	rcode = regexec((regex_t*)re,str,nm,&rm,flag);
-	return rcode;
+	rm[0].rm_so = so;
+	rm[0].rm_eo = eo;
+	return regexec((regex_t*)re,str,nm < 0 ? 0 : nm,rm.data(),flag);
 }
 void Regfree(void *re){
+	if( re == 0 )
+		return;
 	regfree((regex_t*)re);
+	free(re);
 }

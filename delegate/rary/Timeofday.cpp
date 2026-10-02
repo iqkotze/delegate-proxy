@@ -49,7 +49,7 @@ int date_main(int ac,const char *av[]){
 	int ai;
 	const char *a1;
 	CStr(date,128);
-	int now = time(0);
+	time_t now = time(0);
 
 	for( ai = 1; ai < ac; ai++ ){
 		a1 = av[ai];
@@ -71,6 +71,6 @@ int date_main(int ac,const char *av[]){
 	printf("%s\n",date);
 	StrftimeGMT(AVStr(date),sizeof(date),TIMEFORM_RFC822,now,0);
 	printf("%s\n",date);
-	printf("Unix-Clock: %u %08X\r\n",now,now);
+	printf("Unix-Clock: %u %08X\r\n",(unsigned int)now,(unsigned int)now);
 	return 0;
 }

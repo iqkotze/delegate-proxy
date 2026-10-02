@@ -177,11 +177,11 @@ static void onTimeout(int sig)
 		ll2i(time(NULL)-func_start));
 	longjmp(func_env,-1);
 }
-void *callFuncTimeout(int sec,void *xcode,void *(*func)(void*,...),...)
+void *(callFuncTimeout)(int sec,void *xcode,void *(*func)(void*,...),...)
 {	void *rcode;
 	int timer;
 	void *osig;
-	VARGS(4,func);
+	VARGSE(4,func);
 
 	minit_timer();
 	func_start = time(NULL);

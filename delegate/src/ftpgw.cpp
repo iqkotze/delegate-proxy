@@ -1304,7 +1304,7 @@ FileSize CTX_file_copyTimeout(Connection *XConn,FILE *src,FILE *dst,FILE *cache,
 	int ci,bin;
 	CStr(buff,1024*8);
 	int bsize;
-	int start = time(0);
+	time_t start = time(0);
 
 	if( file_isreg(fileno(src)) )
 		bsize = sizeof(buff);
@@ -1414,7 +1414,7 @@ int dir_copy(Connection *Conn,FILE *src,FILE *dst,FILE *cachefp,PCStr(user),PCSt
 	CStr(line,1024);
 	CStr(dirent,1024);
 	FtpEnv env;
-	int start = time(0);
+	time_t start = time(0);
 
 	totalc = 0;
 

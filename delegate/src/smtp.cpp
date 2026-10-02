@@ -1362,7 +1362,7 @@ static int doDATA(Connection *Conn,FILE *indata,FILE *tc,FILE *fc,PCStr(myhost),
 	if( sent < 0 )
 		goto EXIT;
 #else
-	rc = stoV(rb,elnumof(rv),rv,',');
+	rc = stoV((char*)rb,elnumof(rv),rv,',');
 	for( ri = 0; ri < rc; ri++ ){
 		fseek(indata,off1,0);
 		sent = SMTPgateway(Conn,tc,indata,md5a,peerHELO,Sender,rv[ri],log);

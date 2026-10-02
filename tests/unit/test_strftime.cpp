@@ -1,7 +1,6 @@
 #include "dg_test.hpp"
+#include <type_traits>
 
-int scanYmdHMS_GMT(PCStr(stime));
-int YMD_HMS_toi(PCStr(ymdhms));
 void canon_date(PVStr(date));
 int wdaytoi(PCStr(wday));
 
@@ -43,8 +42,11 @@ TEST(Strftime, ScanHttpTimeReachesLastInt32Second) {
 }
 
 TEST(Strftime, ScanHttpTimeAcceptsDatesAfter2038) {
-	GTEST_SKIP() << "known bug: scanHTTPtime() returns int, dates after 2038-01-19 are rejected";
-	EXPECT_GT(scanHTTPtime("Fri, 01 Jan 2100 00:00:00 GMT"), 0);
+	EXPECT_EQ(4102444800LL, scanHTTPtime("Fri, 01 Jan 2100 00:00:00 GMT"));
+}
+
+TEST(Strftime, ScanHttpTimeReturnsTimeT) {
+	static_assert(std::is_same_v<time_t, decltype(scanHTTPtime(""))>);
 }
 
 TEST(Strftime, ScanCompactTimestamp) {
@@ -53,8 +55,15 @@ TEST(Strftime, ScanCompactTimestamp) {
 }
 
 TEST(Strftime, ScanCompactTimestampKeepsConstInput) {
-	GTEST_SKIP() << "known bug: scanYmdHMS_GMT() writes into its const argument and crashes on string literals";
 	EXPECT_EQ(kRfc1945Example, scanYmdHMS_GMT("19941106084937"));
+}
+
+TEST(Strftime, ScanCompactTimestampAcceptsDatesAfter2038) {
+	EXPECT_EQ(4102444800LL, scanYmdHMS_GMT("21000101000000"));
+}
+
+TEST(Strftime, ScanCompactTimestampRejectsShortInput) {
+	EXPECT_EQ(-1, scanYmdHMS_GMT("1994110608"));
 }
 
 TEST(Strftime, ParsesDateAndTimeWithZone) {

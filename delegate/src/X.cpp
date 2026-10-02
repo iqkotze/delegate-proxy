@@ -602,12 +602,12 @@ static struct {
 } ioStat;
 #define IoStat ioStat.io_stat
 
-static int yy_timeSIG;
+static time_t yy_timeSIG;
 static int yy_tidPIPE;
 static int yy_showStats;
 
 static void sigINT(int sig){
-	int now = time(0);
+	time_t now = time(0);
 
 	yy_showStats++;
 	if( sig == SIGTERM ){
@@ -4745,7 +4745,7 @@ static int connects(MuxCtx *Mc,PCStr(host),double Start,int *sleep1,int slpx,int
 	int sock = -9;
 	int nready;
 	int slp1 = *sleep1;
-	int start = time(0);
+	time_t start = time(0);
 	int elps;
 	int serrno = 0;
 	double St;
@@ -4912,7 +4912,7 @@ static int accepts(MuxCtx *Mc){
 	int sock = -2;
 	int ri;
 	int rem;
-	int start = time(0);
+	time_t start = time(0);
 	int nint = 0;
 	int rdy;
 	int rj;

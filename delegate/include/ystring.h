@@ -436,7 +436,7 @@ int   scan_namebody(PCStr(namebody),PVStr(name),int nsiz,PCStr(nbrk),PVStr(body)
 
 
 int   del8bits(PVStr(dst),PCStr(src));
-char *strip_spaces(PCStr(value));
+char *strip_spaces(char *value);
 FileSize kmxatoi(PCStr(ai));
 char *strtolowerX(PCStr(s1),PVStr(s2),int siz);
 char *strtoupperX(PCStr(s1),PVStr(s2),int siz);
@@ -481,8 +481,8 @@ int   uvfromsfX(PCStr(str),int siz,PCStr(fmt),UTag *tagv[],const char **rsp,cons
 void  uvfmtreverse(PCStr(src),PCStr(dst),const char **rsrc,const char **rdst);
 int   utosX(UTag *tag,PVStr(str),int siz);
 int   utoi(UTag *tag);
-int   stoV(PCStr(abuf),int mac,const char *av[],int sep);
-int   stoVX(PCStr(abuf),int mac,const char *av[],int sep,int depth);
+int   stoV(char *abuf,int mac,const char *av[],int sep);
+int   stoVX(char *abuf,int mac,const char *av[],int sep,int depth);
 int   ustrcmp(UTag *tag,PCStr(str));
 
 #ifndef _FL_PAR_
@@ -569,26 +569,8 @@ const char *getMainArg(PCStr(where),PCStr(name));
 /*
 #include "yarg.h"
 */
-#ifndef _YARG_H
-#define _YARG_H
-typedef int (*iFUNCP)(const void*,...);
+#include "yarg.h"
 typedef int (*IFUNCP)(void*,...);
-typedef void (*vFUNCP)(void*,...);
-typedef char *(*sFUNCP)(void*,...);
-#include <stdarg.h>
-#define VARGS(ac,a0) \
-	char *va[ac]; va_list ap; va_start(ap,a0); \
-	{ int ai; for(ai = 0; ai < ac; ai++) va[ai] = va_arg(ap,char*); }
-#define VA4	va[0],va[1],va[2],va[3]
-#define VA8	va[0],va[1],va[2],va[3],va[4],va[5],va[6],va[7]
-#define VA14    va[0],va[1],va[2],va[3],\
-                va[4],va[5],va[6],va[7],\
-                va[8],va[9],va[10],va[11],va[12],va[13]
-#define VA16    va[0],va[1],va[2],va[3],\
-                va[4],va[5],va[6],va[7],\
-                va[8],va[9],va[10],va[11],\
-		va[12],va[13],va[14],va[15]
-#endif /* _YARG_H */
 
 int Setproctitle(const char *fmt,...);
 
@@ -603,10 +585,10 @@ typedef int (*scanListFuncP)(PCStr(elem),...);
 #define scanListFunc int
 #define scanListCall (scanListFuncP)
 
-int   scan_List(PCStr(list),int sep,int allocm,scanListFuncP func, ...);
-int   scan_ListL(PCStr(list),int,int,scanListFuncP,...);
-int   scan_commaList(PCStr(list),int,scanListFuncP,...);
-int   scan_commaListL(PCStr(list),int,scanListFuncP,...);
+int   (scan_List)(PCStr(list),int sep,int allocm,scanListFuncP func, ...);
+int   (scan_ListL)(PCStr(list),int,int,scanListFuncP,...);
+int   (scan_commaList)(PCStr(list),int,scanListFuncP,...);
+int   (scan_commaListL)(PCStr(list),int,scanListFuncP,...);
 
 int   scanv(const char *av[],PCStr(name),iFUNCP func,void *arg1);
 int   isinList(PCStr(list),PCStr(word));
@@ -646,13 +628,13 @@ int   StrftimeLocal(PVStr(atime),int size,PCStr(fmt),time_t clock,int usecond);
 int   StrfTimeGMT(PVStr(atime),int size,PCStr(fmt),double T);
 int   StrfTimeLocal(PVStr(atime),int size,PCStr(fmt),double T);
 int   fromclockLocal(time_t clock,int *w,int *y,int *m,int *d,int *H,int *M,int *S);
-int   LsDateClock(PCStr(date),time_t now);
-int   scanYmdHMS_GMT(PCStr(stime));
-int   YMD_HMS_toi(PCStr(ymdhms));
+time_t LsDateClock(PCStr(date),time_t now);
+time_t scanYmdHMS_GMT(PCStr(stime));
+time_t YMD_HMS_toi(PCStr(ymdhms));
 int   scan_period(PCStr(period),int dfltunit,int dflt);
-int   scanNNTPtime(PCStr(stime));
-int   scanHTTPtime(PCStr(stime));
-int   scanUNIXFROMtime(PCStr(stime));
+time_t scanNNTPtime(PCStr(stime));
+time_t scanHTTPtime(PCStr(stime));
+time_t scanUNIXFROMtime(PCStr(stime));
 void  canon_date(PVStr(date));
 double Scan_period(PCStr(period),int dfltunit,double dflt);
 void  getTimestamp(PVStr(stime));

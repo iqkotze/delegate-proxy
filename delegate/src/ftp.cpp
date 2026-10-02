@@ -52,7 +52,7 @@ FILE *fopen_ftpcache0(Connection *Conn,int expire,PCStr(host),int port,PCStr(pat
 void ftp_xferlog(int start,PCStr(chost),int size,PCStr(path),int bin,int in,int anon,PCStr(user),PCStr(auser),PCStr(cstat));
 */
 void ftp_xferlog(int start,PCStr(chost),FileSize rest,FileSize size,PCStr(md5),PCStr(path),int bin,int in,int anon,PCStr(user),PCStr(auser),PCStr(cstat));
-FILE *fopen_ICP(Connection *Conn,PCStr(url),FileSize *sizep,int *datep);
+FILE *fopen_ICP(Connection *Conn,PCStr(url),FileSize *sizep,time_t *datep);
 int stat_lpr(PCStr(lphost),int lpport,PCStr(queue),PCStr(opt),PCStr(fname),PVStr(stat));
 int rmjob_lpr(Connection*Conn,PCStr(lphost),int lpport,PCStr(queue),PCStr(user),PCStr(jobname),PVStr(stat));
 int send_lpr(Connection*Conn,PCStr(lphost),int lpport,PCStr(queue),FILE *dfp,int dlen,PCStr(user),PCStr(fname),PVStr(stat));
@@ -1914,7 +1914,7 @@ static int localSTOR(FtpStat *FS,FILE *tc,FILE *fc,PCStr(com),PCStr(vpath),PVStr
 	int wcc = -9;
 	*/
 	FileSize wcc = -9;
-	int start = time(0);
+	time_t start = time(0);
 	int xcdsock = -1;
 	Connection *dataConn = &FS->fs_dataConn;
 	CStr(port,256);
@@ -5774,7 +5774,7 @@ static int lookaside_cache(Connection *Conn,FtpStat *FS,FILE *tc,PCStr(com),PCSt
 	int islocal;
 	int viaICP;
 	FileSize dsize;
-	int dtime;
+	time_t dtime;
 	int modeXDC;
 
 	if( FCF.fc_nodata )
@@ -8606,7 +8606,7 @@ int ftpxhttpRETR(FtpStat *FS,FILE *tc,PCStr(com),PCStr(arg),PVStr(path)){
 	IStr(hresp,1024);
 	int hcode = 0;
 	IStr(url,1024);
-	int start = time(0);
+	time_t start = time(0);
 	FILE *fp;
 	int xc;
 
@@ -8849,7 +8849,7 @@ static int ftpxhttpSIZE(FtpStat *FS,FILE *tc,PCStr(com),PCStr(arg)){
 	IStr(file,512);
 	IStr(path,512);
 	int hcode;
-	int mtime;
+	time_t mtime;
 	IStr(sm,128);
 	FileSize cleng = 0;
 	IStr(fcode,128);

@@ -1268,7 +1268,7 @@ int builtincmd(FILE *out,PCStr(command),DGC*ctx,Mssg *mssg,PCStr(path)){
 	valuescanY(cp,AVStr(arg),sizeof(arg));
 
 	if( streq(com,"date") ){
-		int now = time(0);
+		time_t now = time(0);
 		IStr(tm,128);
 
 		if( *arg == '+' )
