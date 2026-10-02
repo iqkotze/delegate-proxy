@@ -20,3 +20,6 @@ option(DG_BUILD_TESTS "Build the GoogleTest unit tests" ${GTest_FOUND})
 if(ADMIN STREQUAL "root@localhost")
   message(STATUS "ADMIN is the default root@localhost")
 endif()
+
+find_package(OpenSSL 3.0 REQUIRED)
+find_package(ZLIB REQUIRED)

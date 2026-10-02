@@ -42,7 +42,6 @@ http://www.cs.cmu.edu/~dst/Adobe/Gallery/anon21jul01-pdf-encryption.txt
 int zlibUncompress(void *in,int isiz,void *out,int osiz);
 int gunzipFilter(FILE *in,FILE *out);
 
-int sslway_dl();
 #define RC4_INT unsigned int
 typedef struct {
 	RC4_INT x,y;
@@ -243,9 +242,6 @@ static int decryptObj(Pdf *pdf,const unsigned char *in,int ilen,unsigned char *o
 	char objnb[3];
 	char gennb[2];
 
-	if( sslway_dl() < 0 ){
-		return -1;
-	}
 	md5 = newMD5();
 /*
 	addMD5(md5,(char*)pdf->p_stdf.p_key,5);

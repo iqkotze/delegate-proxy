@@ -23,19 +23,6 @@ string(MD5 _dg_all "${_dg_md5s}")
 string(SUBSTRING "${_dg_all}" 0 16 DG_SRC_MD5)
 configure_file(${DG_ROOT}/cmake/bldsign.h.in ${DG_GEN_DIR}/bldsign.h @ONLY)
 
-# randtext.cpp is included by filters/sslway.cpp
-string(TIMESTAMP _dg_epoch "%s" UTC)
-math(EXPR _dg_ncase "${_dg_epoch} % 128")
-set(_dg_rand "int randtext(int n){\n  switch(n){\n")
-if(_dg_ncase GREATER 0)
-  math(EXPR _dg_last "${_dg_ncase} - 1")
-  foreach(i RANGE ${_dg_last})
-    string(APPEND _dg_rand "    case ${i}: n++;\n")
-  endforeach()
-endif()
-string(APPEND _dg_rand "  }\n  return n;\n}\n")
-file(WRITE ${DG_GEN_DIR}/randtext.cpp "${_dg_rand}")
-
 # Host tool that creates the dlopen stubs
 add_executable(mkstab ${DG_ROOT}/filters/mkstab.cpp)
 set_target_properties(mkstab PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tools)

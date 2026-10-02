@@ -26,133 +26,28 @@ History:
 #include "proc.h"
 #include "fpoll.h"
 #include "ysignal.h"
+#include <zlib.h>
 
 #define GZDBG lZLIB()==0?0:fprintf
 
 int setCloseOnFork(PCStr(wh),int fd);
 int clearCloseOnFork(PCStr(wh),int fd);
 
-#define Z_SYNC_FLUSH    2
-#define Z_FULL_FLUSH    3
-
-typedef int (*SYMADDR)(const char *sym,const void *addr,void **xaddr);
-typedef void (*GZFUNCS)(void *_fdopen,void *_fread,void *_fwrite,void *_fprintf,void *_fputc,void *_fflush,void *_fclose);
-static GZFUNCS _gzfuncs;
-
-/*BEGIN_STAB(zlib)*/
-typedef void *gzFile;
-const char *zlibVersion();
-gzFile gzopen(const char *path,const char *mode);
-gzFile gzdopen(int fd,const char *mode);
-int gzwrite(gzFile file,const void *buf,unsigned len);
-int gzflush(gzFile file,int flush);
-int gzread(gzFile file,void *buf,unsigned len);
-int gzeof(gzFile);
-long gztell(gzFile file);
-int gzclose(gzFile file);
-int gziocallback(const char *name,const void *addr);/*OPT(0)*/
-const char *gzerror(gzFile file,int *errnum);
-typedef unsigned char Byte;
-typedef unsigned long uLong;
-int compress2(Byte *dest,uLong *destLen,const Byte *source,uLong sourceLen,int lev);
-int uncompress(Byte *dest,uLong *destLen,const Byte *source,uLong sourceLen);
-
-typedef void *z_streamp;
-int inflateInit_(z_streamp stream,const char *version,int stream_size);
-int inflateEnd(z_streamp stream);
-int inflate(z_streamp stream,int flush);
-int deflateInit_(z_streamp stream,int level,const char *ver,int siz);
-int deflate(z_streamp stream,int flush);
-int deflateEnd(z_streamp stream);
-/*END_STAB*/
-
-typedef int (*IFUNC)();
-int dl_library(const char *libname,DLMap *dlmap,const char *mode);
 
 static int DGzlibVer;
 int withDGZlib(){
 	return DGzlibVer;
 }
 
-static FILE *xfdopen(int fd,const char *mode){
-	FILE *fp;
-	fp = fdopen(fd,mode);
-	if( fp && streq(mode,"r") ){
-		/*can have significant effect on parallelism */
-		//setbuffer(fp,NULL,0);
-	}
-	//fprintf(stderr,"---- dgzlib:fdopen(%d,%s)=%X\n",fd,mode,fp);
-	return fp;
-}
 int getthreadid();
 int strCRC32(PCStr(str),int len);
 int strCRC32add(int crc,PCStr(str),int len);
-static int inlen;
-static int xfread(char *buf,int siz,int nel,FILE *fp){
-	int rel;
-
-	fPollIn(fp,0);
-	errno = 0;
-	rel = fread(buf,siz,nel,fp);
-	if( rel == 0 ){
-		while( !feof(fp) ){
-			fPollIn(fp,0);
-			rel = fread(buf,siz,nel,fp);
-fprintf(stderr,"----[%d] dgzlib:fread(%d)=%d RETRY\n",
-getpid(),fileno(fp),rel);
-			if( 0 < rel ){
-				break;
-			}
-		}
-	}
-
-	if( rel <= 0 ){
-		syslog_ERROR("[%X] xfread rcc=%d/%d +%d errno=%d\n",
-			getthreadid(),rel,nel,inlen,errno);
-	}
-
-	if( 0 < rel ){
-		inlen += rel;
-		if( errno == EAGAIN ){
-//fprintf(stderr,">>>>>>> dgzlib:fread(%d)=%d, errno=%d\n",fileno(fp),rel,errno);
-			clearerr(fp);
-			errno = 0;
-		}
-	}
-	return rel;
-}
-static int xfwrite(const char *buf,int siz,int nel,FILE *fp){
-	int wel;
-	wel = fwrite(buf,siz,nel,fp);
-	fflush(fp);
-	return wel;
-}
-static int xfflush(FILE *fp){
-	return fflush(fp);
-}
-static int xfclose(FILE *fp){
-	return fclose(fp);
-}
-static int symaddr(const char *sym,const void *addr,void **xaddr){
-	if( addr == fdopen ){ *xaddr = (void*)xfdopen; return 1; }
-	if( addr == fflush ){ *xaddr = (void*)xfflush; return 1; }
-	if( addr == fclose ){ *xaddr = (void*)xfclose; return 1; }
-	if( addr == fread  ){ *xaddr = (void*)xfread;  return 1; }
-	if( addr == fwrite ){ *xaddr = (void*)xfwrite; return 1; }
-	return 0;
-}
-
 extern int inGzip;
 extern const char *FL_F_Gzip;
 extern int FL_L_Gzip;
 
 int gzipInit0(){
-	int code;
-	code = dl_library("z",dlmap_zlib,"");
-	if( code != 0 && isCYGWIN() ){
-		code = dl_library("dgzlib1",dlmap_zlib,"");
-	}
-	return code;
+	return 0;
 }
 /*
 #define GZdopen(fd,mode) gzdopen(fd,mode)
@@ -180,168 +75,10 @@ int GZclose(gzFile file){
 	return rcode;
 }
 
-static void *Zmalloc(int siz){
-	void *ptr;
-	int nsiz;
-	nsiz = ((siz+127)/128)*128;
-	ptr = malloc(nsiz);
-	GZDBG(stderr,"-- %4X Zmalloc(%d/%d)=%X\n",TID,siz,nsiz,p2i(ptr));
-	return ptr;
-}
-void Zfree(void *ptr){
-	free(ptr);
-	GZDBG(stderr,"-- %4X Zfree(%X)\n",TID,p2i(ptr));
-}
-
-static void Znotify(const char *fmt,...){
-	VARGS(8,fmt);
-	fprintf(stderr,fmt,VA8);
-}
-static void Zclearerr(FILE *fp){
-	clearerr(fp);
-	GZDBG(stderr,"-- %X Zclearerr(%X)\n",TID,fileno(fp));
-}
 int SocketOf(int fd);
 int ShutdownSocket(int fd);
 int Gzip_NoFlush;
 int fdebug(FILE *fp,const char *mode);
-static int Zfclose(FILE *fp){
-	int fd;
-	int sock;
-	int rcode;
-
-	fflush(fp);
-	fd = fileno(fp);
-	if( sock = SocketOf(fd) ){
-		ShutdownSocket(fileno(fp));
-	}
-	rcode = fclose(fp);
-	GZDBG(stderr,"-- %X Zfclose(%X)=%d %s\n",TID,fd,rcode,
-		sock?"(SOCKET)":"");
-
-	return rcode;
-}
-static FILE *Zfdopen(int fd,const char *mode){
-	FILE *fp;
-	if( (fd & 0x80000000) ){
-		fp = 0;
-	}else
-	fp = fdopen(fd,mode);
-	GZDBG(stderr,"-- %X Zfdopen(%X,%s)=%X\n",TID,fd,mode,p2i(fp));
-	if( fp && Gzip_NoFlush ){
-		/*
-		fdebug(fp,"w");
-		*/
-	}
-	return fp;
-}
-static int Zfeof(FILE *fp){
-	int rcode;
-	rcode = feof(fp);
-	GZDBG(stderr,"-- %X Zfeof(%X)=%d\n",TID,fileno(fp),rcode);
-	return rcode;
-}
-static int Zferror(FILE *fp){
-	int rcode;
-	rcode = ferror(fp);
-	GZDBG(stderr,"-- %X Zferror(%X)=%d\n",TID,fileno(fp),rcode);
-	return rcode;
-}
-static int Zfflush(FILE *fp){
-	int rcode;
-	rcode = fflush(fp);
-	GZDBG(stderr,"-- %X Zfflush(%X)=%d\n",TID,fileno(fp),rcode);
-	return rcode;
-}
-static int Zfgetc(FILE *fp){
-	int ch;
-	ch = fgetc(fp);
-	GZDBG(stderr,"-- %X Zfgetc(%X)=%02X\n",TID,fileno(fp),ch);
-	return ch;
-}
-static int Zfprintf(FILE *fp,const char *fmt,...){
-	int len;
-	VARGS(16,fmt);
-	len = fprintf(fp,fmt,VA16);
-	GZDBG(stderr,"-- %X Zfprintf(%X)=%d\n",TID,fileno(fp),len);
-	return len;
-}
-static int Zfputc(int ch,FILE *fp){
-	int rcode;
-	rcode = fputc(ch,fp);
-	GZDBG(stderr,"-- %X Zfputc(%02X,%X)=%02X\n",TID,ch,fileno(fp),rcode);
-	return rcode;
-}
-int fgetBuffered(PVStr(b),int n,FILE *fp);
-static size_t Zfread(void *b,size_t z,size_t n,FILE *fp){
-	int rcc;
-	char *bp;
-	/*
-	if( !isWindowsCE() && z == 1 && ready_cc(fp) <= 0 ){
-	*/
-	if( z == 1 ){
-		int rcc2;
-		int fd = fileno(fp);
-		/*
-		rcc = read(fd,b,n);
-		*/
-		bp = (char*)b;
-		rcc = fgetBuffered(ZVStr(bp,z),z,fp);
-		if( 0 < rcc ){
-			GZDBG(stderr,"-- %X Zfread:buff=%d\n",TID,rcc);
-		}else
-		if( rcc < 0 ){
-			rcc = 0;
-		}
-		if( rcc < 32 && rcc < n ){
-			rcc += read(fd,bp+rcc,n-rcc);
-		}
-		if( 0 < rcc && rcc < 32 && rcc < n ){
-			if( 0 < PollIn(fd,30) ){
-				rcc2 = read(fd,((char*)b)+rcc,n-rcc);
-				if( 0 < rcc2 ){
-					rcc += rcc2;
-				}else{
-				}
-			}else{
-			}
-		}else{
-		}
-	}else{
-	rcc = fread(b,z,n,fp);
-	}
-	GZDBG(stderr,"-- %X Zfread(%X,%d,%d)=%d\n",TID,fileno(fp),ll2i(z),ll2i(n),rcc);
-	return rcc;
-}
-static size_t Zfwrite(const void *b,size_t z,size_t n,FILE *fp){
-	int wcc;
-	wcc = fwrite(b,z,n,fp);
-	GZDBG(stderr,"-- %X Zfwrite(%X,%d,%d)=%d S%d\n",TID,fileno(fp),ll2i(z),ll2i(n),wcc,
-		SocketOf(fileno(fp)));
-	return wcc;
-}
-static int Zftell(FILE *fp){
-	int off;
-	off = ftell(fp);
-	GZDBG(stderr,"-- %X Zftell(%X)=%d\n",TID,fileno(fp),off);
-	return -1;
-}
-int Zfgzflush(FILE *fp){
-	int fd;
-	int rcode;
-
-	fd = fileno(fp);
-	rcode = fPollIn(fp,500);
-	GZDBG(stderr,"-- %X Zfgzflush(%X)=%d\n",TID,fd,rcode);
-	return rcode <= 0;
-}
-static char *Zstrerror(int code){
-	char *es;
-	es = strerror(code);
-	GZDBG(stderr,"---- Zstrerror(%d)\n",code);
-	return es;
-}
-
 
 static int zlib_dl;
 static int zlib_pid;
@@ -370,42 +107,9 @@ int gzipInit(){
 	}
 	code = gzipInit0();
 	if( code == 0 ){
-		if( mydlsym("gziocallback") )
-		if( gziocallback("gzionotify",(void*)Znotify) == 0 ){
-			_dg_zlib = 1;
-			gziocallback("clearerr", (void*)Zclearerr);
-			gziocallback("fclose",   (void*)Zfclose);
-			gziocallback("fdopen",   (void*)Zfdopen);
-			gziocallback("feof",     (void*)Zfeof);
-			gziocallback("ferror",   (void*)Zferror);
-			gziocallback("fflush",   (void*)Zfflush);
-			gziocallback("fgetc",    (void*)Zfgetc);
-			gziocallback("fprintf",  (void*)Zfprintf);
-			gziocallback("fputc",    (void*)Zfputc);
-			gziocallback("fread",    (void*)Zfread);
-			gziocallback("fwrite",   (void*)Zfwrite);
-			gziocallback("ftell",    (void*)Zftell);
-			gziocallback("strerror", (void*)Zstrerror);
-			if( strneq(zlibVersion(),"1.2.3.f-DeleGate-v",18) )
-			if( 4 <= atoi(zlibVersion()+18) ){
-				gziocallback("malloc",  (void*)Zmalloc);
-				gziocallback("free",    (void*)Zfree);
-				gziocallback("fgzflush",(void*)Zfgzflush);
-				InitLog("+++ fgzflush() / %s\n",zlibVersion());
-			}
-		}
-	}
-	if( code == 0 ){
-		InitLog("+++ loaded Zlib %s\n",zlibVersion());
-		if( lDYLIB() )
-		printf("+++ loaded Zlib %s\n",zlibVersion());
+		InitLog("+++ linked Zlib %s\n",zlibVersion());
 		zlib_pid = getpid();
 		zlib_dl = 1;
-		if( _gzfuncs = (GZFUNCS)mydlsym("gzfuncs") ){
-//fprintf(stderr,"----------- fdopen=%X,fread=%X\n",fdopen,fread);
-			(*_gzfuncs)((void*)xfdopen,(void*)xfread,(void*)xfwrite,0,0,(void*)xfflush,(void*)xfclose);
-			DGzlibVer = 1;
-		}
 	}else{
 		zlib_dl = -1;
 	}
@@ -779,7 +483,6 @@ int gunzipFilterX(FILE *in,FILE *out,SyncF syncf,void *sp,int si){
 	int gi;
 	int fd = -1;
 
-	inlen = 0;
 	errno = 0;
 	fd = dup(fileno(in));
 
@@ -915,10 +618,6 @@ porting_dbg("+++EPIPE[%d] gunzip fwrite() %d/%d err=%d/%d %d SIG*%d",fileno(out)
 		}
 		fseek(out,0,0);
 		syslog_DEBUG("(%f)gunzipFilter -> %d\n",Time()-Start,size);
-
-if( lTHREAD() )
-if( 0 < inlen )
-syslog_ERROR("###GUNZIP filter %d/%d\n",inlen,size);
 		return size;
 	}
 	return 0;
@@ -967,96 +666,6 @@ int inflateFilter(FILE *in,FILE *out){
 }
 */
 
-#define Z_OK		 0
-#define Z_STREAM_END	 1
-#define Z_ERRNO		-1
-#define Z_STREAM_ERROR	-2
-#define Z_VERSION_ERROR	-6
-#define Z_SYNC_FLUSH	 2
-#define Z_BEST_SPEED	 1
-
-/* portable z_stream ...
- * z_stream available at the runtime might be different from the one
- * at the compile time ...
- */
-typedef struct _Z64_stream {
-     const char	*next_in;
-	int	 avail_in;
-	Int64	 total_in; /* long or off_t */
-
-	char	*next_out;
-	int	 avail_out;
-	Int64	 total_out; /* long or off_t */
-
-	char	*msg;
-	void	*state;
-
-	void  *(*zalloc)(void*,unsigned int,unsigned int);
-	void   (*zfree)(void*,void*);
-	void	*opaque;
-
-	int	 data_type;
-	long	 adler;
-	long	 reserved;
-} Z64_stream;
-typedef struct _Z32_stream {
-     const char	*next_in;
-	int	 avail_in;
-	long	 total_in; /* long or off_t */
-
-	char	*next_out;
-	int	 avail_out;
-	long	 total_out; /* long or off_t */
-
-	char	*msg;
-	void	*state;
-
-	void  *(*zalloc)(void*,unsigned int,unsigned int);
-	void   (*zfree)(void*,void*);
-	void	*opaque;
-
-	int	 data_type;
-	long	 adler;
-	long	 reserved;
-} Z32_stream;
-static int Zenpack(Z1Ctx *Zc,Z32_stream *Z32){
-	Z64_stream *Z64 = (Z64_stream*)Zc->z1_Z1;
-
-	Z32->next_in   = Z64->next_in;
-	Z32->avail_in  = Z64->avail_in;
-	Z32->total_in  = Z64->total_in;
-	Z32->next_out  = Z64->next_out;
-	Z32->avail_out = Z64->avail_out;
-	Z32->total_out = Z64->total_out;
-	Z32->msg       = Z64->msg;
-	Z32->state     = Z64->state;
-	Z32->zalloc    = Z64->zalloc;
-	Z32->zfree     = Z64->zfree;
-	Z32->opaque    = Z64->opaque;
-	Z32->data_type = Z64->data_type;
-	Z32->adler     = Z64->adler;
-	Z32->reserved  = Z64->reserved;
-	return 0;
-}
-static int Zdepack(Z1Ctx *Zc,Z32_stream *Z32){
-	Z64_stream *Z64 = (Z64_stream*)Zc->z1_Z1;
-
-	Z64->next_in   = Z32->next_in;
-	Z64->avail_in  = Z32->avail_in;
-	Z64->total_in  = Z32->total_in;
-	Z64->next_out  = Z32->next_out;
-	Z64->avail_out = Z32->avail_out;
-	Z64->total_out = Z32->total_out;
-	Z64->msg       = Z32->msg;
-	Z64->state     = Z32->state;
-	Z64->zalloc    = Z32->zalloc;
-	Z64->zfree     = Z32->zfree;
-	Z64->opaque    = Z32->opaque;
-	Z64->data_type = Z32->data_type;
-	Z64->adler     = Z32->adler;
-	Z64->reserved  = Z32->reserved;
-	return 0;
-}
 
 static void *zalloc(void *opq,unsigned int ne,unsigned int siz){
 	Z1Ctx *Zc = (Z1Ctx*)opq;
@@ -1089,88 +698,36 @@ static void zfree(void *opq,void *ptr){
 	Zc->z1_fcnt++;
 }
 int XdeflateInit_(Z1Ctx *Zc,int level,const char *version,int siz){
-	Z32_stream Z32;
-
-	if( deflateInit_(Zc->z1_Z1,level,version,sizeof(Z64_stream)) == Z_OK ){
-		Zc->z1_ssize = sizeof(Z64_stream);
-		return Z_OK;
-	}
-	Zenpack(Zc,&Z32);
-	if( deflateInit_(&Z32,level,version,sizeof(Z32_stream)) == Z_OK ){
-		Zdepack(Zc,&Z32);
-		Zc->z1_ssize = sizeof(Z32_stream);
+	if( deflateInit_((z_streamp)Zc->z1_Z1,level,version,sizeof(z_stream)) == Z_OK ){
+		Zc->z1_ssize = sizeof(z_stream);
 		return Z_OK;
 	}
 	return Z_VERSION_ERROR;
 }
 int XinflateInit_(Z1Ctx *Zc,const char *version,int siz){
-	Z32_stream Z32;
-
-	if( inflateInit_(Zc->z1_Z1,version,sizeof(Z64_stream)) == Z_OK ){
-		Zc->z1_ssize = sizeof(Z64_stream);
-		return Z_OK;
-	}
-	Zenpack(Zc,&Z32);
-	if( inflateInit_(&Z32,version,sizeof(Z32_stream)) == Z_OK ){
-		Zdepack(Zc,&Z32);
-		Zc->z1_ssize = sizeof(Z32_stream);
+	if( inflateInit_((z_streamp)Zc->z1_Z1,version,sizeof(z_stream)) == Z_OK ){
+		Zc->z1_ssize = sizeof(z_stream);
 		return Z_OK;
 	}
 	return Z_VERSION_ERROR;
 }
 int Xdeflate(Z1Ctx *Zc,int flush){
-	Z32_stream Z32;
-	int rcode;
-
-	if( Zc->z1_ssize == sizeof(Z64_stream) ){
-		return deflate(Zc->z1_Z1,flush);
-	}
-	Zenpack(Zc,&Z32);
-	rcode = deflate(&Z32,flush);
-	Zdepack(Zc,&Z32);
-	return rcode;
+	return deflate((z_streamp)Zc->z1_Z1,flush);
 }
 int Xinflate(Z1Ctx *Zc,int flush){
-	Z32_stream Z32;
-	int rcode;
-
-	if( Zc->z1_ssize == sizeof(Z64_stream) ){
-		return inflate(Zc->z1_Z1,flush);
-	}
-	Zenpack(Zc,&Z32);
-	rcode = inflate(&Z32,flush);
-	Zdepack(Zc,&Z32);
-	return rcode;
+	return inflate((z_streamp)Zc->z1_Z1,flush);
 }
 int XdeflateEnd(Z1Ctx *Zc){
-	Z32_stream Z32;
-	int rcode;
-
-	if( Zc->z1_ssize == sizeof(Z64_stream) ){
-		return deflateEnd(Zc->z1_Z1);
-	}
-	Zenpack(Zc,&Z32);
-	rcode = deflateEnd(&Z32);
-	Zdepack(Zc,&Z32);
-	return rcode;
+	return deflateEnd((z_streamp)Zc->z1_Z1);
 }
 int XinflateEnd(Z1Ctx *Zc){
-	Z32_stream Z32;
-	int rcode;
-
-	if( Zc->z1_ssize == sizeof(Z64_stream) ){
-		return inflateEnd(Zc->z1_Z1);
-	}
-	Zenpack(Zc,&Z32);
-	rcode = inflateEnd(&Z32);
-	Zdepack(Zc,&Z32);
-	return rcode;
+	return inflateEnd((z_streamp)Zc->z1_Z1);
 }
 
 Z1Ctx *createZ1(Z1Ctx *Zc,int de){
-	int siz = sizeof(Z64_stream);
+	int siz = sizeof(z_stream);
 	const char *ver;
-	Z64_stream *Z1;
+	z_stream *Z1;
 	int rcode;
 
 	if( gzipInit() != 0 ){
@@ -1178,11 +735,11 @@ Z1Ctx *createZ1(Z1Ctx *Zc,int de){
 		return 0;
 	}
 	ver = zlibVersion();
-	Z1 = (Z64_stream*)malloc(siz);
+	Z1 = (z_stream*)malloc(siz);
 	bzero(Z1,siz);
 
-	Z1->zalloc = zalloc;
-	Z1->zfree = zfree;
+	Z1->zalloc = (alloc_func)zalloc;
+	Z1->zfree = (free_func)zfree;
 	Z1->opaque = Zc;
 	Zc->z1_Z1 = Z1;
 	if( de ){
@@ -1212,26 +769,26 @@ int inflateZ1end(Z1Ctx *Zc){
 	return 0;
 }
 int deflateZ1(Z1Ctx *Zc,PCStr(in),int len,PVStr(out),int osz){
-	Z64_stream *Z1 = (Z64_stream*)Zc->z1_Z1;
+	z_stream *Z1 = (z_stream*)Zc->z1_Z1;
 	int rcode;
 
-	Z1->next_in = in;
+	Z1->next_in = (Bytef*)in;
 	Z1->avail_in = len;
-	Z1->next_out = (char*)out;
+	Z1->next_out = (Bytef*)out;
 	Z1->avail_out = osz;
 	rcode = Xdeflate(Zc,Z_SYNC_FLUSH);
-	return Z1->next_out - out;
+	return (char*)Z1->next_out - (char*)out;
 }
 int inflateZ1(Z1Ctx *Zc,PCStr(in),int len,PVStr(out),int osz){
-	Z64_stream *Z1 = (Z64_stream*)Zc->z1_Z1;
+	z_stream *Z1 = (z_stream*)Zc->z1_Z1;
 	int rcode;
 
-	Z1->next_in = in;
+	Z1->next_in = (Bytef*)in;
 	Z1->avail_in = len;
-	Z1->next_out = (char*)out;
+	Z1->next_out = (Bytef*)out;
 	Z1->avail_out = osz;
 	rcode = Xinflate(Zc,Z_SYNC_FLUSH);
-	return Z1->next_out - out;
+	return (char*)Z1->next_out - (char*)out;
 }
 int Zsize(int *asize){
 	Z1Ctx eZcb,*eZc = &eZcb;

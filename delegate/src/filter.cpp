@@ -241,7 +241,7 @@ static const char *open_cfi(PCStr(file))
 
 void set_CERTDIR(PCStr(dir),int exp);
 static int certdir_set;
-DG_PARAM(CERTDIR, "CERTDIR=dir", "${ETCDIR}/certs", "Directory with the certificates and keys used by SSLway", "CERTDIR=/etc/delegate/certs")
+DG_PARAM(CERTDIR, "CERTDIR=dir", "${ETCDIR}/certs", "Directory with the certificates and keys of SSLway, also the generated default certificate", "CERTDIR=/etc/delegate/certs")
 void scan_CERTDIR(Connection *Conn,PCStr(dir)){
 	IStr(xdir,1024);
 	if( !isFullpath(dir) && !strneq(dir,"./",2) ){
@@ -252,7 +252,7 @@ void scan_CERTDIR(Connection *Conn,PCStr(dir)){
 	certdir_set = 1;
 }
 void scan_TLSCONFs(Connection *Conn,PCStr(confs));
-DG_PARAM(TLSCONF, "TLSCONF=tlsConf[,tlsConf]*", "scache:do,xcache:do", "TLS settings such as session caches, log detail and libraries", "TLSCONF=\"libs:crypto+ssl\"")
+DG_PARAM(TLSCONF, "TLSCONF=tlsConf[,tlsConf]*", "scache:do,xcache:do", "TLS settings such as session caches, shutdown alert and log detail", "TLSCONF=\"scache:no,shutdown\"")
 void scan_TLSCONF(Connection *Conn,PCStr(confs)){
 	CStr(sel,256);
 	const char *dp;
@@ -271,7 +271,6 @@ void scan_TLSCONF(Connection *Conn,PCStr(confs)){
 	}
 	scan_TLSCONFs(Conn,confs);
 }
-void sslway_dflt_certkey(PCStr(cert),PCStr(pkey));
 int sslway_dl();
 int sslwayFilter(SSLwayCTX *Swc,int ac,char *av[],FILE *cl,FILE *sv,int internal);
 int sslwayFilterX(SSLwayCTX *Swc,int ac,char *av[],int clnt,int serv,int internal);
@@ -342,9 +341,6 @@ static int XsslwayFilterX(SSLwayCTX *Swc,Connection *XConn,int clnt,int serv,PCS
 	CStr(argb,1024);
 	const char *av[32];
 	int ac;
-	const char *cert;
-	const char *key;
-	int size,date;
 	int rcode;
 	const char **nav;
 
@@ -385,10 +381,6 @@ static int XsslwayFilterX(SSLwayCTX *Swc,Connection *XConn,int clnt,int serv,PCS
 			sprintf(ap,"SNIHOST=%s",snihost);
 		}
 	}
-
-	cert= get_builtin_data("builtin/config/anonymous-cert.pem",&size,&date);
-	key = get_builtin_data("builtin/config/anonymous-key.pem",&size,&date);
-	sslway_dflt_certkey(cert,key);
 
 	/*
 	nav = (const char**)Dupv(av);

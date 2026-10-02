@@ -14,8 +14,14 @@ sys.dont_write_bytecode = True
 HERE = os.path.dirname(os.path.abspath(__file__))
 PARAM_DEF = re.compile(r'^char\s+P_\w+\[\]\s*=\s*"([^"]*)"\s*;', re.M)
 LITERAL = re.compile(r'\b\w*getEnv\w*\s*\(\s*"([A-Z][A-Z0-9_]*)"')
-SUB_FUNCS = {'MAXIMA': 'maxima1', 'TIMEOUT': 'timeout1'}
 SUB_NAME = re.compile(r'streq\(\s*name\s*,\s*"([^"]+)"\s*\)')
+TLS_SUB_NAME = re.compile(r'strcaseeq\(\s*what\s*,\s*"([^"]+)"\s*\)')
+# parameter: (source file, function evaluating the options, pattern of the option names)
+SUB_FUNCS = {
+    'MAXIMA': ('delegate/src/env.cpp', 'maxima1', SUB_NAME),
+    'TIMEOUT': ('delegate/src/env.cpp', 'timeout1', SUB_NAME),
+    'TLSCONF': ('delegate/filters/sslway.cpp', 'scan_TLSCONF1', TLS_SUB_NAME),
+}
 
 
 def load_generator():
@@ -53,10 +59,10 @@ def used_parameters(gen, root):
 
 def used_sub_options(root):
     subs = {}
-    text = read(os.path.join(root, 'delegate', 'src', 'env.cpp'))
-    for parent, func in SUB_FUNCS.items():
-        for n in SUB_NAME.findall(function_body(text, func)):
-            subs[(parent, n)] = 'delegate/src/env.cpp'
+    for parent, (path, func, pattern) in SUB_FUNCS.items():
+        text = read(os.path.join(root, path))
+        for n in pattern.findall(function_body(text, func)):
+            subs[(parent, n)] = path
     return subs
 
 
