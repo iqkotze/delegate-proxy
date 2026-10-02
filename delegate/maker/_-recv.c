@@ -12,11 +12,7 @@ int RecvPeek(int sock,void *buf,int len)
 int RecvPeek_FL(int sock,void *buf,int len,FL_PAR)
 {
 	((char*)buf)[0] = 0;
-#ifdef __APPLE__
-	return recvDarwin(sock,(char*)buf,len,MSG_PEEK,FL_BAR);
-#else
 	return recv(sock,(char*)buf,len,MSG_PEEK);
-#endif
 }
 
 int RecvLine(int sock,void *vbuf,int len)

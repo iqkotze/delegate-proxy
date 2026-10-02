@@ -24,15 +24,8 @@ History:
 #include "vsignal.h"
 int IsSolaris();
 
-#if defined(SA_RESTART) || defined(sun)
+#if defined(SA_RESTART)
 
-#ifdef sun
-/* an executalbe compiled on SunOS may be executed on Solaris,
- * therefore SA_RESTART given by preprocessor cannot be used.
- */
-#undef SA_RESTART
-#define SA_RESTART (IsSolaris() ? 4 : 0)
-#endif
 
 vfuncp BSDsignal(int sig,void (*func)(int))
 {	int rcode;

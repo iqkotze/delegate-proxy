@@ -5,80 +5,19 @@
 #include <stdio.h>
 #include <string.h>
 
-#if defined(__linux__) /* RedHat6 */ \
- || defined(__APPLE__) /* gcc4.0 */ \
- || defined(__osf__) /* DEC ALPHA */ \
- || defined(__CYGWIN__)
 
 #include <sys/time.h>
-#endif
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifndef _MSC_VER
 #include <stdlib.h>
-#endif
-
-#ifdef _MSC_VER
-#include <windows.h>
-#include <winbase.h>
-static void utime2ftime(struct timeval *tv,FILETIME *ftime)
-{	int year,mon,day,hour,min,sec;
-	struct tm *tm;
-	WORD ddate,dtime;
-	struct tm tm0;
-	time_t tsec;
-
-	tsec = tv->tv_sec;
-	tm = gmtime(&tsec);
-	/*
-	tm = gmtime(&tv->tv_sec);
-	*/
-	if( tm == 0 ){
-		memset(&tm0,0,sizeof(tm0));
-		tm = &tm0;
-	}
-
-	year = tm->tm_year + 1900 - 1980;
-	mon  = tm->tm_mon  +  1;
-	day  = tm->tm_mday;
-	hour = tm->tm_hour;
-	min  = tm->tm_min;
-	sec  = tm->tm_sec / 2;
-	ddate = (year <<  9) | (mon << 5) | day;
-	dtime = (hour << 11) | (min << 5) | sec;
-	DosDateTimeToFileTime(ddate,dtime,ftime);
-}
-int utimes(const char *path,struct timeval *tvp)
-{	HANDLE fh;
-	FILETIME atime,mtime;
-	BOOL ok;
-	struct tm *tm;
-
-	fh = CreateFile(path,GENERIC_READ|GENERIC_WRITE,
-		0,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-	if( fh == NULL )
-		return -1;
-
-	utime2ftime(&tvp[0],&atime);
-	utime2ftime(&tvp[1],&mtime);
-
-	ok = SetFileTime(fh,NULL,&atime,&mtime);
-	CloseHandle(fh);
-	if( ok )
-		return 0;
-	else	return -1;
-}
-#endif
 
 
-#include "../putsigned.c"
-#ifndef _PUTSIGNED_C_
+
 int putsigned(FILE *in,FILE *out,char *line,int didsign){
 	return 0;
 }
-#endif
 
 static int p2i(const void *p){
 	union {

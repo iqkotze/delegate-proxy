@@ -4,9 +4,7 @@ int SUBST_strrcasestr = 1;
 #include <ctype.h>
 
 #include "ystring.h"
-#if !defined(__KURO_BOX__)
 int strncasecmp(const char *s1, const char *s2, size_t n);
-#endif
 
 char *strrcasestr(const char *s1,const char *s2)
 {	const char *p1;

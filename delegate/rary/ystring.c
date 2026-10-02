@@ -26,11 +26,6 @@ TODO:
 #include <stdio.h>
 #include <errno.h>
 
-#if defined(_MSC_VER) && defined(UNDER_CE)
-static int Igetc(FILE *fp){ return getc(fp); }
-char *strdup(const char*);
-FILE *fdopen(int,const char*);
-#endif
 
 const char *MyVer = "";
 
@@ -158,31 +153,15 @@ FILE *Xtmpfile(FL_Par){
 int p2iX(FL_PAR,const void *p);
 #define p2i(p) p2iX(FL_ARG,p)
 
-#if defined(_MSC_VER) && UNDER_CE
-#define isWindowsCE() 1
-#define isWindows() 1
-int XX_fflush_FL(const char *F,int L,FILE *fp);
-int XX_fclose_FL(const char *F,int L,FILE *fp);
-int XX_fcloseFILE_FL(const char *F,int L,FILE *fp);
-FILE *XX_fdopen_FL(const char *F,int L,int fd,const char *mode);
-FILE *XX_fopen_FL(const char *F,int L,const char *path,const char *mode);
-#define FL_fcloseFILE(F,L,fp) 0
-#else
 int FL_fcloseFILE(const char *F,int L,FILE *fp);
 #define isWindowsCE() 0
 #define XX_fgets(buf,siz,fp) 0
 #define XX_fflush_FL(FL_P,fp) 0
-#if defined(_MSC_VER)
-#define isWindows() 1
-int XX_fclose_FL(const char *F,int L,FILE *fp);
-#else
 #define isWindows() 0
 #define XX_fclose_FL(FL_P,fp) 0
-#endif
 #define XX_fcloseFILE_FL(FL_P,fp) 0
 #define XX_fdopen_FL(FL_P,fd,mode) 0
 #define XX_fopen_FL(FL_P,p,m) 0
-#endif
 
 /* may block seconds for linger. */
 /* fcloseFILE() under mutex + close() could be enough. */
@@ -284,11 +263,6 @@ FILE *XXfopen(FL_Par,const char *path,const char *mode){
 	return fp;
 }
 
-#if defined(_MSC_VER) && defined(UNDER_CE)
-int Xfileno(FILE *fp);
-#undef fileno
-#define fileno(f) Xfileno(f)
-#endif
 int pop_fd(int fd,int rw);
 int fpop_fd(FILE *fp){
 	if( feof(fp) ){
@@ -1236,11 +1210,7 @@ d[z-1] = 0;
 	return xn;
 }
 
-#if defined(UNDER_CE)
-char *XX_fgets(PVStr(buf),int siz,FILE *fp);
-#else
 #define XX_fgets(buf,siz,fp) 0
-#endif
 
 char *Xfgets(PVStr(d),int siz,FILE *fp){
 	char *dp; /**/
@@ -2076,130 +2046,6 @@ int Xputenv_FL(FL_PAR,const char *env){
 	return rcode;
 }
 
-#ifdef _MSC_VER
-int open_FL(FL_PAR, const char *path,int flag);
-int close_FL(FL_PAR, int fd);
-int dup_FL(FL_PAR, int fd);
-int dup2_FL(FL_PAR, int sfd,int dfd);
-int socketpair_FL(FL_PAR, int d,int t,int p,int v[]);
-int accept_FL(FL_PAR, int fdd,void *sa,int *len);
-int socket_FL(FL_PAR,int d,int t,int p);
-
-int Xopen_FL(FL_PAR, const char *path,int flag){
-	int rcode;
-	if( isWindows() ){
-		Lock locked;
-		doLockB("open",2);
-		rcode = open_FL(FL_BAR,path,flag);
-		unLockB("open-done",2);
-	}else{
-		rcode = open(path,flag);
-	}
-	return rcode;
-}
-/* may block seconds for linger. */
-int Xclose_FL(FL_PAR, int fd){
-	int rcode;
-	if( isWindows() ){
-		Lock locked;
-		doLockB("close",2);
-		rcode = close_FL(FL_BAR,fd);
-		unLockB("close-done",2);
-	}else{
-		rcode = close(fd);
-	}
-	return rcode;
-}
-int Xdup_FL(FL_PAR, int fd){
-	int rcode;
-	if( isWindows() ){
-		Lock locked;
-		doLockB("dup",2);
-		rcode = dup_FL(FL_BAR,fd);
-		unLockB("dup-done",2);
-	}else{
-		rcode = dup(fd);
-	}
-	return rcode;
-}
-int Xdup2_FL(FL_PAR, int sfd,int dfd){
-	int rcode;
-	if( isWindows() ){
-		Lock locked;
-		doLockB("dup2",2);
-		rcode = dup2_FL(FL_BAR,sfd,dfd);
-		unLockB("dup2-done",2);
-	}else{
-		rcode = dup2(sfd,dfd);
-	}
-	return rcode;
-}
-int Xsocketpair_FL(FL_PAR,int d,int t,int p,int v[]){
-	int rcode;
-	if( isWindows() ){
-		Lock locked;
-		doLockB("socketpair",2);
-		rcode = socketpair_FL(FL_BAR,d,t,p,v);
-		unLockB("socketpair-done",2);
-	}else{
-		rcode = socketpair(d,t,p,v);
-	}
-	return rcode;
-}
-int Xaccept_FL(FL_PAR,int fd,void *sa,int *len){
-	int rcode;
-	if( isWindows() ){
-		Lock locked;
-		doLockB("accept",2);
-		rcode = accept_FL(FL_BAR,fd,sa,len);
-		unLockB("accept-done",2);
-	}else{
-		rcode = accept(fd,sa,len);
-	}
-	return rcode;
-}
-int Xsocket_FL(FL_PAR,int d,int t,int p){
-	int rcode;
-	if( isWindows() ){
-		Lock locked;
-		doLockB("socket",2);
-		rcode = socket_FL(FL_BAR,d,t,p);
-		unLockB("socket-done",2);
-	}else{
-		rcode = socket(d,t,p);
-	}
-	return rcode;
-}
-
-#undef filemmap
-#undef freemmap
-MMap *Xfilemmap_FL(FL_PAR,PCStr(fname),PCStr(fmode),int off,int len){
-	MMap *mm;
-	if( isWindows() ){
-		Lock locked;
-		doLockB("filemmap",2);
-		mm = filemmap(fname,fmode,off,len);
-		unLockB("filemmap-done",2);
-	}else{
-		mm = filemmap(fname,fmode,off,len);
-	}
-	return mm;
-}
-int Xfreemmap_FL(FL_PAR,MMap *mm){
-	int rcode;
-	if( isWindows() ){
-		Lock locked;
-		doLockB("freemmap",2);
-		rcode = freemmap(mm);
-		unLockB("freemmap-done",2);
-	}else{
-		rcode = freemmap(mm);
-	}
-	return rcode;
-}
-
-#else
-#endif
 
 static int ignRet;
 int *IgnRet(FL_PAR){

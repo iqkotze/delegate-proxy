@@ -5,7 +5,6 @@
 /*
  *  Get the count of bufferd characters.
  */
-#ifdef __linux__
 #if defined(__STDIO_STREAM_BUFFER_RAVAIL)
 #define READYCC(fp)      __STDIO_STREAM_BUFFER_RAVAIL(fp)
 #else
@@ -13,38 +12,6 @@
 #define READYCC(fp)     (fp->_IO_read_end - fp->_IO_read_ptr)
 #else
 #define READYCC(fp)     (fp->_egptr - fp->_gptr)
-#endif
-#endif
-#else
-#if defined(__bsdi__) \
- || defined(__FreeBSD__) \
- || defined(__NetBSD__) \
- || defined(__OpenBSD__) \
- || defined(__MACHTEN__) \
- || defined(__CYGWIN__) || defined(__MINGW32__) \
- || defined(__APPLE__)
-#define READYCC(fp)     (fp->_r)
-#else
-#ifdef __GNU_LIBRARY__
-#define READYCC(fp)     (fp->__get_limit - fp->__bufp)
-#else
-#ifdef __EMX__
-#define READYCC(fp)	(fp->_rcount)
-#else
-#if defined(sun) && defined(__x86_64__)
-#define READYCC(fp)	((int*)fp)[6]
-#elif defined(sun) && defined(m64) && defined(sparc)
-#define READYCC(fp)	((int*)fp)[7]
-#else
-#if defined(_MSC_VER) && defined(UNDER_CE)
-int Xready_cc(FILE *fp);
-#define READYCC(fp)     Xready_cc(fp)
-#else
-#define READYCC(fp)     (fp->_cnt)
-#endif
-#endif
-#endif
-#endif
 #endif
 #endif
 
@@ -131,9 +98,7 @@ extern RelayCtrl *relayCtrlG;
 #define RELAY_getxfd()	((RELAY_ctrl&RELAY_EXITFD)?RELAY_exitfd:-1)
 #define RELAY_setxfd(f)	(RELAY_ctrl|=RELAY_EXITFD),(RELAY_exitfd=f)
 
-#ifndef _MSC_VER
 #include <unistd.h>
-#endif
 
 int top_fd(int fd,int rw);
 int file_issock(int fd);
@@ -181,9 +146,6 @@ void usleep_bypoll(int usec);
 void relay2_cntl(int timeout,int s1,int d1,int s2,int d2,int s3,int d3,int (*cntlfunc)(void*,...),void *arg);
 
 #ifndef NO_INC_IO
-#if defined(_MSC_VER) && defined(UNDER_CE)
-#include <io.h>
-#endif
 #endif
 
 #if defined(FMT_CHECK)

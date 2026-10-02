@@ -1,9 +1,5 @@
 #ifndef FD_SETSIZE
-#if UNDER_CE
-#define FD_SETSIZE	64
-#else
 #define FD_SETSIZE	256
-#endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #endif

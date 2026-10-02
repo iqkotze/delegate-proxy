@@ -7,24 +7,12 @@
 #define MaxHostNameLen	256
 
 extern int isWindows95();
-#ifdef _MSC_VER
-#include "ywinsock.h"
-#define isWindows()	1
-#define MSCver() _MSC_VER
-#define Foff_t __int64
-#define Int64 __int64
-#else
 #define isWindows()	0
 #define MSCver() 0
 #define Foff_t long long int
 #define Int64 long long int
-#endif
 
-#ifdef __CYGWIN__
-#define isCYGWIN()	1
-#else
 #define isCYGWIN()	0
-#endif
 
 #ifdef SIZE32
 typedef int FileSize;
@@ -332,7 +320,7 @@ public:
 #endif
 */
 
-#if defined(QC) && !defined(_MSC_VER) && !defined(NONC99)
+#if defined(QC) && !defined(NONC99)
 #define QVCONST	const
 #else
 #define QVCONST
@@ -395,7 +383,7 @@ public:
 #define SStr(nam,z)	char nam[z]
 #endif /*}*/
 
-#if defined(_MSC_VER) || defined(NONC99)
+#if defined(NONC99)
 #define NONEMPTYARRAY
 #define xMStr(n,z)	NStr(n,z)
 #else
@@ -423,10 +411,8 @@ char *strtailstr(PCStr(str),PCStr(ss));
 char *strtailstrX(PCStr(str),PCStr(ss),int igncase);
 char *strchrX(PCStr(str),int fch,PCStr(inc),PCStr(dec));
 
-#if !defined(__KURO_BOX__)
 char *Strcasestr(PCStr(str),PCStr(ss));
 #define strcasestr(s,t) Strcasestr(s,t)
-#endif
 
 char *strcats3(PVStr(dst),PCStr(s0),PCStr(s1),PCStr(s2));
 void  strreverse(PCStr(str));
@@ -856,173 +842,18 @@ void  stackcopy(char *av[],int ac,char *asT,char *esT,char **areap,int *lengp,in
 char *rsctime(time_t clock,PVStr(lsdate));
 long timeBaseDayLocal(time_t clock);
 
-#ifdef _MSC_VER /* VC++ {*/
-int  bcmp(const void *,const void *,unsigned int);
-void bcopy(const void*,void*,unsigned int);
-void bzero(void*,unsigned int);
-
-FILE *popen(const char*,const char*);
-int  pclose(FILE*);
-
-#include <io.h>
-#include <direct.h>
-#include <process.h>
-#include <malloc.h>
-
-#ifdef __cplusplus
-unsigned int alarm(unsigned int);
-int  chdir(const char*);
-int  chown(const char *,int,int);
-int  fchmod(int,int);
-int  fcntl(int,int,void*);
-int  fork();
-int  ftruncate(int fd,unsigned int);
-int  getegid();
-int  geteuid();
-int  getgid();
-int  getppid();
-int  gettimeofday(struct timeval *tv, struct timezone *tz);
-int  getuid();
-int  inet_aton(const char*,struct in_addr *);
-int  kill(int,int);
-int  killpg(int,int);
-off_t lseek(int,off_t offset,int);
-int  link(const char*,const char*);
-int  lstat(const char *,struct stat *);
-// int  mkdir(const char*,int);
-#define mkdir(d,m) _mkdir(d)
-int  pipe(int []);
-int  seteuid(int);
-void sleep(unsigned int);
-int  strcasecmp(const char*,const char*);
-int  strncasecmp(const char*,const char*,unsigned int n);
-int  usleep(unsigned int);
-int  utimes(const char*,struct timeval*);
-int  readlink(const char*,char*,unsigned int);
-int  rmdir(const char*);
-int  vfork();
-int  wait(int*);
-int  wait3(int*,int,void*);
-int  wait4(int,int*,int,void*);
-int  waitpid(int,int*,int);
-int  initgroups(const char*,int);
-
-int  setsid();
-int  nice(int);
-int  chroot(const char*);
-void setlinebuf(FILE*);
-int  symlink(const char*,const char*);
-void setbuffer(FILE*,char*,unsigned int);
-int  fchown(int,int,int);
-int  setegid(int);
-int  setgid(int);
-int  setuid(int);
-/*
-int  socketpair(int,int,int,int[]);
-*/
-
-char *getlogin(void);
-int setlogin(const char *name);
-struct passwd *getpwent();
-void setpwent();
-void endpwent();
-void endhostent();
-
-#define snprintf _snprintf
-#define vsnprintf _vsnprintf
-
-#else
-#endif
-
-#define sigsetjmp(b,s)	setjmp(b)
-#define siglongjmp	longjmp
-#ifndef sigjmp_buf
-#define sigjmp_buf	jmp_buf
-#endif
-
-struct rusage {
- struct timeval ru_utime;
- struct timeval ru_stime;
-	long	ru_maxrss;
-	long	ru_ixrss;
-	long	ru_idrss;
-	long	ru_isrss;
-	long	ru_minflt;
-	long	ru_majflt;
-	long	ru_nswap;
-	long	ru_inblock;
-	long	ru_oublock;
-	long	ru_msgsnd;
-	long	ru_msgrcv;
-	long	ru_nsignals;
-	long	ru_nvcsw;
-	long	ru_nivcsw;
-};
-int getrusage(int who,struct rusage *rusage);
-
-#else /*}else(UNIX){*/
 #include <unistd.h>
-#ifndef __EMX__
 #include <sys/wait.h>
-#endif
-#if defined(hpux) || defined(__hpux__)
-#include <alloca.h>
-int seteuid(int uid);
-int setegid(int gid);
-void setbuffer(FILE *fp,char *buff,unsigned int size);
-void setlinebuf(FILE *fp);
-#endif
 
-#if !defined(__KURO_BOX__)
 int  bcmp(const void *s1, const void *s2, size_t n);
 void bcopy (const void *src, void *dest, size_t n);
 void bzero(void *s, size_t n);
-#endif
 
 #ifndef _VSIGNAL_H
-#if defined(sun) || defined(__CYGWIN__)
-int sigblock(int mask);
-int sigmask(int signum);
-int sigsetmask(int mask);
-#endif
 #endif
 
-#if defined(sun) /* SunOS5.* {*/
-#undef FS
 
-#if defined(SOLARIS2) || defined(SOLARIS25) /* SunoS5.X {*/
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifndef snprintf
-int __snprintf(char *str,size_t size,const char *format,...);
-#define snprintf __snprintf
-#endif
-#define NOVSNPRINTF
-
-int getrusage(int who, struct rusage *rusage);
-int usleep(unsigned int useconds);
-int utimes(const char *file, struct timeval *tvp);
-int killpg(pid_t pgrp,int sig);
-pid_t wait3(int *statusp, int options,struct rusage *rusage);
-int gethostname(char *name,int namelen);
-int inet_aton(const char *addr,struct in_addr *inap);
-void setbuffer(FILE *iop,char *abuf,size_t asize);
-int setlinebuf(FILE *iop);
-#ifdef __cplusplus
-}
-#endif
-#endif /*}*/
-#endif /*}*/
-#endif /*}*/
-
-#ifdef sun
-#define isSolaris() 1
-#include <alloca.h>
-#else
 #define isSolaris() 0
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -1077,35 +908,10 @@ int FL_fcloseFILE(FL_PAR,FILE *fp);
 int mallocSize(void *p);
 int pipeX(int sv[2],int size);
 
-#ifdef _MSC_VER
-void wlfprintf(const char *fmt,...);
-#else
 #define wlfprintf 0?1:printf
-#endif
 
-#ifdef _MSC_VER
-int Xsocket_FL(FL_PAR,int,int,int);
-int Xaccept_FL(FL_PAR,int fd,void *sa,int *len);
-int Xsocketpair_FL(FL_PAR,int,int,int,int[]);
-int Xopen_FL(FL_PAR,const char *path,int mode);
-int Xclose_FL(FL_PAR,int fd);
-int Xdup_FL(FL_PAR, int fd);
-int Xdup2_FL(FL_PAR, int sfd,int dfd);
-#define socketpair(d,t,p,v) Xsocketpair_FL(FL_ARG,d,t,p,v)
-#undef socket
-#define socket(d,t,p)     Xsocket_FL(FL_ARG,d,t,p)
-#undef accept
-#define accept(fd,sa,len) Xaccept_FL(FL_ARG,fd,sa,len)
-
-//#if defined(UNDER_CE)
-#define open(p,m)       Xopen_FL(FL_ARG,p,m)
-#define close(d)        Xclose_FL(FL_ARG,d)
-//#endif
-
-#else
 #define Xclose_FL(FL_PAR,fd)     close(fd)
 #define Xdup2_FL(FL_PAR,sfd,dfd) dup2(sfd,dfd)
-#endif
 
 FILE *Xfopen(FL_PAR,    const char *f,const char *m);
 #define fopen(f,m)	Xfopen(FL_ARG, f,m)
@@ -1135,11 +941,6 @@ FILE *Xtmpfile(FL_PAR);
 #define TIMEOUT_NEVER      -1
 #define TIMEOUT_IMM        -2
 
-#if !defined(__KURO_BOX__)
-#if defined(SOLARIS25)
-#define flockfile(f)
-#define funlockfile(f)
-#else
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1149,8 +950,6 @@ void funlockfile(FILE *fp);
 #endif
 #ifdef __cplusplus
 }
-#endif
-#endif
 #endif
 
 #ifndef NOVSNPRINTF /*{*/
@@ -1167,14 +966,7 @@ void funlockfile(FILE *fp);
 	va[0] = _msg; /* for(i=1;i<siz;i++)va[i]=0; */ \
 	fmt = "%s";
 
-#if defined(__KURO_BOX__) \
- || defined(__arm__) \
- || defined(__amd64__) \
- || defined(UNDER_CE) \
- || defined(__osf__) \
- || DOUBLEARG_ALIGNED
 #define daVARGS xdaVARGS
-#endif
 #endif /*}*/
 
 int fpurge(FILE *fp);
@@ -1196,67 +988,8 @@ int Xwait(int *status);
 #define wait(s)		Xwait(s)
 */
 
-#if defined(_MSC_VER) && 1400 <= _MSC_VER /* VC2005 or laters */
-__time32_t _time32(__time32_t *t);
-#define time(t) _time32(t)
-#endif
 
 extern int STDIO_IOFBF;
-#if defined(_MSC_VER) && defined(UNDER_CE) /* isWindowsCE(){*/
-#define isWindowsCE() 1
-void dumposf(FILE *tc,PCStr(wh),int min,int max,int dup);
-void dumpFILEX(FILE *tc,int inact);
-void exitX(int code,const char *fmt,...);
-#define exit(code) \
-	exitX(code,"%X exit(%d) from %s:%d",getpid(),code,__FILE__,__LINE__)
-void exitmessage(const char *fmt,...);
-FILE *XX_fopen(const char *path,const char *mode);
-int XX_fgetc(FILE *fp);
-int XX_fread(FL_PAR, void *b,int siz,int nel,FILE *fp);
-int XX_fputc(int ch,FILE *fp);
-int XX_fputs(FL_PAR,const char *s,FILE *fp);
-int XX_fwrite(FL_PAR, const void *b,int siz,int nel,FILE *fp);
-int XX_vfprintf(FILE *fp,const char *fmt,va_list ap);
-int XX_fflush(FILE *fp);
-int XX_fseek(FILE *fp,int off,int wh);
-long XX_ftell(FILE *fp);
-int XX_fclose_FL(FL_PAR, FILE *fp);
-int XX_fcloseFILE_FL(FL_PAR, FILE *fp);
-int XX_setvbuf(FILE *fp,char *buf,int mode,size_t size);
-#undef getc
-#define getc(fp) XX_fgetc(fp)
-#undef fgetc
-#define fgetc(fp) XX_fgetc(fp)
-#undef putc
-#define putc(c,fp) XX_fputc(c,fp)
-#undef fputc
-#define fputc(c,fp) XX_fputc(c,fp)
-#undef fputs
-#define fputs(s,f) XX_fputs(FL_ARG,s,f)
-#define fread(b,z,n,f) XX_fread(FL_ARG, b,z,n,f)
-
-#undef fseek
-#define fseek(fp,off,wh) XX_fseek(fp,off,wh)
-#undef ftell
-#define ftell(fp) XX_ftell(fp)
-#undef setvbuf
-#define setvbuf(fp,buf,mode,size) XX_setvbuf(fp,buf,mode,size)
-
-#include <io.h>
-#define dup(fd) Xdup_FL(FL_ARG, fd)
-#define dup2(sfd,dfd) Xdup2_FL(FL_ARG, sfd,dfd)
-
-int XX_feof(FILE *fp);
-int XX_ferror(FL_PAR, FILE *fp);
-int XX_clearerr(FILE *fp);
-#define feof(fp) XX_feof(fp)
-#define clearerr(fp) XX_clearerr(fp)
-#define ferror(fp) XX_ferror(FL_ARG, fp)
-
-int XX_ungetc(FL_PAR,int ch,FILE *fp);
-#define ungetc(ch,fp) XX_ungetc(FL_ARG,ch,fp)
-
-#else /*}{ !WindowsCE */
 #define isWindowsCE() 0
 #define dumposf(fp,wh,min,max,dup) 0
 #define dumpFILEX(fp,inact) 0
@@ -1275,18 +1008,7 @@ int fcloseFILE(FILE *fp);
 */
 int FL_fcloseFILE(FL_PAR,FILE *fp);
 
-#if defined(_MSC_VER)
-void abortX(FL_PAR);
-void exitX(int code,FL_PAR);
-void _exitX(int code,FL_PAR);
-#define abort() abortX(FL_ARG)
-#define exit(code) exitX(code,FL_ARG)
-#define _exit(code) _exitX(code,FL_ARG)
-#define dup(fd) Xdup_FL(FL_ARG, fd)
-#define dup2(sfd,dfd) Xdup2_FL(FL_ARG, sfd,dfd)
-#endif
 
-#endif /*} !WindowsCE */
 
 void FinishX(PCStr(F),int L,int code);
 #define Finish(code) FinishX(__FILE__,__LINE__,code)
@@ -1335,20 +1057,8 @@ int freemmap(MMap *mm);
 
 
 #ifdef __cplusplus
-#if defined(__hpux__) || defined(sun)
-extern "C" int unsetenv(const char *name);
-#endif
-#endif
-#ifdef _MSC_VER
-void unsetenv(const char *name);
 #endif
 
-#if defined(_MSC_VER)
-MMap *Xfilemmap_FL(FL_PAR,PCStr(fname),PCStr(fmode),int off,int len);
-int Xfreemmap_FL(FL_PAR,MMap *mm);
-#define filemmap(fn,fm,off,len) Xfilemmap_FL(FL_ARG,fn,fm,off,len)
-#define freemmap(mm) Xfreemmap_FL(FL_ARG,mm)
-#endif
 
 void *getmmap(MMap *mmap);
 void *setmmap(void *mh,int off,int len);
@@ -1369,13 +1079,8 @@ int getthreadgix(int tid);
 int setthread_FL(int tid,FL_PAR,PCStr(st));
 int dumpthreads(PCStr(wh),FILE *tc);
 
-#if defined(_MSC_VER) && !isWindowsCE()
-#define tidof(tix)	(tix & 0x00FFFFFF)
-#define tideq(ttid,tid)	(tidof(ttid) == tidof(tid))
-#else
 #define tidof(tix)	(tix)
 #define tideq(ttid,tid)	(tidof(ttid) == tidof(tid))
-#endif
 
 #define SVX (STX_tix)
 #define SVI (STX_tid)
@@ -1477,7 +1182,7 @@ char *FMT_Sprintf(PVStr(str),PCStr(fmt),...);
 
 int FMT_Xsprintf(PVStr(d),PCStr(f),...);
 int FMT_XRsprintf(PRVStr(d),PCStr(f),...);
-#if defined(_MSC_VER) || defined(NONC99)
+#if defined(NONC99)
 #else
 #undef Rsprintf
 #define sprintf(d,f,...) FMT_Xsprintf(TVSTR(d) d,f,##__VA_ARGS__)

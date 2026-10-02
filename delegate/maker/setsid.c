@@ -1,10 +1,6 @@
 int SUBST_setsid = 1;
 #include <sys/ioctl.h>
 
-#if defined(hpux) || defined(__hpux__)
-#include <sys/file.h>
-#define TIOCNOTTY       O_NOCTTY
-#endif
 
 int open(char*,int);
 int close(int);

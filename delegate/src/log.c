@@ -868,12 +868,7 @@ static FILE *open_tmpfile(Logfile *Logf,PCStr(form),PCStr(mode),PCStr(proto))
 	else	return fp;
 }
 
-#if defined(__APPLE__)
-/* to escape leak? (by unknown reason) of file-descriptor on SIGHUP */
-int DUP_TTYLOGFD = 1;
-#else
 int DUP_TTYLOGFD = 0;
-#endif
 
 FILE *open_logfile(Logfile *Logf,PCStr(form),PCStr(mode),PCStr(proto))
 {	FILE *fp;

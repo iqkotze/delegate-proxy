@@ -51,11 +51,7 @@ int INET_Socketpair(int sv[])
 	return SocketPair(AF_INET,SOCK_STREAM,0,sv);
 }
 
-#ifdef _MSC_VER
-#define socketpair_FL(FL_PAR,d,t,p,sv) Xsocketpair_FL(FL_PAR,d,t,p,sv)
-#else
 #define socketpair_FL(FL_PAR,d,t,p,sv) socketpair(d,t,p,sv)
-#endif
 
 int Socketpair_FL(FL_PAR,int sv[])
 {

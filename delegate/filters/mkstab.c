@@ -15,7 +15,6 @@
  *        0,
  *      };
  */
-#ifndef UNDER_CE
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -65,10 +64,7 @@ int main(int ac,char *av[]){
 			}
 		}
 		if( strncmp(line,"#ifdef _MSC_VER",15) == 0 ){
-#ifdef _MSC_VER
-#else
 			skip = 1;
-#endif
 		}
 
 printf("%s",line);
@@ -174,4 +170,3 @@ printf("/*DLST*/ {\"%s\",&%s_PTR_},\n",name1,name1);
 printf("/*DLST*/ 0};\n");
 	return 0;
 }
-#endif

@@ -59,7 +59,7 @@ AdminCtx *myAdminCtx(Connection *Conn);
 #define fileHead	myAdmCtx->sd_fileHead
 
 void HTML_putmssg(Connection *Conn,PVStr(mssg),PCStr(fmt),...);
-#if defined(_MSC_VER) || defined(NONC99)
+#if defined(NONC99)
 	/* putMssg() will be expanded in mkcpp */
 #else
 #define putMssg(mb,fmt,...) HTML_putmssg(Conn,mb,fmt,##__VA_ARGS__)

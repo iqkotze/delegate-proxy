@@ -182,12 +182,6 @@ static void addReceiverAgent(PCStr(selector),Agent *ap)
 	rp->r_cnt = 0;
 }
 
-#ifdef _MSC_VER
-struct iovec {
-  const	char *iov_base;
-	int   iov_len;
-};
-#endif
 
 #define AGENT_DEATH_TIMEOUT	5 /* seconds */
 

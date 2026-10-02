@@ -805,9 +805,6 @@ char *fgetsTO(PVStr(b),int z,FILE *f,int t1,int t2){
 	else	return NULL;
 }
 
-#if defined(UNDER_CE)
-char *fgetsByBlock(PVStr(line),int size,FILE *fs,int niced,int ltimeout,int byline,int fromcache,int remlen,int *lengp,int *isbinp);
-#else
 char *fgetsByBlockX(int exsock,PVStr(line),int size,FILE *fs,int niced,int ltimeout,int byline,int fromcache,int remlen,int *lengp,int *isbinp);
 char *fgetsByBlock(PVStr(line),int size,FILE *fs,int niced,int ltimeout,int byline,int fromcache,int remlen,int *lengp,int *isbinp)
 {
@@ -976,7 +973,6 @@ char *fgetsByBlockX(int exsock,PVStr(line),int size,FILE *fs,int niced,int ltime
 	*isbinp = bc;
 	return (char*)rcode;
 }
-#endif
 
 char *fgetsByLine(PVStr(line),int lsiz,FILE *in,int timeout,int *rccp,int *isbinp)
 {

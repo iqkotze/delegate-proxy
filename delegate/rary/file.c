@@ -1596,17 +1596,10 @@ int Xfclose(const char *F,int L,FILE *fp){
 }
 
 
-#if defined(_MSC_VER) || defined(__CYGWIN__) || defined(__EMX__)
-int FS_dosPath = 1;
-#define IsSep(ch)		(ch == '/' || ch == '\\')
-#define FindDirSep(path)	strpbrk(path,"/\\")
-#define FindRDirSep(path)	strrpbrk(path,"/\\")
-#else
 int FS_dosPath = 0;
 #define IsSep(ch)		(ch == '/')
 #define FindDirSep(path)	strchr(path,'/')
 #define FindRDirSep(path)	strrchr(path,'/')
-#endif
 
 int isFullpath(PCStr(path));
 void chdir_cwd(PVStr(cwd),PCStr(go),int userdir)

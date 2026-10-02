@@ -49,12 +49,8 @@ extern const char *sigsym(int);
 #define SIGSEGV	-11
 #endif
 
-#ifdef _MSC_VER
-#define SIGPIPE	SIGABRT
-#else
 #ifndef SIGPIPE
 #define SIGPIPE -13
-#endif
 #endif
 
 #ifndef SIGALRM
@@ -89,12 +85,6 @@ vfuncp Vsignal_FL(const char *F,int L,int sig,vfuncp func);
 #define signal(sig,func) Vsignal_FL(__FILE__,__LINE__,sig,func)
 void sigIGNORE(int sig);
 
-#if defined(_MSC_VER) && 1400 <= _MSC_VER /* VC2005 or laters */
-typedef void (*sigFunc)(int);
-sigFunc winSignal(int sig,sigFunc func);
-#undef signal
-#define signal(s,f) winSignal(s,f)
-#endif
 
 #ifndef _SIGMASKINT_
 #define _SIGMASKINT_
@@ -124,9 +114,6 @@ SigMaskInt SigMask_FL(FL_PAR,SigMaskInt sig);
 #define sigblock(mask)   SigBlock_FL(FL_ARG,mask)
 #define sigmask(sig)     SigMask_FL(FL_ARG,sig)
 
-#if defined(_MSC_VER) && !defined(sigjmp_buf)
-#define sigjmp_buf jmp_buf
-#endif
 int SigSetJmp(FL_PAR,sigjmp_buf env,int savemask);
 void SigLongJmp(FL_PAR,sigjmp_buf env,int val);
 void LongJmp(FL_PAR,jmp_buf env,int val);

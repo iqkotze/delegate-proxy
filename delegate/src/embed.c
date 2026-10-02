@@ -20,7 +20,6 @@ History:
 	941001	created
 	970104	self wild-card extension
 //////////////////////////////////////////////////////////////////////#*/
-#ifndef UNDER_CE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -349,10 +348,4 @@ int (*DELEGATE_MAIN)(int ac,const char *av[]);
 int (*DELEGATE_START)(int ac,const char *av[]);
 void (*DELEGATE_TERMINATE)();
 int gethostint_nboV4(PCStr(host)){ return -1; } /* for winmo.c */
-#endif
 
-#ifdef _MSC_VER
-int getpass1(FILE *in,FILE *out,PVStr(pass),PCStr(xpass),PCStr(echoch)){
-        return 0;
-}
-#endif

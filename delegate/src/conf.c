@@ -59,11 +59,7 @@ v9.9.13 new-141023a
 const char *DELEGATE_CONF          = "${EXECDIR}/${EXECNAME}.conf;${EXECDIR}/../etc/${EXECNAME}.conf";
 const char *DGCOMMON_CONF          = "${DGROOT}/common.conf";
 const char *DELEGATE_VARDIR        = "${DGROOT?&:/var/spool/delegate}";
-#if _MSC_VER
-const char *DELEGATE_LDPATH        = "${ETCDIR};${LIBDIR};${EXECDIR};${STARTDIR};${HOME}/lib;/Windows;/";
-#else
 const char *DELEGATE_LDPATH        = "${ETCDIR};${LIBDIR};${EXECDIR};${STARTDIR};${HOME}/lib;/usr/local/lib;/usr/lib;/lib";
-#endif
 const char *DELEGATE_LIBDIR        = "${VARDIR}/lib";
 const char *DELEGATE_LIBPATH       = ".;${STARTDIR};${LIBDIR};${EXECDIR};${ETCDIR}";
 const char *DELEGATE_DATAPATH      = ".;${DGROOT};${STARTDIR};${EXECDIR}";
@@ -1186,7 +1182,6 @@ void putBLDsign(FILE *out){
 	fprintf(out,"\r\n");
 }
 void setup_hostid(FILE *out,int verb);
-extern const char *SIGN_windows_c;
 int myid_mainX(int ac,const char *av[],FILE *idout){
 	const char *admin;
 	int ai;
@@ -1250,9 +1245,6 @@ int myid_mainX(int ac,const char *av[],FILE *idout){
 		fprintf(idout,"%s=","EXESIGN");
 		puts1(DELEGATE_exesign(),idout);
 		fprintf(idout,"\r\n");
-	}
-	if( v ){
-		fprintf(idout,"%s\n",SIGN_windows_c);
 	}
 	if( LOG_VERBOSE ){
 		iLOGdump(0,"---- initialization ----\n");

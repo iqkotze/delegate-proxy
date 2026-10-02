@@ -269,7 +269,6 @@ WINLIB =	WS2_32.LIB ADVAPI32.LIB OLE32.LIB SHELL32.LIB UUID.LIB \
 		USER32.LIB \
 		GDI32.LIB \
 		-MT
-CCLD_WIN32 =	sh ../link-win32_win8.sh
 #endif ############################################################
 
 SSLDIR =	../../SSL
@@ -280,7 +279,6 @@ NETLIB =	$(SOLLIB) $(WINLIB) -lpam -lstdc++
 
 #IF UNIX ##########################################################
  #NETLIB =	$(SOLLIB) -lpam -lstdc++
- #CCLD_WIN32 =	-@echo ""
 #FI ###############################################################
 
 HDRDIRS =	-I../gen -I../include
@@ -508,7 +506,6 @@ dg.exe:		$(GENHDR_DEPEND) $(EXE_DEPEND) $(LIBDGF) $(DOBJS) $(LIBNETYF)
 		"$(MKMAKE)" -randtext ../include/randtext.c
 		$(MKBUILTIN)
 		$(CCLD) $(DOBJS) $(LIBDGF) $(LIBSC)
-		$(CCLD_WIN32)
 		@echo "################"
 		-$(DGEXE) -Fver
 		@echo "################"
@@ -519,11 +516,6 @@ delegated$(EXE): dg.exe
 		$(COPY) dg.exe $@.sign
 		-$(XDG) -Fesign -s -w $@.sign
 		mv -f $@.sign $@
-
-wince-dg.exe:	$(GENHDR_DEPEND) $(EXE_DEPEND) $(LIBDGF) $(DOBJS) $(LIBNETYF)
-		sh ../link-wince.sh $@
-		"$(MKMAKE)" -cksum $(HLFILES)
-		"$(MKMAKE)" -cksum ../maker/mkmake.c
 
 delegatedp:	delegated
 		$(CCLD) -p $(DOBJS) $(LIBDGF) $(LIBSC)
@@ -713,7 +705,7 @@ SUBIN_DEPEND =	../subin/Makefile \
 			"$(MAKE)" commands $(MAKEENV) \
 			CFLAGS="$(XCFLAGS)" LIBSC="$(LIBSC)" LIBDGF=-ldelegate
 
-$(MKCPPF):	../include/mkcpp.c ../putsigned.c
+$(MKCPPF):	../include/mkcpp.c
 		$(CC) -o $@ ../include/mkcpp.c $(LIBDIRS)
 
 ../gen/mime.h:		$(MKCPPF) ../include/mime.h

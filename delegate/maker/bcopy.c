@@ -2,11 +2,7 @@
 
 int SUBST_bcopy = 1; /* bcopy(void*,void*,unsigned int*); */
 
-#if defined(__hpux__)
-#define TSZ unsigned long
-#else
 #define TSZ unsigned int
-#endif
 
 void bcopy(const void *b1,void *b2,TSZ length)
 {	int i;

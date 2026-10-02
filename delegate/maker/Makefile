@@ -70,7 +70,6 @@ SUBSTSRCS1 = dummy.c \
 	setresuid.c \
 	seteuid.c \
 	setegid.c \
-	unaligned.c \
 	timegm.c \
 	__usleep.c usleep.c \
 	__ualarm.c ualarm.c \
@@ -80,7 +79,7 @@ SUBSTSRCS1 = dummy.c \
 	closesocket.c \
 	yp_match.c \
 	endhostent.c \
-	gethostbyname2.c __gethostbyname2.c \
+	__gethostbyname2.c \
 	socklen_u.c socklen_s.c \
 	socketpair.c \
 	inet_aton.c \
@@ -154,7 +153,6 @@ SUBSTSRCS2 = \
 	errno.c
 
 SUBSTSRCS3 = \
-	Gates_Win32.c \
 	gethostid.c \
 	opt_s_vsap.c \
 	opt_s_htaccept.c \

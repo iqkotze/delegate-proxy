@@ -48,31 +48,6 @@ static void setBinaryIO(){ }
 #define MaybeOnUnix	0
 #endif
 
-#ifdef _MSC_VER
-/*########################################### MSWIN ############*/
-#define SYST		"MSWIN"
-#define BESILENT	"-s -nologo"
-#define CCOUT		"/Fo"
-#include <process.h>
-#define pipe(sv)	_pipe(sv,0x4000,O_BINARY)
-#define popen(com,mod)	_popen(com,mod)
-#define pclose(fp)	_pclose(fp)
-#define sleep(s)	_sleep(s*1000)
-#define QUOTE_ARG
-#define RETRY_RENAME
-#define WITH_SPAWN
-#include <direct.h>
-
-#else /* !_MSC_VER */
-#ifdef __EMX__
-/*########################################### OS2EMX ###########*/
-#define SYST		"OS2EMX"
-#define BESILENT	"-s"
-#define CCOUT		"-o "
-#include <process.h>
-#define WITH_SPAWN
-
-#else /* !__EMX__ */
 /*########################################### UNIX #############*/
 #include <unistd.h>
 #define SYST		"UNIX"
@@ -83,8 +58,6 @@ static void setBinaryIO(){ }
 #define WEXITSTATUS(status)	((status >> 8) & 0xFF)
 #endif
 
-#endif /* __EMX__ */
-#endif /* _MSC_VER */
 
 static char *GETCWD(char *cwd,int size)
 {
@@ -220,7 +193,6 @@ void checkC99(const char *Cc,const char *Cflags,const char *Cflagsplus){
 	){
 		CPP++;
 	}
-#ifndef _MSC_VER
 	erronly = fdopen(dup(fileno(stderr)),"a");
 	fprintf(stderr,"      ---- testing CC capability [%s][%s][%s] ...\n",
 		Cc,Cflags,Cflagsplus);
@@ -255,7 +227,6 @@ void checkC99(const char *Cc,const char *Cflags,const char *Cflagsplus){
 		fclose(erronly);
 		erronly = 0;
 	}
-#endif
 }
 
 static char *MAKEenv(const char *oenv,char *nenv,int size)
@@ -650,10 +621,6 @@ static int find_ranlib(char *ranlib,int size,const char *make)
 	char res[0x10000];
 	int rcode;
 
-#ifdef _MSC_VER
-	strcpy(ranlib,"dir");
-	return 1;
-#endif
 
 	if( which(_ranlib,ranlib,size) )
 		return 1;
@@ -1046,16 +1013,12 @@ fprintf(stderr,"---------------------------- end of %s detection\n",l1);
 		const char *name = "alloca";
 		char file[128];
 		sprintf(file,"__%s.o",name);
-#ifdef _MSC_VER
-		fprintf(lfp,"#define AVAIL_%s 1\r\n",name);
-#else
 		if( fp = fopen(file,"r") ){
 			fclose(fp);
 			fprintf(lfp,"#define AVAIL_%s 1\r\n",name);
 		}else{
 			fprintf(lfp,"#define AVAIL_%s 0\r\n",name);
 		}
-#endif
 	}
 	if( lfp != NULL ){
 		if( lfp != stdout )
@@ -1813,16 +1776,6 @@ int subst1(const char *file,const char *filev[],int *filecp)
 	int ifavail,xtry,avail;
 	char libs[1024];
 
-#ifdef _MSC_VER
-	if( strcmp(file,"dlopen.c")==0
-	 || strcmp(file,"yp_match.c")==0
-	 || strcmp(file,"__spawnvp.c")==0
-	 || strcmp(file,"spawnvp.c")==0
-	 || strcmp(file,"flockfile.c")==0
-	){
-		return 0;
-	}
-#endif
 
 	dp = strrchr(file,'.');
 	if( dp == NULL || strcmp(dp,".c") != 0 )
@@ -2011,7 +1964,6 @@ int check_env(){
 	if( MaybeOnUnix ){
 		fprintf(stderr,"\t -- checking socket library\n");
 		if( !e_available(ERRLOG,"socket",CC,cflags/*CFLAGS*/,libs) ){
-#ifndef __CYGWIN__
 			fatal(" Socket library should be given.");
 			fatal(" You may have to specify");
 			fatal("     LIBS=-lnsl -lsocket");
@@ -2021,7 +1973,6 @@ int check_env(){
 			/*
 			return 4;
 			*/
-#endif
 		}
 	}
 #endif
@@ -2156,11 +2107,7 @@ int _available(FILE *errlog,const char *sym,const char *cc,const char *flags,con
 	unlink("a.exe");
 
 	unlink("_.o");
-#ifdef _MSC_VER
-	sprintf(command,"%s -c -Fo_.o %s %s",cc,flags,TEST_C);
-#else
 	sprintf(command,"%s -c -o _.o %s %s",cc,flags,TEST_C);
-#endif
 	rcode = msystem(1,res,sizeof(res),command);
 	rcode1 = rcode;
 	strcpy(command1,command);
@@ -2183,9 +2130,6 @@ int _available(FILE *errlog,const char *sym,const char *cc,const char *flags,con
 	if( strstr(flags," -x c++") )
 	{
 		strcat(command," -lstdc++");
-#if defined(__OpenBSD__) || defined(__NetBSD__)
-		strcat(command," -lm");
-#endif
 	}
 
 	rcode = msystem(1,res+strlen(res),sizeof(res)-strlen(res),command);

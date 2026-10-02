@@ -779,17 +779,6 @@ static void getsigns(PCStr(iexe),int fovw,int fverb,FILE *ifp,FILE *ofp,FileSign
 char funcFimp[] = "-Fimp";
 int ttyuid(int fd);
 
-#ifdef _MSC_VER
-int getcuser(PVStr(name),int size,PVStr(domain),int dsiz);
-int getowner(PCStr(path),PVStr(owner),int osiz,PVStr(group),int gsiz);
-char *myName(PVStr(name),int osiz){
-	IStr(group,128);
-	strcpy(name,"?");
-
-	getcuser(BVStr(name),osiz,AVStr(group),sizeof(group));
-	return (char*)name;
-}
-#else
 char *myName(PVStr(name),int size){
 	const char *user;
 	int uid,tuid;
@@ -830,7 +819,6 @@ int getowner(PCStr(path),PVStr(owner),int osiz,PVStr(group),int gsiz){
 	}
 	return got;
 }
-#endif
 
 static void putEmbedHelp(FILE *out,int ac,const char *av[],int detail){
  CStr(com,256);

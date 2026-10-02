@@ -34,9 +34,6 @@ int INHERENT_lstat();
 #endif
 
 
-#if defined(__CYGWIN__)
-#include <unistd.h>
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -89,10 +86,6 @@ int access_RWX(PCStr(path))
 	if( isWindowsCE() ){
 		return 0;
 	}
-#if defined(__CYGWIN__)
-	if( access(path,R_OK|W_OK|X_OK) == 0 )
-		return 0;
-#endif
 
 	if( stat(path,&st) == 0 ){
 		mode = st.st_mode;

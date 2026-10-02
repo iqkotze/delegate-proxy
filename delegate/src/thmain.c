@@ -27,21 +27,6 @@ History:
 #include "delegate.h"
 
 extern int AccViaHTMUX; /* accept by normal accept() via SockMux */
-#ifdef UNDER_CE
-int closeR(FL_PAR,int fd);
-static int closeS(FL_PAR,int fd){
-	int rcode;
-	if( AccViaHTMUX ){
-		rcode = closeR(FL_BAR,fd);
-	}else{
-		rcode = close(fd);
-	}
-	return rcode;
-}
-#undef closeEfd
-#define closeEfd(efd) \
-	(efd==NULL?-1:(efd->_closed?-1:((efd->_closed=1),closeS(FL_ARG,efd->_fd))))
-#endif
 
 
 extern int NUM_THSV;

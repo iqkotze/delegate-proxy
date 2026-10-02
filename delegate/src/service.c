@@ -4166,11 +4166,6 @@ int CTX_setSockBuf(FL_PAR,Connection *Conn,int sock,int clnt){
 	return 0;
 }
 
-#if _MSC_VER
-extern int SHUT_RD;
-extern int SHUT_WR;
-extern int SHUT_RDWR;
-#endif
 static int nss;
 static scanListFunc shutfp(PCStr(conf1),Connection *Conn,FILE *fp,int clnt){
 	int how = 0;

@@ -18,18 +18,7 @@ OR IMPLIED WARRANTIES.
 #include "bldsign.h"
 #include "_builtin.c"
 
-#if defined(__hpux__) || defined(hpux)
-#ifdef __cplusplus
-extern "C" void allow_unaligned_data_access();
-#else
-void allow_unaligned_data_access();
-#endif
-static void hpuxsetup(){
-	allow_unaligned_data_access();
-}
-#else
 #define hpuxsetup()
-#endif
 
 static void showaddrs();
 void mainX(int ac,const char *av[]);

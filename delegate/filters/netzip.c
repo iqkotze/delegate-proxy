@@ -269,40 +269,6 @@ int reads(int fd,PVStr(buf),int len)
 	return off;
 }
 
-#ifdef __CYGWIN__
-#include <process.h>
-int comp1(int decomp,PCStr(ibuf),int ilen,PVStr(obuf),int osiz)
-{	int tz[2],fz[2];
-	int fd0,fd1,pid,olen,wlen,wpid,xstat;
-
-	pipe(tz);
-	pipe(fz);
-
-	fcntl(tz[1],F_SETFD,1);
-	fcntl(fz[0],F_SETFD,1);
-
-	fd0 = dup(0); dup2(tz[0],0);
-	fd1 = dup(1); dup2(fz[1],1);
-	if( decomp )
-		pid = spawnvp(_P_NOWAIT,gzip_path,gunzip_av);
-	else	pid = spawnvp(_P_NOWAIT,gzip_path,gzip_av);
-	dup2(fd0,0); close(fd0);
-	dup2(fd1,1); close(fd1);
-
-	wlen = writes(tz[1],ibuf,ilen);
-	close(tz[1]);
-	if( wlen != ilen )
-		CHECKP("\r\n**(write failed[%d/%d]**\r\n",wlen,ilen);
-
-	close(tz[0]);
-	close(fz[1]);
-
-	olen = read(fz[0],obuf,osiz);
-	close(fz[0]);
-	wpid = wait(&xstat);
-	return olen;
-}
-#else
 int comp1(int decomp,PCStr(ibuf),int ilen,PVStr(obuf),int osiz)
 {	int tz[2],fz[2];
 	int olen;
@@ -326,7 +292,6 @@ int comp1(int decomp,PCStr(ibuf),int ilen,PVStr(obuf),int osiz)
 	wait(0);
 	return olen;
 }
-#endif
 
 void fsetBinaryIO(int fd,int on)
 {	int oflags,flags,nflags,rcode;

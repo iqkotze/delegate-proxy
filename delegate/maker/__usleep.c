@@ -1,6 +1,4 @@
-#if defined(hpux) || defined(__hpux__) \
- || defined(_nec_ews) \
- || defined(BUGGY_USLEEP)
+#if defined(BUGGY_USLEEP)
 
 #include "usleep.c"
 

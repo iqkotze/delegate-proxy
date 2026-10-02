@@ -23,14 +23,11 @@ History:
 #include "fpoll.h"
 int _PollIn1(int fd,int timeout);
 
-#if defined(_MSC_VER)
-#else
 #undef bind
 #undef connect
 #undef accept
 #undef Xaccept
 #define accept Xaccept
-#endif
 
 int connectL(PCStr(host),int port,int timeout){
 	struct sockaddr_in sin;

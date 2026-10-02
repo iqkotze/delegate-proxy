@@ -1,10 +1,4 @@
 #include "ystring.h"
-#if defined(__KURO_BOX__)
-#define dlopen  __dlopen
-#define dlsym   __dlsym
-#define dlerror __dlerror
-#define dlclose __dlclose
-#endif
 int porting_dbg(const char *fmt,...);
 
 #ifdef __cplusplus

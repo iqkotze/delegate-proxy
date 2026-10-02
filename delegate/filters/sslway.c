@@ -102,11 +102,6 @@ typedef struct {
 #define _VERSION_H /* include macro definitions only */
 #include "../src/version.c"
 
-#ifdef _MSC_VER
-#undef ERROR
-#undef X509
-#undef X509_NAME
-#endif
 
 int randstack_call(int strg,iFUNCP func, ...);
 char **move_envarg(int ac,const char *av[],const char **areap,int *lengp,int *sizep);

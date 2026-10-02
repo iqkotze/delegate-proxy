@@ -146,43 +146,6 @@ extern int inGzip;
 extern const char *FL_F_Gzip;
 extern int FL_L_Gzip;
 
-#ifdef _MSC_VER
-int gzipInit0(){
-	int code;
-	code = -1;
-	if( isWindowsCE() )
-		code = dl_library("dgcezlib1",dlmap_zlib,"");
-	if( code != 0 )
-	code = dl_library("dgzlib1",dlmap_zlib,"");
-	return code;
-}
-void thread_yield();
-int fd2handle(int fd);
-int withDG_Zlib();
-gzFile GZdopen(int fd,const char *mode){
-	gzFile gz;
-	int handle;
-
-	thread_yield();
-
-	inGzip++; FL_F_Gzip = "Gzdopen"; FL_L_Gzip = __LINE__;
-    if( isWindows() && !withDG_Zlib() ){
-	handle = 0x80000000 | fd2handle(fd);
-	gz = gzdopen(handle,mode);
-	if( gz == 0 ){
-		syslog_ERROR("-- failed gzdopen(0x%X)\n",handle);
-		gz = gzdopen(fd,mode);
-	}
-    }else{
-	gz = gzdopen(fd,mode);
-    }
-	inGzip--;
-	if( gz == 0 ){
-		syslog_ERROR("-- failed gzdopen(%d)\n",fd);
-	}
-	return gz;
-}
-#else
 int gzipInit0(){
 	int code;
 	code = dl_library("z",dlmap_zlib,"");
@@ -201,7 +164,6 @@ gzFile GZdopen(int fd,const char *mode){
 	inGzip--;
 	return gz;
 }
-#endif
 /* gztell()/malloc() should be sigblocked ... */
 long GZtell(gzFile file){
 	long off;
@@ -373,19 +335,12 @@ int Zfgzflush(FILE *fp){
 	GZDBG(stderr,"-- %X Zfgzflush(%X)=%d\n",TID,fd,rcode);
 	return rcode <= 0;
 }
-#if UNDER_CE
-static char *Zstrerror(int code){
-	GZDBG(stderr,"-- %X Zstrerror(%X)\n",TID,code);
-	return "";
-}
-#else
 static char *Zstrerror(int code){
 	char *es;
 	es = strerror(code);
 	GZDBG(stderr,"---- Zstrerror(%d)\n",code);
 	return es;
 }
-#endif
 
 
 static int zlib_dl;
@@ -478,50 +433,7 @@ void putZLIBver(FILE *fp){
 #include "file.h"
 
 #ifdef MMAP
-#ifdef _MSC_VER /*{*/
-#define PROT_READ 1
-#define PROT_WRITE 2
-#define MAP_SHARED 0
-static HANDLE last_fmh[2];
-void *mmap(void *adr,size_t len,int pro,int flg,int fd,off_t off){
-	void *addr;
-	HANDLE fh,fmh;
-	int protect;
-	int acc;
-	int rw;
-
-	fh = (HANDLE)_get_osfhandle(fd);
-	if( pro == PROT_READ ){
-		protect = PAGE_READONLY;
-		acc = FILE_MAP_READ;
-	}else{
-		protect = PAGE_READWRITE;
-		acc = FILE_MAP_WRITE;
-	}
-
-	fmh = CreateFileMapping(fh,NULL,protect,0,off+len,NULL);
-	if( last_fmh[0] == 0 )
-		last_fmh[0] = fmh;
-	else	last_fmh[1] = fmh;
-	addr = MapViewOfFile(fmh,acc,0,off,len);
-	return addr;
-}
-int munmap(void *adr,size_t le){
-	int ok = UnmapViewOfFile(adr);
-	if( last_fmh[0] ){
-		CloseHandle(last_fmh[0]);
-		last_fmh[0] = 0;
-	}
-	if( last_fmh[1] ){
-		CloseHandle(last_fmh[1]);
-		last_fmh[0] = 0;
-	}
-	return ok ? 0 : -1;
-}
-
-#else /*}{*/
 #include <sys/mman.h>
-#endif /*}*/
 
 int gzipMmap(int do_comp,FILE *in,FILE *out){
 	double Start = Time();

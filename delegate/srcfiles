@@ -11,17 +11,7 @@ LICENSE.txt
 Makefile
 Makefile.QSC
 README
-README.5-6
-README.7-8
 README.MAKE
-announce/Release-9.9.10.txt
-announce/Release-9.9.11.txt
-announce/Release-9.9.12.txt
-announce/Release-9.9.13.txt
-announce/Release-9.9.6.txt
-announce/Release-9.9.7.txt
-announce/Release-9.9.8.txt
-announce/Release-9.9.9.txt
 bin/Makefile
 bin/README
 bin/dmosaic
@@ -63,7 +53,6 @@ filters/swft.c
 fsx/Makefile
 fsx/any2fdif.c
 gates/Gates_Win32.c
-gates/Gates_Win32.c.des
 gates/Makefile
 gates/b2x.c
 gen/README
@@ -107,12 +96,10 @@ include/ywinsock.h
 install-chroot.sh
 install.sh
 lib/README
-link-win32_win8.sh
 make-fin.sh
 make-init.sh
 maker/ERR_error_string_n.c
 maker/FMODE.c
-maker/Gates_Win32.c
 maker/Makefile
 maker/RSA_generate_key.c
 maker/SSL_CTX_set_tmp_rsa_callback.c
@@ -209,7 +196,6 @@ maker/fsync.c
 maker/futimes.c
 maker/futimes_.c
 maker/getcwd.c
-maker/gethostbyname2.c
 maker/gethostid.c
 maker/getmsg.c
 maker/getrlimit.c
@@ -284,7 +270,6 @@ maker/sysinfo.c
 maker/syslog.c
 maker/timegm.c
 maker/ualarm.c
-maker/unaligned.c
 maker/uname.c
 maker/unsetenv.c
 maker/unsetenv_.c
@@ -375,6 +360,7 @@ rary/lsock.c
 rary/modfmt.c
 rary/nbio.c
 rary/netsh.c
+rary/nonwin.c
 rary/pam.c
 rary/passwd.c
 rary/pelcgb.c
@@ -398,13 +384,7 @@ rary/unix.c
 rary/urlesc.c
 rary/uu.c
 rary/vsaddr.c
-rary/wince.c
-rary/windows.c
 rary/windows0.c
-rary/winmisc.c
-rary/winmo.c
-rary/winnat.c
-rary/winsspi.c
 rary/ystring.c
 resolvy/Makefile
 resolvy/ccres

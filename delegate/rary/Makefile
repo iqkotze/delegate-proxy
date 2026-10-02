@@ -60,11 +60,8 @@ FILES =		Makefile SLL.c TLEX.c String.c ystring.c modfmt.c JIS.c codeconv.c \
 		hostaddr.c socks5.c \
 		cfilib.c \
 		netsh.c \
-		wince.c \
-		winmo.c \
-		winsspi.c winnat.c \
-		winmisc.c \
-		unix.c windows.c windows0.c Finish.c
+		nonwin.c \
+		unix.c windows0.c Finish.c
 
 OBJS =		SLL.o String.o ystring.o modfmt.o TLEX.o JIS.o codeconv.o \
 		pilsner.o \
@@ -85,14 +82,10 @@ OBJS =		SLL.o String.o ystring.o modfmt.o TLEX.o JIS.o codeconv.o \
 		hostaddr.o socks5.o \
 		cfilib.o \
 		netsh.o \
-		wince.o \
-		winmo.o \
-		winsspi.o winnat.o \
-		winmisc.o \
-		unix.o windows.o Finish.o
+		nonwin.o \
+		unix.o Finish.o
 
 vsaddr.o:	../include/vsocket.h ../include/log.h vsaddr.c
-windows.o:	../include/config.h windows.c windows0.c
 unix.o:		../include/config.h ../include/log.h unix.c windows0.c
 ystring.o:	../include/ystring.h ../include/log.h ../include/ysignal.h ystring.c
 String.o:	../include/ystring.h ../include/log.h String.c
@@ -118,13 +111,8 @@ all:		$(LIBFILE) ccx sched credhy
 
 syslog.o:	../include/log.h ../include/dgctx.h syslog.c
 nbio.o:		../include/log.h nbio.c
-wince.o:	../include/log.h wince.c
-winmo.o:	../include/log.h winmo.c
-winsspi.o:	../include/log.h winsspi.c
-winmisc.o:	../include/log.h winmisc.c
 ttyio.o:	../include/log.h ttyio.c
-winnat.o:	../include/log.h winnat.c
-windows.o:	../include/log.h windows.c
+nonwin.o:	../include/log.h nonwin.c
 
 ccx:		ccxmain.o $(LIBFILE)
 		$(CC) ccxmain.o -o ccx ../lib/libcfi.a $(LIBS)

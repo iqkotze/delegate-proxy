@@ -51,7 +51,6 @@ CFLAGSPLUS =	-x c++ -DQS
 
 SRCS =		Makefile \
 		Gates_Win32.c \
-		Gates_Win32.c.des \
 		b2x.c \
 
 GATES =		Gates_Win32.o \

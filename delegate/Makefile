@@ -4,9 +4,8 @@ FILE0 =	COPYRIGHT LICENSE.txt LICENSE-ja.txt \
 	Makefile.QSC \
 	make-init.sh \
 	make-fin.sh \
-	link-win32_win8.sh \
 	install.sh dg9.conf.txt install-chroot.sh setup-subin.sh \
-	README INSTALL README.5-6 README.7-8 README.MAKE CREDITS INSTALL.txt \
+	README INSTALL README.MAKE CREDITS INSTALL.txt \
 	IPv6NOTE.txt \
 	DG9note.html \
 	id.shtml \
@@ -18,7 +17,6 @@ VER =	`cd src;       $(MAKE) -s ver`
 DVER =	`cd src;       $(MAKE) -s ver | sed 's/\./_/g'`
 SRC =	`cd src;       $(MAKE) -s files | sed "s:^:src/:"`
 DOC =	`cd doc;       $(MAKE) -s files | sed "s:^:doc/:"`
-ANN =   `cd announce;  ls -d *          | sed "s:^:announce/:"`
 MD5 =	`cd pds/md5;   $(MAKE) -s files | sed "s:^:pds/md5/:"`
 REGEX =	`cd pds/regex; $(MAKE) -s files | sed "s:^:pds/regex/:"`
 RARY =	`cd rary;      $(MAKE) -s files | sed "s:^:rary/:"`
@@ -39,23 +37,15 @@ FILEA = $(PDS) $(SRC) $(RARY) $(BIN) $(SUBIN) $(DOC) $(TLPT) \
 	$(FSX) $(FLTR) $(RSLV) $(SUBST) $(GATES) $(HDRS)
 
 FILEB = $(FILE0) $(PDS) $(SRC) $(RARY) $(BIN) $(SUBIN) $(DOC) $(TLPT) \
-	$(FSX) $(FLTR) $(RSLV) $(SUBST) $(GATES) $(HDRS) $(ANN)
+	$(FSX) $(FLTR) $(RSLV) $(SUBST) $(GATES) $(HDRS)
 
 FILEC =	rw.c ck.c qastrip.c srcsign.c srcsign srcvrfy newdist cksums \
-	putsigned.c \
 	dgcaps.h \
 	rsasign \
 	bench \
 	tc \
-	mkdist.sh mkdist-win.sh \
-	make-xcc make-vc.bat make-vc95.bat make-vc.sh link-wince.sh \
-	link-win32.sh \
-	link-libs.sh \
-	src/win32-dg.rc src/win32-dg.res \
-	make-vce.sh make-vs8ce.bat make-vs8ce_win8.bat include-ce DELEGATE_CONF.vce \
-	make-vs8.bat make-vs9.bat make-vs8_win8.bat \
+	mkdist.sh \
 	src/delegated.conf \
-	src-srcsign.c \
 	srcfiles \
 	$(FILEB)
 
@@ -97,22 +87,7 @@ all1:	$(MKMAKE)
 		"$(MAKE)" MKMAKE_SRC="" \
 		SHELL="$(SHELL)" HDRDIRS="$(HDRDIRS)" LIBDIRS="$(LIBDIRS)"
 
-wince-dg.exe:
-	sh make-init.sh
-	@"./$(MKMAKE)" -makeat "" src $@ \
-		"$(MAKE)" MKMAKE_SRC="" \
-		SHELL="$(SHELL)" HDRDIRS="$(HDRDIRS)" LIBDIRS="$(LIBDIRS)"
-	"$(XDG)" "-Fsrcmd5" -csrc -f srcfiles -type f -o gen/bldsign.h
-	rm src/$@
-	rm src/builtin.o
-	@"./$(MKMAKE)" -makeat "" src $@ \
-		"$(MAKE)" MKMAKE_SRC="" \
-		SHELL="$(SHELL)" HDRDIRS="$(HDRDIRS)" LIBDIRS="$(LIBDIRS)"
-	"$(XDG)" "-Fesign" src\$@
-	-sh make-fin.sh
-
 $(MKMAKE): Makefile src/Makefile mkmkmk.c maker/mkmake.c
-	-sh link-libs.sh
 	$(CC) -DMKMKMK -DDEFCC=\"$(CC)\" $(HDRDIRS) $(PLIBDIRS) mkmkmk.c -o $(MKMKMK)
 	-"./$(MKMKMK)" -mkmkmk "$(CC)" $(HDRDIRS) $(PLIBDIRS) maker/mkmake.c -o $@
 
@@ -150,7 +125,7 @@ dtar:	tar
 	gzip $$DTARARGS dgX$(DATE).tar
 	ls -l dgX$(DATE).tar.gz
 tar:
-	src/delegated -Fesign -w rary/windows.c
+	src/delegated -Fesign -w rary/nonwin.c
 	echo $(FILEB) $(MIME) | tr ' ' '\n' | src/delegated -Fsort > srcfiles
 	srcsign
 	tar cf delegateX$(VER).tar $(FILES)

@@ -39,49 +39,15 @@ static int IOCTL(int fd, int op, void *arg);
 /*
  *	IO CONTROL
  */
-#ifdef hpux /* { */
-#  define notdef
-#  include <sgtty.h>
-#  include <termio.h>
-#  define TIOCSBRK TCSBRK
-#  include <bsdtty.h>
-#  include <sys/ioctl.h>
-#  define IOCTL_FLUSH(fd)	0
-#elif defined(__FreeBSD__) && 8 <= __FreeBSD__
-#  define COMPAT_43TTY
-#  include <sys/ioctl_compat.h>
-#  include <sys/filio.h>
-#  include <termios.h>
-#  define SGTTY_SGTTY
-#  define IOCTL_FLUSH(fd)	IOCTL(fd,TIOCFLUSH,0)
-#elif defined(sun)
-#  define BSD_COMP
-#  include <sys/ioctl.h>
-#  include <sys/filio.h>
-#  include <termios.h>
-#  define IOCTL_FLUSH(fd)   0
-#  define sigmask(s) 0
-#  define sigsetmask(m) 0
-#elif defined(__CYGWIN__)
-#  include <termios.h>
-#  include <sys/ioctl.h>
-#  define sigmask(s) 0
-#  define sigsetmask(m) 0
-#else
-#  ifdef __linux__ /* { */
      /* #include <bsd/sgtty.h> */
      /*RH6*/
 #    include <termios.h>
 #    include <sys/ioctl.h>
-#  else
-#    include <sgtty.h>
-#  endif /* } */
 #  ifdef TIOCFLUSH /* { */
 #    define IOCTL_FLUSH(fd)	IOCTL(fd,TIOCFLUSH,0)
 #  else
 #    define IOCTL_FLUSH(fd)	0
 #  endif /* } */
-#endif /* } */
 
 #ifndef NOFLSH
 #define NOFLSH NOFLUSH
@@ -98,12 +64,6 @@ static int IOCTL(int fd, int op, void *arg);
 #endif
 #endif
 
-/*
-#ifdef __CYGWIN__
-#define TIOCSETP	TCSETA
-#define TIOCGETP	TCGETA
-#endif
-*/
 /*--}--*/
 
 /*--{---------------------------------------------- ipc/comcom.c ---*/
@@ -131,18 +91,15 @@ static int CURTTY_FD;
 static void set_notty(void)
 {	int ttyfd;
 
-#ifndef __CYGWIN__
 	ttyfd = open("/dev/tty",0);
 	IOCTL(ttyfd,TIOCNOTTY,0);
 	close(ttyfd);
-#endif
 }
 
 static int TCSETPGRP(int ttyfd, int pgrp) {
 	int rcode;
 	void (*osig)(int);
 
-#ifndef __CYGWIN__
 	osig = signal(SIGTTOU,SIG_IGN);
 	rcode = IOCTL(ttyfd,TIOCSPGRP,&pgrp);
 	/*flush_output(ttyfd);
@@ -150,33 +107,23 @@ static int TCSETPGRP(int ttyfd, int pgrp) {
 		CosmosJobs destruct output from VIN */
 	signal(SIGTTOU,osig);
 	return rcode;
-#endif
 }
 static int TCGETPGRP(int ttyfd) {
 	int pgrp;
 
-#ifndef __CYGWIN__
 	if( IOCTL(ttyfd,TIOCGPGRP,&pgrp) < 0 )
 		return -1;
 	else	return pgrp;
-#endif
 }
 
 static void INQ_FLUSH(int fd){
-#ifndef __CYGWIN__
 	IOCTL_FLUSH(fd);
-#endif
 }
 static int INQ_SIZE(int fd){
 	int cc;
 
 	cc = 0;
-#ifdef __CYGWIN__
-	if( 0 < _PollIn1(fd,1) )
-		cc = 1;
-#else
 	IOCTL(fd,FIONREAD,&cc);
-#endif
 	return cc;
 }
 
@@ -190,27 +137,8 @@ static int stdin_qsize(void){
 	return stream_qsize(stdin);
 }
 
-#ifndef __CYGWIN__
-#ifndef __linux__
-static int set_interrupt(int tty){
-	if( NO_TTY ) return 0;
-	IOCTL(tty,TIOCSBRK,0);
-	return 1;
-}
-#endif
-#endif
 
 static void dump_ioctls(void) {
-#ifndef __CYGWIN__
-#ifndef __linux__ /*RH6*/
-	printf("TIOCGLTC\t%x\n",	TIOCGLTC);
-	printf("TIOCNOTTY\t%x\n",	TIOCNOTTY);
-#ifndef __linux__
-	printf("TIOCSBRK\t%x\n",	TIOCSBRK);
-#endif
-	printf("TIOCSETN\t%x\n",	TIOCSETN);
-#endif /*RH6*/
-#endif
 }
 
 static int IOCTL(int fd, int op, void *arg){
@@ -218,9 +146,6 @@ static int IOCTL(int fd, int op, void *arg){
 
 	if( NO_TTY || NO_TTYIOCTL && isatty(fd) )
 		return -1;
-#ifdef hpux
-	set_noflsh(fd,1);
-#endif
 	rcode = ioctl(fd,op,arg);
 	return rcode;
 }
@@ -297,75 +222,15 @@ static struct { const char *sym; int flag; int local; } sttysyms[] = {
 #ifdef MDMBUF
 	{"mdmbuf",	MDMBUF},	/* start/stop output */
 #endif
-#ifndef __CYGWIN__
-#ifndef __linux__/*RH6*/
-	{"lcase",	LCASE},		/* simulate lower case		*/
-	{"crmod",	CRMOD},		/* map \r to \r\n on output	*/
-	{"raw",		RAW},		/* no i/o processing		*/
-	{"oddp",	ODDP},		/* get/send odd parity		*/
-	{"evenp",	EVENP},		/* get/send even parity		*/
-	{"anyp",	ANYP},		/* get any parity/send none	*/
-#ifndef __linux__
-	{"nldelay",	NLDELAY},	/* \n delay			*/
-	{"crdelay",	CRDELAY},	/* \r delay			*/
-	{"vtdelay",	VTDELAY},	/* vertical tab delay		*/
-	{"bsdelay",	BSDELAY},	/* \b delay			*/
-#endif
-	{"tbdelay",	TBDELAY},	/* horizontal tab delay		*/
-#endif
-#endif
-#if defined(__CYGWIN__ )
-	{"nldelay",	NL1},		/* \n delay			*/
-	{"crdelay",	CR3},		/* \r delay			*/
-	{"vtdelay",	VT1},		/* vertical tab delay		*/
-	{"bsdelay",	BS1},		/* \b delay			*/
-#endif
 	{"xtabs",	XTABS},		/* expand tabs on output	*/
-#if defined(hpux)
-	{"cbreak",	X_CBREAK,1},	/* cook input */
-#endif
-#if defined(__CYGWIN__)
 	{"cbreak",	X_CBREAK},	/* cook input */
-#endif
-#if defined(__linux__)/*RH6*/
-	{"cbreak",	X_CBREAK},	/* cook input */
-#endif
-#if !defined(hpux) && !defined(__CYGWIN__)
-#if !defined(__linux__)/*RH6*/
-	{"cbreak",	CBREAK},	/* half-cooked mode		*/
-#endif
-#ifndef __linux__
-	{"tandem",	TANDEM},	/* send stopc on out q full	*/
-	{"crtbs",	CRTBS},		/* do backspacing for crt	*/
-	{"prtera",	PRTERA},	/* \ ... / erase		*/
-	{"crtera",	CRTERA},	/* " \b " to wipe out char	*/
-	{"tilde",	TILDE},		/* hazeltine tilde kludge	*/
-#endif
-#ifndef sony_news
 	{"tostop",	TOSTOP},	/* SIGSTOP on background output	*/
 	{"flusho",	FLUSHO},	/* flush output to terminal	*/
-#ifndef __CYGWIN__
-#ifndef __linux__
-	{"nohang",	NOHANG},	/* no SIGHUP on carrier drop	*/
-	{"crtkil",	CRTKIL},	/* kill line with " \b "	*/
-	{"ctlech",	CTLECH},	/* echo control chars as ^X	*/
-	{"decctq",	DECCTQ},	/* only ^Q starts after ^S	*/
-#endif
 	{"pendin",	PENDIN},	/* tp->t_rawq needs reread	*/
-#endif
-#ifndef vax
-#ifndef mips
 	{"noflsh",	NOFLSH},	/* no output flush on signal	*/
-#endif
-#endif
-#endif /* sony_news */
-#endif /* hpux */
 	0
 };
 
-#if defined(__CYGWIN__) \
- || defined(__linux__)/*RH6*/ \
- || defined(__FreeBSD__) && 8 <= __FreeBSD__
 
 #define SGTTY_TYPE "termio"
 #define SGTTY_TERMIO
@@ -377,20 +242,6 @@ typedef struct {
 #define SG_flags	SG.c_lflag
 #define SG_ispeed(tt)	cfgetispeed(&(tt)->SG)
 #define SG_ospeed(tt)	cfgetospeed(&(tt)->SG)
-#else
-#define SGTTY_TYPE "sgtty"
-#define SGTTY_SGTTY
-typedef struct {
-	struct	sgttyb	SG;
-	int		SG_lflag;
-	struct winsize	SG_wsz;
-} Sgttyb;
-#define SG_flags	SG.sg_flags
-#define SG_ispeed(tt)	(tt)->SG.sg_ispeed
-#define SG_ospeed(tt)	(tt)->SG.sg_ospeed
-#define SG_erase	SG.sg_erase
-#define SG_kill		SG.sg_kill
-#endif
 
 #define MAXFD 64
 static Sgttyb cur_sgttyb[MAXFD];
@@ -410,24 +261,12 @@ static int TC_setattr(int fd,Sgttyb *sgtty){
 	/*
 	SETWINSIZE(fd,&sgtty->SG_wsz);
 	*/
-#if defined(__linux__)
 	return tcsetattr(fd,TCSANOW,&sgtty->SG);
-#elif defined(TIOCSETN) && !defined(SGTTY_SGTTY) || !defined(TCSANOW)
-	return IOCTL(fd,TIOCSETN,&sgtty->SG);
-#else
-	return tcsetattr(fd,TCSANOW,&sgtty->SG);
-#endif
 }
 
 static int TCgetattr(int fd,Sgttyb *sgtty){
 	int xfd = (0 <= fd && fd < MAXFD) ? fd: MAXFD-1;
-#if defined(__linux__)
 	return tcgetattr(fd,&cur_sgttyb[xfd].SG);
-#elif defined(TIOCSETP) && !defined(SGTTY_SGTTY) || !defined(TCSANOW)
-	return ioctl(fd, TIOCGETP, &cur_sgttyb[xfd]);
-#else
-	return tcgetattr(fd,&cur_sgttyb[xfd].SG);
-#endif
 }
 static int TCsetattr(int fd,Sgttyb *sgtty){
 #ifdef TIOCSETN
@@ -442,9 +281,6 @@ static int cached_gtty(int fd,Sgttyb *buf){
 
 	if( SG_ispeed(&cur_sgttyb[xfd]) == 0 ){
 		rcode = TCgetattr(fd,(Sgttyb*)&cur_sgttyb[xfd].SG);
-#ifdef hpux
-		cur_sgttyb[xfd].SG_lflag = ICANON;
-#endif
 	}
 
 	if(initial_stty == 0){
@@ -462,14 +298,7 @@ static int cached_stty(int fd,Sgttyb *buf){
 	if( cur_sgttyb[xfd].SG_flags != buf->SG_flags
 	 || cur_sgttyb[xfd].SG_lflag != buf->SG_lflag ){
 		cur_sgttyb[xfd] = *buf;
-#ifdef hpux
-		tcdrain(fd);
-		usleep(100*1000);
-#endif
 		rcode = TCsetattr(fd,buf);
-#ifdef hpux
-		set_cbreak(fd,!(buf->SG_lflag&ICANON));
-#endif
 		return rcode;
 	}else	return 0;
 }
@@ -749,9 +578,6 @@ static int set_SCRSIZE(int rows){
 }
 
 
-#ifdef __FreeBSD__
-#define _ANSI_SOURCE
-#endif
 #include <sys/time.h>
 static int cgetc_with_timeout(int sec,int usec){
 	Sgttyb *tty;
@@ -776,9 +602,7 @@ static int cgetc(void){
 	Sgttyb *tty;
 	int ch;
 
-#if !defined(__CYGWIN__)
 	if( READYCC(stdin) || _PollIn1(fileno(stdin),1) == 0 )
-#endif
 		tty = STTY("-echo cbreak");
 
 	ch = getc(stdin);

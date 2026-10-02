@@ -147,29 +147,3 @@ int gotOOB(int fd){
 }
 
 
-#if defined(__cplusplus) && defined(_MSC_VER)
-extern int (*win_read)(int,char*,unsigned int);
-extern int (*win_write)(int,const char*,unsigned int);
-extern int (*win_close)(int fd);
-extern "C" {
-	int _lookuptrailbytes = 0;
-	int _read(int fd,char buf[],unsigned int size){
-		return (*win_read)(fd,buf,size);
-	}
-	int _read_lk(int fd,char buf[],unsigned int size){
-		return (*win_read)(fd,buf,size);
-	}
-	int _read_nolock(int fd,char buf[],unsigned int size){
-		return (*win_read)(fd,buf,size);
-	}
-	int _write(int fd,const char *buf,unsigned int size){
-		return (*win_write)(fd,buf,size);
-	}
-	int _write_lk(int fd,const char *buf,unsigned int size){
-		return (*win_write)(fd,buf,size);
-	}
-	int _write_nolock(int fd,const char *buf,unsigned int size){
-		return (*win_write)(fd,buf,size);
-	}
-}
-#endif
