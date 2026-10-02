@@ -34,14 +34,10 @@ install(FILES ${DG_REPO}/contrib/systemd/delegate.tmpfiles
 
 install(FILES ${DG_REPO}/doc/man/delegated.8 DESTINATION ${CMAKE_INSTALL_MANDIR}/man8)
 
-install(FILES ${DG_REPO}/CHANGELOG.md DESTINATION ${DG_INSTALL_DOCDIR})
-if(EXISTS ${DG_REPO}/README.md)
-  install(FILES ${DG_REPO}/README.md DESTINATION ${DG_INSTALL_DOCDIR})
-endif()
-install(DIRECTORY ${DG_REPO}/doc/reference DESTINATION ${DG_INSTALL_DOCDIR})
-if(EXISTS ${DG_REPO}/doc/examples)
-  install(DIRECTORY ${DG_REPO}/doc/examples DESTINATION ${DG_INSTALL_DOCDIR})
-endif()
+install(FILES ${DG_REPO}/CHANGELOG.md ${DG_REPO}/README.md DESTINATION ${DG_INSTALL_DOCDIR})
+install(DIRECTORY ${DG_REPO}/doc DESTINATION ${DG_INSTALL_DOCDIR} PATTERN man EXCLUDE)
+install(FILES ${DG_ROOT}/LICENSE.txt ${DG_ROOT}/LICENSE-ja.txt ${DG_ROOT}/COPYRIGHT ${DG_ROOT}/CREDITS
+        DESTINATION ${DG_INSTALL_DOCDIR}/delegate)
 
 # Empty directories for package builds, systemd-tmpfiles sets the owner at run time
 foreach(d lib log cache)

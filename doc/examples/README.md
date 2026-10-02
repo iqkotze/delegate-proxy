@@ -1,6 +1,6 @@
 # Beispielkonfigurationen
 
-Jede Datei zeigt ein Szenario für `delegated`. Die Dateien nennen nur Parameter aus `doc/reference/parameters.md`. Jedes Beispiel läuft als Test mit dem Label `examples`.
+Jede Datei zeigt ein Szenario für `delegated`. Die Dateien nennen nur Parameter aus [../reference/parameters.md](../reference/parameters.md). Den Aufbau der Konfiguration beschreibt [../configuration.md](../configuration.md). Jedes Beispiel läuft als Test mit dem Label `examples`.
 
 Platzhalter stehen zwischen `@`. Vor dem Start ersetzt man sie, zum Beispiel mit `sed`. `DGROOT` zeigt auf ein Verzeichnis, in das der Benutzer schreiben darf. Unter root wechselt `delegated` auf den Benutzer nobody.
 
