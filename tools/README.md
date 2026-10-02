@@ -30,6 +30,33 @@ Startet die libFuzzer-Ziele aus `tests/fuzz/` je eine feste Zeit lang. Die Ziele
 
     ctest --test-dir build/fuzz -L fuzz-regress
 
+## coverage.sh
+
+Baut mit dem Preset `coverage` (gcc `--coverage`, `-O0`), führt alle Tests aus und erzeugt Berichte mit `gcovr`. Das Skript schreibt `build/coverage/report/cobertura.xml`, `summary.txt` und `html/index.html`. Auf der Standardausgabe stehen die Zeilen- und Funktionsabdeckung. Es braucht `gcovr`.
+
+    tools/coverage.sh
+
+## analyze.sh
+
+Führt `clang-tidy` oder `cppcheck` über alle Quellen unter `delegate/` aus und vergleicht die Befunde mit der Baseline `ci/<werkzeug>-baseline.txt`. Die Baseline zählt Befunde je Datei und Prüfung. Das Skript schlägt nur fehl, wenn eine Zahl über der Baseline liegt. Der Bericht liegt in `build/analyze/<werkzeug>.txt`, dazu eine Codequality-JSON-Datei. Die Prüfungen von `clang-tidy` stehen in `.clang-tidy`. Die Hilfe `tools/baseline.py` führt den Vergleich aus.
+
+    tools/analyze.sh clang-tidy
+    tools/analyze.sh cppcheck
+    tools/analyze.sh clang-tidy --update-baseline
+
+## check-warnings.sh
+
+Baut mit `-DDG_EXTRA_WARNINGS=ON` und zählt die Warnungen mit `warnstats.sh`. Das Skript schlägt fehl, wenn die Zahl über `ci/warnings-baseline.txt` liegt. Die Zahl hängt vom Compiler ab. Die Baseline gilt für gcc im Image `debian:trixie`.
+
+    tools/check-warnings.sh
+    tools/check-warnings.sh --update-baseline
+
+## Doxygen
+
+Das CMake-Target `docs` erzeugt die HTML-Dokumentation nach `build/<preset>/docs/html`. Es braucht `doxygen`, `dot` ist optional.
+
+    cmake --build build/debug --target docs
+
 ## cleanup-unifdef.sh
 
 Entfernt mit `unifdef` den Code für andere Plattformen als Linux amd64 aus allen `.cpp` und `.h` Dateien unter `delegate/`. Das Verzeichnis `delegate/pds/` bleibt unberührt. Die Makroliste steht im Skript. Features und Sprachmakros wie `QS` oder `NONC99` werden nicht gesetzt.
@@ -57,6 +84,7 @@ Presets
 * `release` baut mit `-O2` und LTO. Durch LTO exportiert die Binärdatei weniger Symbole.
 * `cxx23` entspricht `debug`, aber mit C++23.
 * `clang` entspricht `debug`, aber mit clang++.
+* `coverage` baut mit gcc `--coverage` und `-O0`.
 * `fuzz` baut die Fuzz-Ziele mit clang, ASan und UBSan.
 * `asan` entspricht `debug`, aber mit `-fsanitize=address,undefined -fno-omit-frame-pointer`. Der Smoke-Test und alle Tests laufen unter ASan durch.
 

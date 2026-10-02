@@ -8,6 +8,7 @@ include(DgOptions)
 include(DgWarnings)
 include(DgSources)
 include(DgGenerate)
+include(DgDocs)
 
 # Prefixes the names with a directory and the .cpp suffix
 function(dg_files out dir)
