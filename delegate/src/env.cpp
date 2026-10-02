@@ -572,12 +572,18 @@ extern int UDPRELAY_MAXASSOC;
 extern int CON_RETRY;
 int SERVER_RESTART_SERNO;
 
-static scanListFunc maxima1(PCStr(maxima),Connection *Conn)
-{	CStr(name,128);
+static scanListFunc maxima1(PCStr(maxima),...)
+{	va_list ap;
+	Connection *Conn;
+	CStr(name,128);
 	IStr(unit,32);
 	CStr(val,32);
 	int num;
 	int *addr;
+
+	va_start(ap,maxima);
+	Conn = va_arg(ap,Connection*);
+	va_end(ap);
 
 	/*
 	if( Xsscanf(maxima,"%[^:]:%d",AVStr(name),&num) != 2 ){
@@ -652,7 +658,7 @@ DG_PARAM_SUB(MAXIMA, "socksend", "socksend:N", "16384", "[ungeprüft] Maximum si
 DG_PARAM_SUB(MAXIMA, "contry", "contry:N", "2", "[ungeprüft] Number of connection trials to a server", "MAXIMA=contry:3")
 void scan_MAXIMA(Connection *Conn,PCStr(maxima))
 {
-	scan_commaList(maxima,0,scanListCall maxima1,Conn);
+	scan_commaList(maxima,0,maxima1,Conn);
 }
 
 extern int SHUTOUT_TIMEOUT;
