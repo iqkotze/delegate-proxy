@@ -10,6 +10,7 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Quellen als C++20 (`.cpp`), Narrowing- und `register`-Altlasten behoben, kritische Warnungen als Fehler (`feature/cxx20`)
 
 ### Hinzugefügt
+- Coverage mit gcovr, clang-tidy und cppcheck gegen Baseline, Warnungsgrenze, Doxygen-Target `docs` (`feature/coverage-analysis`)
 - 9 libFuzzer-Ziele für Parser, Preset `fuzz`, Funde als Regressionstests (`feature/fuzzing`)
 - Lasttest `tools/load-test.sh` mit wrk für Forward-, Reverse- und TLS-Proxy (`feature/load-test`)
 - TLS-Integrationstests gegen OpenSSL 3 und TLS-Fälle im Smoke-Test (`feature/tls-tests`)

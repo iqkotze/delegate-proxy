@@ -1,0 +1,22 @@
+# Doxygen HTML reference, target "docs" (output in <builddir>/docs/html).
+find_package(Doxygen OPTIONAL_COMPONENTS dot)
+if(DOXYGEN_FOUND)
+  set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/docs)
+  set(DOXYGEN_PROJECT_NAME "DeleGate")
+  set(DOXYGEN_PROJECT_NUMBER ${PROJECT_VERSION})
+  set(DOXYGEN_RECURSIVE YES)
+  set(DOXYGEN_FILE_PATTERNS *.cpp *.h *.hpp)
+  set(DOXYGEN_EXCLUDE_PATTERNS */pds/* */subin/* */bin/* */bench/* */doc/* */tc/*)
+  set(DOXYGEN_EXTRACT_ALL YES)
+  set(DOXYGEN_EXTRACT_STATIC YES)
+  set(DOXYGEN_GENERATE_LATEX NO)
+  set(DOXYGEN_QUIET YES)
+  set(DOXYGEN_WARN_IF_UNDOCUMENTED NO)
+  set(DOXYGEN_WARN_LOGFILE ${CMAKE_BINARY_DIR}/docs/doxygen-warnings.txt)
+  set(DOXYGEN_MARKDOWN_SUPPORT YES)
+  set(DOXYGEN_PREDEFINED QS)
+  set(DOXYGEN_HAVE_DOT ${DOXYGEN_DOT_FOUND})
+  doxygen_add_docs(docs ${DG_ROOT}/include ${DG_ROOT}/rary ${DG_ROOT}/mimekit ${DG_ROOT}/src
+                   ${DG_ROOT}/../tests/unit ${DG_ROOT}/../tests/fuzz
+                   COMMENT "Generating Doxygen HTML")
+endif()
