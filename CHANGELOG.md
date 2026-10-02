@@ -10,6 +10,7 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Quellen als C++20 (`.cpp`), Narrowing- und `register`-Altlasten behoben, kritische Warnungen als Fehler (`feature/cxx20`)
 
 ### Hinzugefügt
+- Lasttest `tools/load-test.sh` mit wrk für Forward-, Reverse- und TLS-Proxy (`feature/load-test`)
 - TLS-Integrationstests gegen OpenSSL 3 und TLS-Fälle im Smoke-Test (`feature/tls-tests`)
 - Parameterdeklaration `DG_PARAM` am Code, generierte Referenz `doc/reference/parameters.md`, Hilfe `delegated -Fparam [NAME]` und Lückenprüfung als Test (`feature/param-registry`)
 - 104 Unit-Tests mit GoogleTest, 5 bekannte Fehler als Skip markiert (`feature/unit-tests`)
