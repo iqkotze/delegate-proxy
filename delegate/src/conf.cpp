@@ -26,6 +26,8 @@ History:
 #include "file.h"
 #include "ccenv.h"
 #include "dgparam.h"
+#include <sys/socket.h>
+#include <algorithm>
 
 const char *MYSELF                 = "-.-";
 const char *CLIENT_HOST            = "clnt.-";
@@ -102,7 +104,17 @@ int   DELEGATE_syncro        = 0; /* syncronous mode (only one client
                                           at a time, for debug) */
 const char *DELEGATE_IMAGEDIR      = 0;
 
-int   DELEGATE_LISTEN        = 20;
+/// Kernel limit of the accept queue, the largest useful listen backlog.
+static int defaultListenBacklog(){
+	int v = 0;
+	if( FILE *fp = fopen("/proc/sys/net/core/somaxconn","r") ){
+		if( fscanf(fp,"%d",&v) != 1 )
+			v = 0;
+		fclose(fp);
+	}
+	return 0 < v ? v : SOMAXCONN;
+}
+int   DELEGATE_LISTEN        = defaultListenBacklog();
 /*
 int   MAX_DELEGATE           = 64;
 */
@@ -907,30 +919,35 @@ FileSize getMeminfo(PCStr(name)){
 	FILE *fp;
 	IStr(info,8*1024);
 	const char *val;
-	int memtotal;
-	int memfree;
-	int inactive;
-	int active;
-	int ina;
+	FileSize memtotal;
+	FileSize memfree;
+	FileSize inactive;
+	FileSize active;
+	FileSize ina;
 
 	fp = fopen("/proc/meminfo","r");
 	if( fp == 0 )
 		return -1;
 	IGNRETP fread(info,1,sizeof(info),fp);
 	fclose(fp);
+	if( streq(name,"available") ){
+		if( val = findFieldValue(info,"MemAvailable") )
+			return (FileSize)atoll(val) * 1024;
+		return -1;
+	}
 	if( streq(name,"inactive") ){
 		memtotal = -1;
 		memfree = -1;
 		inactive = -1;
 		active = -1;
 		if( val = findFieldValue(info,"MemTotal") )
-			memtotal = atoi(val);
+			memtotal = atoll(val);
 		if( val = findFieldValue(info,"MemFree") )
-			memfree = atoi(val);
+			memfree = atoll(val);
 		if( val = findFieldValue(info,"Active") )
-			active = atoi(val);
+			active = atoll(val);
 		if( val = findFieldValue(info,"Inactive") )
-			inactive = atoi(val);
+			inactive = atoll(val);
 		if( inactive < 0 ){
 			if( 0 < active )
 				inactive = memtotal - active;
@@ -948,21 +965,43 @@ int MAX_DELEGATEP(int dyn){
 	static int prevmax;
 
 	if( 0 < MAX_DELEGATEsta ) max = MAX_DELEGATEsta; else
-	if( dyn && 0 < MAX_DELEGATEdyn ) max = MAX_DELEGATEdyn; else
+	if( 0 < MAX_DELEGATEdyn ) max = MAX_DELEGATEdyn; else
 		max = MAX_DELEGATEdef;
 	if( max != prevmax )
-	Verbose("MAX_DELEGATEP %d (%d)%d %d >>> %d\n",
+	Verbose("MAXIMA=delegated %d (%d)%d %d >>> %d\n",
 		MAX_DELEGATEsta,dyn,MAX_DELEGATEdyn,MAX_DELEGATEdef,max);
 	prevmax = max;
 	return max;
 }
+
+namespace {
+/// Estimated resident memory of one delegated process.
+constexpr FileSize kBytesPerProcess = 4LL * 1024 * 1024;
+/// Descriptors kept back for the main process (ports, logs, pipes).
+constexpr long kFdReserve = 64;
+/// Descriptors of one connection (client and server side).
+constexpr long kFdPerConnection = 2;
+constexpr int kMaxDelegatedCap = 4096;
+constexpr int kMaxDelegatedMin = 64;
+}
+
+/// Default of MAXIMA=delegated from the available memory (bytes) and the descriptor limit.
+int calcMaxDelegated(FileSize availBytes,long nofile){
+	FileSize byMem = availBytes / kBytesPerProcess;
+	FileSize byFd = (nofile - kFdReserve) / kFdPerConnection;
+	FileSize max = std::min<FileSize>({byMem,byFd,kMaxDelegatedCap});
+	return (int)std::max<FileSize>(max,kMaxDelegatedMin);
+}
+
 void set_MAXIMA(Connection *Conn,int update){
 	FileSize mem;
 	FileSize imem;
+	FileSize avail;
 	int max;
 	int omax;
 	int oexp;
 	int mag;
+	long nofile;
 
 	if( lNOAUTOMAXIMA() ){
 		return;
@@ -977,40 +1016,24 @@ void set_MAXIMA(Connection *Conn,int update){
 		if( mem < imem ){
 			mem = imem;
 		}
+		avail = getMeminfo("available");
+		if( avail <= 0 )
+			avail = mem;
 		mem /= 1024*1024;
-		max = 0;
-		/*
-		omax = MAX_DELEGATE;
-		*/
 		omax = MAX_DELEGATEdyn;
 		oexp = MAG_EXPSOCKBUF;
 
-		/*
-		if( 0 < origMAX_DELEGATE ){
-			max = origMAX_DELEGATE;
-		}else
-		*/
-		if( mem <  16 ) max =  8; else
-		if( mem <  32 ) max = 10; else
-		if( mem <  64 ) max = 12; else
-		if( mem <  96 ) max = 14; else
-		if( mem < 128 ) max = 16; else
-		if( mem < 172 ) max = 20; else
-		if( mem < 256 ) max = 24; else
-		if( mem < 512 ) max = 32;
-			   else max = MAX_DELEGATEP(0);
+		nofile = nofile_limit();
+		if( update == 0 || omax <= 0 )
+			max = calcMaxDelegated(avail,nofile);
+		else	max = omax;
 
-		if( 0 < max && max != omax ){
+		if( max != omax ){
 			if( MAX_DELEGATEsta < 0 )
-			sv1log("MAXIMA=delegated:%d for small mem=%dM\n",
-				max,(int)mem);
-/*
-porting_dbg("MAXIMA=delegated:%d for small mem=%dM <- %d (%d)",
-max,(int)mem,prevMEM,origMAX_DELEGATE);
-*/
-			/*
-			MAX_DELEGATE = max;
-			*/
+			sv1log("MAXIMA=delegated:%d = min(memory %lldM / %lldM per process, (nofile %ld - %ld) / %ld per connection, %d), at least %d\n",
+				max,avail/(1024*1024),kBytesPerProcess/(1024*1024),
+				nofile,kFdReserve,kFdPerConnection,
+				kMaxDelegatedCap,kMaxDelegatedMin);
 			MAX_DELEGATEdyn = max;
 		}
 		if( mem <  16 ){ mag = 16; }else

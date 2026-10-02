@@ -24,6 +24,38 @@ static int expand(const char *what,int op,int amax)
 }
 
 #ifdef RLIMIT_NOFILE
+int nofile_limit();
+/// Upper bound for descriptor tables, as the hard limit can be in the billions.
+static const rlim_t kNofileCap = 65536;
+
+/// Raises the soft RLIMIT_NOFILE to the hard limit (at most kNofileCap) and returns the new soft limit.
+int raise_nofile_limit(int *before,int *hard)
+{	struct rlimit rl;
+	rlim_t want;
+
+	if( getrlimit(RLIMIT_NOFILE,&rl) != 0 )
+		return -1;
+	if( before ) *before = rl.rlim_cur == RLIM_INFINITY ? (int)kNofileCap : (int)rl.rlim_cur;
+	if( hard ) *hard = rl.rlim_max == RLIM_INFINITY ? -1 : (int)(rl.rlim_max < 0x7fffffff ? rl.rlim_max : 0x7fffffff);
+	want = rl.rlim_max < kNofileCap ? rl.rlim_max : kNofileCap;
+	if( rl.rlim_cur != RLIM_INFINITY && rl.rlim_cur < want ){
+		rl.rlim_cur = want;
+		setrlimit(RLIMIT_NOFILE,&rl);
+	}
+	return nofile_limit();
+}
+
+/// Current soft RLIMIT_NOFILE, between 64 and kNofileCap.
+int nofile_limit()
+{	struct rlimit rl;
+
+	if( getrlimit(RLIMIT_NOFILE,&rl) != 0 )
+		return FD_SETSIZE;
+	if( rl.rlim_cur == RLIM_INFINITY || kNofileCap < rl.rlim_cur )
+		return (int)kNofileCap;
+	return rl.rlim_cur < 64 ? 64 : (int)rl.rlim_cur;
+}
+
 int expand_fdset(int amax)
 {	struct rlimit rl;
 	int max = amax;
@@ -44,6 +76,14 @@ int expand_fdset(int amax)
 
 #else
 
+int raise_nofile_limit(int *before,int *hard)
+{
+	return FD_SETSIZE;
+}
+int nofile_limit()
+{
+	return FD_SETSIZE;
+}
 int expand_fdset(int amax)
 {
 	porting_dbg("FD_SETSIZE = %d",FD_SETSIZE);

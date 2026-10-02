@@ -1266,7 +1266,7 @@ Source: `delegate/src/delegated.cpp`
 
 Syntax: `MAXIMA=what:number[,what:number]*`
 
-Default: `listen:20,delegated:64,standby:32,ftpcc:16,...`
+Default: `listen:somaxconn,delegated:auto,standby:32,ftpcc:16,...`
 
 Maxima of resources: processes, connections, queue sizes and similar
 
@@ -1279,13 +1279,13 @@ MAXIMA=delegated:256,listen:1024
 | `bps` | `bps:N` | `0 (unlimited)` | Maximum transmission speed of HTTP and FTP data; k and m units are allowed | `MAXIMA=bps:128k` |
 | `conpch` | `conpch:N` | `0 (unlimited)` | Maximum number of connections at a time per client host | `MAXIMA=conpch:20` |
 | `contry` | `contry:N` | `2` | [ungeprüft] Number of connection trials to a server | `MAXIMA=contry:3` |
-| `delegated` | `delegated:N` | `64 (adapted to the memory size at start)` | Maximum number of DeleGate processes running at a time | `MAXIMA=delegated:256` |
+| `delegated` | `delegated:N` | `min(available memory / 4 MiB, (open file limit - 64) / 2, 4096), at least 64` | Maximum number of DeleGate processes running at a time | `MAXIMA=delegated:256` |
 | `erestart` | `erestart:N` | `1` | [ungeprüft] Maximum number of restarts after an error, used with TIMEOUT erestart | `MAXIMA=erestart:3` |
 | `fdset` | `fdset:N` | `64` | [ungeprüft] Base size of the descriptor set, extended by three per delegated process | `MAXIMA=fdset:128` |
 | `ftpcc` | `ftpcc:N` | `16` | Maximum number of FTP connection cache servers to a host (shared with nntpcc and svcc) | `MAXIMA=ftpcc:4` |
 | `http-cka` | `http-cka:N` | `50` | Maximum requests per keep-alive connection; replaced by HTTPCONF max-cka | `MAXIMA=http-cka:50` |
 | `http-ckapch` | `http-ckapch:N` | `8` | Maximum keep-alive connections per client host; replaced by HTTPCONF max-ckapch | `MAXIMA=http-ckapch:8` |
-| `listen` | `listen:N` | `20` | Maximum size of the queue of an entrance port | `MAXIMA=listen:1024` |
+| `listen` | `listen:N` | `net.core.somaxconn of the kernel (4096 if unreadable)` | Maximum size of the queue of an entrance port | `MAXIMA=listen:1024` |
 | `nntpcc` | `nntpcc:N` | `16` | Maximum number of NNTP connection cache processes to a host (shared with ftpcc and svcc) | `MAXIMA=nntpcc:4` |
 | `randenv` | `randenv:N` | `1024` | Randomization range of the environment variables base | `MAXIMA=randenv:1024` |
 | `randfd` | `randfd:N` | `32` | Randomization range of the client socket descriptor | `MAXIMA=randfd:32` |

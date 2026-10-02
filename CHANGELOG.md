@@ -5,6 +5,7 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 ## [Unreleased]
 
 ### Geändert
+- Grenzen nach System statt fest, `RLIMIT_NOFILE` angehoben, Backlog nach `somaxconn`, `MAXIMA=delegated` nach Speicher und Deskriptoren, 1.200 gleichzeitige Verbindungen ohne Fehler (`feature/session-limits`)
 - OpenSSL 3 und zlib direkt gelinkt, nur TLS ab 1.2, sichere SSL-Optionen, selbst erzeugtes EC-Zertifikat statt eingebautem Zertifikat von 2010; SSLv2, SSLv3, ENGINE und tmp-RSA entfallen (`feature/openssl3`)
 - Quellen als C++20 (`.cpp`), Narrowing- und `register`-Altlasten behoben, kritische Warnungen als Fehler (`feature/cxx20`)
 

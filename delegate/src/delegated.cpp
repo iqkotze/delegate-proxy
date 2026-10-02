@@ -23,6 +23,7 @@ History:
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
+#include <vector>
 #include "ystring.h"
 #include "hostlist.h"
 #include "config.h"
@@ -295,7 +296,7 @@ void minit_main()
 	if( mainEnv == 0 ){
 		mainEnv = NewStruct(MainEnv);
 
-		ACC_BYMAIN_INTERVAL = 200;
+		ACC_BYMAIN_INTERVAL = 10;
 		ACC_NONE_TIMEOUT = 60;
 		IDLE_TIMEOUT = 10*60;
 		StickyTIMEOUT1 = 10;
@@ -1181,7 +1182,7 @@ void setWatchChild()
 		 * status via file like "/proc/*"
 		 */
 		size = expand_fdset(FDSET_MAX+MAX_DELEGATE*3);
-		TraceLog("START tracing children, FD_SETSIZE=%d\n",size);
+		TraceLog("START tracing children, fdset=%d\n",size);
 	}
 	if( lSIGCHLD() ){
 		doSIGCHLDpid = getpid();
@@ -1606,7 +1607,7 @@ if( execpath == NULL )
 		sprintf(nchild,"HUPENV=%d/%d/%d",NUM_HUPS,NUM_CHILDREN,-1);
 
 		if( isatty(fileno(stdin)) ){
-			int fd,logfd,ssfd,rcode;
+			int fd,nfd,logfd,ssfd,rcode;
 			int bgpid,pid,si;
 			IStr(svpid,128);
 			IStr(isserv,32);
@@ -1616,7 +1617,7 @@ if( execpath == NULL )
 			logfd = curLogFd();
 			ssfd = SessionFd();
 			si = 0;
-			for( fd = 0; fd < FD_SETSIZE; fd++ ){
+			for( fd = 0, nfd = nofile_limit(); fd < nfd; fd++ ){
 				if( fd == logfd
 				 || fd == config_FD
 				 || fd == ssfd
@@ -1756,12 +1757,12 @@ static void recv_socks(){
 }
 static void send_socks(PVStr(socks),int cpid)
 {	refQStr(dp,socks); /**/
-	int fd,sock;
+	int fd,nfd,sock;
 
 	sprintf(dp,"%d",cpid);
 	dp += strlen(dp);
 
-	for( fd = 0; fd < FD_SETSIZE; fd++ ){
+	for( fd = 0, nfd = nofile_limit(); fd < nfd; fd++ ){
 		if( !isServSock(fd) )
 			continue;
 		sock = send_sock(cpid,fd,1);
@@ -6935,10 +6936,17 @@ static void _main(int ac,const char *av[])
 
 	START_TIME = time(0);
 
+	{
+		int nofile0,nofileHard;
+		int nofile = raise_nofile_limit(&nofile0,&nofileHard);
+		sv1log("RLIMIT_NOFILE=%d (was %d, hard limit %d)\n",nofile,nofile0,nofileHard);
+	}
 	set_MAXIMA(Conn,0);
 	scan_HOSTS0(Conn);
 	if( env = getEnv(P_TIMEOUT)) scanEnv(Conn,P_TIMEOUT,scan_TIMEOUT);
 	if( env = getEnv(P_MAXIMA))  scanEnv(Conn,P_MAXIMA,scan_MAXIMA);
+	sv1log("MAXIMA in effect: delegated=%d%s listen=%d\n",MAX_DELEGATE,
+		(env && strstr(env,"delegated:")) ? " (set)" : "",DELEGATE_LISTEN);
 
 /* check UDP before mkEntrance */
 proto = Scan_SERVER(Conn);
@@ -7394,7 +7402,9 @@ if( streq(proto,"teleport") ) isteleportd = 1;
 	if( !ME.me_accsimul )
 	if( ViaVSAPassociator(-1) == 0 ) /* no local connect with -Pxxx@vsap */
 	if( reinit || (LOG_type & L_REINIT) && NUM_HUPS == 0 ){
-		int nready,sockv[FD_SETSIZE],udpv[FD_SETSIZE];
+		int nready;
+		std::vector<int> sockvB(nofile_limit()),udpvB(nofile_limit());
+		int *sockv = sockvB.data(),*udpv = udpvB.data();
 		int isset = 0;
 
 		sv1log("#### wait the first contact...\n");
@@ -8583,8 +8593,9 @@ static void setClif(Connection *Conn,ClPort *clif,int clsock){
 int CTX_VSAPbindaccept(Connection *Conn,int timeout,int priority,PVStr(sockname),PVStr(peername));
 static int AcceptByMain(Connection *Conn,int timeout,int *svsockp,Efd *clSock)
 {	int clsock;
-	int sx,nready,sockv[FD_SETSIZE],udpv[FD_SETSIZE];
-	int typev[FD_SETSIZE];
+	int sx,nready;
+	std::vector<int> sockvB(nofile_limit()),udpvB(nofile_limit()),typevB(nofile_limit());
+	int *sockv = sockvB.data(),*udpv = udpvB.data(),*typev = typevB.data();
 	int exlock,sock1;
 	CStr(primport,MaxHostNameLen);
 	CStr(sockname,MaxHostNameLen);
@@ -8763,8 +8774,9 @@ int getParentSock();
 
 static int AcceptBySticky1(Connection *Conn,int timeout,int shlock,int exlock,Efd *clSock)
 {	int clsock = -1;
-	int sx,nready,sockv[FD_SETSIZE],udpv[FD_SETSIZE];
-	int typev[FD_SETSIZE];
+	int sx,nready;
+	std::vector<int> sockvB(nofile_limit()),udpvB(nofile_limit()),typevB(nofile_limit());
+	int *sockv = sockvB.data(),*udpv = udpvB.data(),*typev = typevB.data();
 	CStr(sockname,MaxHostNameLen);
 	CStr(peername,MaxHostNameLen);
 	int remote;
@@ -9294,11 +9306,10 @@ static void setupFixedNumServ(Connection *Conn,int ac,const char *av[]){
 	openServPorts();
 }
 static int withBacklog(){
-	int sockv[FD_SETSIZE];
-	int udpv[FD_SETSIZE];
+	std::vector<int> sockv(nofile_limit()),udpv(nofile_limit());
 	int nready;
 
-	nready = pollServPort(1,sockv,udpv,NULL);
+	nready = pollServPort(1,sockv.data(),udpv.data(),NULL);
 	return nready;
 }
 void StickyServer(Connection *Conn,Efd *clSock,int max)
