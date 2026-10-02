@@ -18,6 +18,7 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Code und Build-Dateien für alle Plattformen außer Linux amd64, rund 25.000 Zeilen (`feature/remove-non-linux-code`)
 
 ### Behoben
+- Speicherlecks in `mkstab` und `sed_free` (`bugfix/asan-leaks`)
 - Ein- und Ausgabe-Polling mit `poll()` statt `select()`, funktioniert ab Dateideskriptor 1024 (`bugfix/poll`)
 - MD5 nutzt feste 32-Bit-Typen, Sonder-Define `m64` entfällt (`bugfix/md5-uint32`)
 - Varargs-Überlesen, Zahlenüberläufe, Pufferlängen, Schreiben in const-Eingaben, Zeiten nach 2038, Regex-Treffer und `*` in Hostmustern (`bugfix/vargs-strings-time-regex`)

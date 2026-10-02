@@ -23,3 +23,17 @@ TEST(Sed, LeavesNonMatchingLineUnchanged) {
 	EXPECT_STREQ("nothing here", out);
 	sed_free(se);
 }
+
+TEST(Sed, FreesEnvWithSeveralCommands) {
+	sed_env *se = sed_new();
+	ASSERT_EQ(0, sed_compile(se, "/foo/s/foo/bar/g"));
+	ASSERT_EQ(0, sed_compile(se, "s/x/y/"));
+	CStr(out, 64);
+	sed_execute1(se, "foo foo", AVStr(out), 0);
+	EXPECT_STREQ("bar bar", out);
+	sed_free(se);
+}
+
+TEST(Sed, FreeAcceptsNull) {
+	sed_free(nullptr);
+}
