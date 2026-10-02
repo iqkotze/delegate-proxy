@@ -59,7 +59,7 @@ static scanListFunc pgp1(PCStr(arg))
 		arg);
 	return 0;
 }
-DG_PARAM(PGP, "PGP=mode[,mode]*", "none", "[ungeprüft] PGP processing of mail messages; sign, mime, encr, decr, vrfy", "PGP=sign,mime")
+DG_PARAM(PGP, "PGP=mode[,mode]*", "none", "PGP processing of mail messages; sign, mime, encr, decr, vrfy", "PGP=sign,mime")
 void scan_PGP(void*_,PCStr(args))
 {
 	scan_commaList(args,0,scanListCall pgp1);

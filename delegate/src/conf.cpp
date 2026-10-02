@@ -206,6 +206,11 @@ void scan_CACHE1(Connection *Conn,PCStr(specs))
  * CACHE=do:http:*.sv.domain:*.cl.domain
  */
 DG_PARAM(CACHE, "CACHE=cacheControl[,cacheControl]*[:connMap]", "none (cache is enabled if CACHEDIR is usable)", "Enable (do), disable (no) or use read-only (ro) the cache", "CACHE=do")
+DG_PARAM_SUB(CACHE, "do", "do", "on", "Create CACHEDIR if it does not exist and enable the cache", "CACHE=do")
+DG_PARAM_SUB(CACHE, "no", "no", "off", "Disable the cache", "CACHE=no")
+DG_PARAM_SUB(CACHE, "ro", "ro", "off", "Use the cache read-only", "CACHE=ro")
+DG_PARAM_SUB(CACHE, "auth", "auth", "off", "[ungeprüft] Cache responses to requests with authentication", "CACHE=auth")
+DG_PARAM_SUB(CACHE, "nounify", "nounify", "off", "[ungeprüft] Do not unify the URLs of cache entries", "CACHE=nounify")
 void scan_CACHE(Connection *Conn,PCStr(specs)){
 	if( strchr(specs,':') ){
 		IStr(spec1,128);

@@ -215,6 +215,19 @@ const char *setHeadMask(PCStr(hmask)){
 }
 
 DG_PARAM(MIMECONV, "MIMECONV=mimeConv[,mimeConv]", "none (empty if CHARCODE is given)", "MIME encoding and decoding in NNTP, POP and SMTP: thru, charcode, nospenc, textonly, alt", "MIMECONV=charcode")
+DG_PARAM_SUB(MIMECONV, "thru", "thru", "none", "Disable all MIME encoding and decoding", "MIMECONV=thru")
+DG_PARAM_SUB(MIMECONV, "charcode", "charcode", "none", "Enable only the character code conversion", "MIMECONV=charcode")
+DG_PARAM_SUB(MIMECONV, "nospenc", "nospenc", "off", "Disable the special encoding of the space in non-ASCII text of MIME headers", "MIMECONV=nospenc")
+DG_PARAM_SUB(MIMECONV, "textonly", "textonly", "off", "Keep only the first text/* part of a multipart/* message", "MIMECONV=textonly")
+DG_PARAM_SUB(MIMECONV, "alt", "alt:{first|unfold}", "none", "Keep the first alternative (first) or all alternatives (unfold) of multipart/alternative", "MIMECONV=alt:first")
+DG_PARAM_SUB(MIMECONV, "all", "all", "none", "Enable all MIME encoding and decoding of header and body", "MIMECONV=all")
+DG_PARAM_SUB(MIMECONV, "enc", "enc", "none", "Enable MIME encoding of header and body", "MIMECONV=enc")
+DG_PARAM_SUB(MIMECONV, "dec", "dec", "none", "Enable MIME decoding of header and body", "MIMECONV=dec")
+DG_PARAM_SUB(MIMECONV, "qy", "qy", "off", "[ungeprüft] Add the QY marker", "MIMECONV=qy")
+DG_PARAM_SUB(MIMECONV, "zero", "zero:{none|utf8|kill}", "none", "[ungeprüft] Treatment of zero-width characters", "MIMECONV=zero:utf8")
+DG_PARAM_SUB(MIMECONV, "rewaddr", "rewaddr:maskList:format", "none", "Rewrite E-mail addresses in the header and the body", "MIMECONV=rewaddr:_Email:%l@%r")
+DG_PARAM_SUB(MIMECONV, "nomapemail", "nomapemail:{addrList}", "none", "E-mail addresses that are not mapped", "MIMECONV=\"nomapemail:{admin@example.com}\"")
+DG_PARAM_SUB(MIMECONV, "headmask", "headmask:{fieldList|-ng2ml}", "none", "[ungeprüft] Header fields kept in the message; -ng2ml selects the list for news to mail", "MIMECONV=headmask:-ng2ml")
 void scan_MIMECONV(PCStr(convspec))
 {
 	if( strneq(convspec,"headmask:",9) ){

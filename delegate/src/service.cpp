@@ -134,7 +134,7 @@ void lsProtos(FILE *out){
 /*
  * SERVICE=name:[port[/udp]][:service]
  */
-DG_PARAM(SERVICE, "SERVICE=name:[port[/udp]][:service]", "none", "[ungeprüft] Define a service name with a port, or as an alias of an existing service", "SERVICE=myhttp:8080:http")
+DG_PARAM(SERVICE, "SERVICE=name:[port[/udp]][:service]", "none", "Define a service name with a port, or as an alias of an existing service", "SERVICE=myhttp:8080:http")
 void scan_SERVICE(Connection *Conn,PCStr(desc))
 {	int ic,ii,port,si,sn;
 	CStr(ib,64);

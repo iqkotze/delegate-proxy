@@ -1820,7 +1820,7 @@ int addServPorts(PCStr(ports),PCStr(serv),Connection *Conn){
  * ENTR=proto://host:port-_-natHost:natPort-_-clntHost:clntPort
  */
 int scan_protositeport(PCStr(url),PVStr(proto),PVStr(userpasshost),PVStr(port));
-DG_PARAM(ENTR, "ENTR=proto://host:port/path", "none", "[ungeprüft] Open an entrance for a protocol on a host and port", "ENTR=http://localhost:8080/")
+DG_PARAM(ENTR, "ENTR=proto://host:port/path", "none", "Open an entrance for a protocol on a host and port", "ENTR=http://localhost:8080/")
 void scan_ENTR(Connection *Conn,PCStr(entrance)){
 	IStr(proto,64);
 	IStr(site,64);

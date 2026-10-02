@@ -3348,6 +3348,20 @@ int scan_yyopts(Connection *Conn,PCStr(arg)){
 	return MxFlags;
 }
 DG_PARAM(YYCONF, "YYCONF=name[:value]", "none", "Environment of the yyMux user session, such as HOME, PATH and SHELL", "YYCONF=\"SHELL:/bin/sh\"")
+DG_PARAM_SUB(YYCONF, "YYUID", "YYUID:uid", "none", "[ungeprüft] User ID of the yyMux user session", "YYCONF=YYUID:1000")
+DG_PARAM_SUB(YYCONF, "HOME", "HOME:dir", "none", "HOME of the yyMux user session", "YYCONF=HOME:/home/user")
+DG_PARAM_SUB(YYCONF, "PATH", "PATH:dirList", "none", "PATH of the yyMux user session", "YYCONF=PATH:/usr/bin:/bin")
+DG_PARAM_SUB(YYCONF, "LD_LIBRARY_PATH", "LD_LIBRARY_PATH:dirList", "none", "LD_LIBRARY_PATH of the yyMux user session", "YYCONF=LD_LIBRARY_PATH:/usr/lib")
+DG_PARAM_SUB(YYCONF, "SHELL", "SHELL:path", "none", "SHELL of the yyMux user session", "YYCONF=SHELL:/bin/sh")
+DG_PARAM_SUB(YYCONF, "PROMPT", "PROMPT:string", "none", "Prompt (PS1) of the yyMux user session", "YYCONF=PROMPT:yy$")
+DG_PARAM_SUB(YYCONF, "HISTFILE", "HISTFILE:file", "none", "HISTFILE of the yyMux user session", "YYCONF=HISTFILE:/tmp/yy.hist")
+DG_PARAM_SUB(YYCONF, "CHROOT", "CHROOT:dir", "none", "[ungeprüft] Accepted and ignored", "YYCONF=CHROOT:/")
+DG_PARAM_SUB(YYCONF, "OWNER", "OWNER:user", "none", "[ungeprüft] Accepted and ignored", "YYCONF=OWNER:nobody")
+DG_PARAM_SUB(YYCONF, "STLS", "STLS", "off", "[ungeprüft] Use TLS for the yyMux connection", "YYCONF=STLS")
+DG_PARAM_SUB(YYCONF, "persistent", "persistent[:period]", "off", "[ungeprüft] Keep the session persistent; the period in minutes is the resume hold time", "YYCONF=persistent:10")
+DG_PARAM_SUB(YYCONF, "sttyraw", "sttyraw:command", "none", "[ungeprüft] Command that sets the terminal to raw mode", "YYCONF=sttyraw:stty raw")
+DG_PARAM_SUB(YYCONF, "forkpty", "forkpty:command", "none", "[ungeprüft] Command used to start a pseudo terminal session", "YYCONF=forkpty:dgforkpty")
+DG_PARAM_SUB(YYCONF, "accept", "accept", "off", "[ungeprüft] Open a server socket that accepts yyMux connections", "YYCONF=accept")
 void scan_YYCONF(Connection *Conn,PCStr(conf)){
 	MuxCtx *Mc = initgMc(Conn);
 	IStr(nam,128);

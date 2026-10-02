@@ -974,7 +974,7 @@ void scan_FORWARD(Connection *Conn,PCStr(forward))
 {
 	scan_FORWARDX(Conn,forward,1);
 }
-DG_PARAM(GATEWAY, "GATEWAY=gatewayURL[-_-connMap]", "none", "[ungeprüft] Same as FORWARD", "GATEWAY=socks://sockshost:1080")
+DG_PARAM(GATEWAY, "GATEWAY=gatewayURL[-_-connMap]", "none", "Same as FORWARD", "GATEWAY=socks://sockshost:1080")
 void scan_GATEWAY(Connection *Conn,PCStr(gateway)){
 	scan_FORWARD(Conn,gateway);
 }
@@ -1672,6 +1672,21 @@ static scanListFunc connect1(PCStr(conn),Connection *Conn,connArg *Ca)
 	return 0;
 }
 DG_PARAM(CONNECT, "CONNECT=connSeq[:connMap]", "c,i,m,h,y,v,s,d:*:*:*", "Order of connection methods tried for the target server", "CONNECT=s,d")
+DG_PARAM_SUB(CONNECT, "cache", "cache (c)", "in the default order", "Search the cache without connecting", "CONNECT=c,d")
+DG_PARAM_SUB(CONNECT, "icp", "icp (i)", "in the default order", "Connect via a PROXY hinted by an ICP server", "CONNECT=c,i,d")
+DG_PARAM_SUB(CONNECT, "master", "master (m)[/p]", "in the default order", "Connect via a PROXY or a MASTER DeleGate", "CONNECT=m,d")
+DG_PARAM_SUB(CONNECT, "https", "https (h)", "in the default order", "Connect via an SSL tunnel on HTTP", "CONNECT=h,d")
+DG_PARAM_SUB(CONNECT, "yymux", "yymux (y)", "in the default order", "Connect via a YYMUX server", "CONNECT=y,d")
+DG_PARAM_SUB(CONNECT, "vsap", "vsap (v)[/arg]", "in the default order", "Connect via a VSAP server", "CONNECT=v,d")
+DG_PARAM_SUB(CONNECT, "socks", "socks (s)", "in the default order", "Connect via SOCKS servers", "CONNECT=s,d")
+DG_PARAM_SUB(CONNECT, "direct", "direct (d)", "in the default order", "Connect directly to the target server; tcp also selects it", "CONNECT=d")
+DG_PARAM_SUB(CONNECT, "proxy", "proxy (p)", "not in the default order", "Connect via a PROXY server", "CONNECT=p,d")
+DG_PARAM_SUB(CONNECT, "udp", "udp (u)", "not in the default order", "Connect by UDP", "CONNECT=u")
+DG_PARAM_SUB(CONNECT, "ftp", "ftp (f)", "not in the default order", "[ungeprüft] Connect with the built-in FTP", "CONNECT=f,d")
+DG_PARAM_SUB(CONNECT, "teleport", "teleport (t)", "not in the default order", "[ungeprüft] Connect via a teleport tunnel", "CONNECT=t,d")
+DG_PARAM_SUB(CONNECT, "internal", "internal (l)", "not in the default order", "[ungeprüft] Connect to an internal service", "CONNECT=l,d")
+DG_PARAM_SUB(CONNECT, "gateway", "gateway (g)", "not in the default order", "[ungeprüft] Connect via a gateway", "CONNECT=g,d")
+DG_PARAM_SUB(CONNECT, "None", "None (N)", "not in the default order", "Do not connect", "CONNECT=N")
 void scan_CONNECT(Connection *Conn,PCStr(connlist))
 {	const char *clist;
 	const char *proto;

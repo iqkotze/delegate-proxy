@@ -87,7 +87,8 @@ static TelnetEnv *telnetEnv;
 #define ccxbTOCL	telnetEnv->te_ccxbTOCL
 #define ccxbTOSV	telnetEnv->te_ccxbTOSV
 
-DG_PARAM(TELNETCONF, "TELNETCONF=keepalive:seconds", "none", "[ungeprüft] Telnet settings; keepalive sets the keep-alive interval, 30 if 0", "TELNETCONF=keepalive:30")
+DG_PARAM(TELNETCONF, "TELNETCONF=keepalive:seconds", "none", "Telnet settings; keepalive sets the keep-alive interval, 30 if 0", "TELNETCONF=keepalive:30")
+DG_PARAM_SUB(TELNETCONF, "keepalive", "keepalive:seconds", "none", "Keep-alive interval; 0 selects 30 seconds", "TELNETCONF=keepalive:30")
 void scan_TELNETCONF(Connection*_,PCStr(conf))
 {	CStr(what,32);
 	CStr(value,64);

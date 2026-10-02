@@ -69,7 +69,7 @@ class Registry:
             table = self.params
         else:
             sub, syntax, dflt, desc, example = strs
-            if not re.match(r'^[a-z][a-z0-9_-]*$', sub):
+            if not re.match(r'^-?[A-Za-z0-9][A-Za-z0-9_.-]*$', sub):
                 self.error(where, 'invalid sub-option name %s' % sub)
                 return
             key = (ident, sub)

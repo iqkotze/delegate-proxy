@@ -66,8 +66,14 @@ double STLS_fsvim_wait(double ws){
 	return ws;
 }
 
-DG_PARAM(TLS, "TLS=stlsSpecs[,sslwayCom][:connMap]", "none", "[ungeprüft] Same as STLS", "TLS=fcl")
+DG_PARAM(TLS, "TLS=stlsSpecs[,sslwayCom][:connMap]", "none", "Same as STLS", "TLS=fcl")
 DG_PARAM(STLS, "STLS=stlsSpecs[,sslwayCom][:connMap]", "none", "Start SSL/TLS by STARTTLS negotiation with client (fcl) or server (fsv)", "STLS=\"fsv,-fcl\"")
+DG_PARAM_SUB(STLS, "fcl", "[-]fcl[/im][/ssl]", "off", "Use SSL with the client; the session ends if SSL is unavailable, - makes it optional", "STLS=fcl")
+DG_PARAM_SUB(STLS, "fsv", "[-]fsv[/im][/ssl]", "off", "Use SSL with the server; the session ends if SSL is unavailable, - makes it optional", "STLS=fsv")
+DG_PARAM_SUB(STLS, "mitm", "[-]mitm", "off", "Behave like -fcl,-fsv; with - only for the server name prefix -mitm.", "STLS=mitm")
+DG_PARAM_SUB(STLS, "im", "[-]imSec", "im0.25", "Wait time for an implicit SSL handshake from the client; -im disables it", "STLS=fcl,im0.5")
+DG_PARAM_SUB(STLS, "ssl", "/ssl", "off", "Use AUTH SSL instead of AUTH TLS (for FTP)", "STLS=fsv/ssl")
+DG_PARAM_SUB(STLS, "opt", "opt", "off", "Make the following specifications optional, like the - prefix", "STLS=opt,fcl")
 void scan_STLS(Connection *Conn,PCStr(stls)){
 	CStr(filt,1024);
 	CStr(proto,1024);

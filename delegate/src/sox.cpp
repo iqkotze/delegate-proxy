@@ -377,6 +377,16 @@ int SOX_NOENCRYPT = 0;
 int SOX_NOCONNDATA = 0;
 
 DG_PARAM(SOXCONF, "SOXCONF=confSpec[,confSpec]*", "none", "Configuration of SockMux, for example crypt:no and packsize:SIZE", "SOXCONF=crypt:no")
+DG_PARAM_SUB(SOXCONF, "crypt", "crypt:no", "on", "no or off disables the encryption of SockMux packets", "SOXCONF=crypt:no")
+DG_PARAM_SUB(SOXCONF, "packsize", "packsize:size", "16k", "Size of a SockMux packet, at least 128 and at most 16k", "SOXCONF=packsize:16k")
+DG_PARAM_SUB(SOXCONF, "dhkey", "dhkey:N", "2", "Diffie-Hellman key group; a non-numeric value turns it off", "SOXCONF=dhkey:2")
+DG_PARAM_SUB(SOXCONF, "noconndata", "noconndata", "off", "[ungeprüft] Do not send data with the connect request", "SOXCONF=noconndata")
+DG_PARAM_SUB(SOXCONF, "nodelay", "nodelay:on", "off", "Set TCP_NODELAY on the SockMux connection when on", "SOXCONF=nodelay:on")
+DG_PARAM_SUB(SOXCONF, "nopush", "nopush:on", "off", "[ungeprüft] Flush the SockMux connection with TCP_NOPUSH off after output", "SOXCONF=nopush:on")
+DG_PARAM_SUB(SOXCONF, "cork", "cork:on", "off", "[ungeprüft] Release TCP_CORK of the SockMux connection after output", "SOXCONF=cork:on")
+DG_PARAM_SUB(SOXCONF, "allow", "allow:acc", "off", "[ungeprüft] Allow remote requests to accept connections", "SOXCONF=allow:acc")
+DG_PARAM_SUB(SOXCONF, "acc", "acc:tcp:rhost:rport:lhost:lport", "none", "[ungeprüft] Accept a remote port for forwarding to a local server", "SOXCONF=acc:tcp:hostA:9023:localhost:23")
+DG_PARAM_SUB(SOXCONF, "private", "private", "off", "[ungeprüft] Make the SockMux private to the parent DeleGate", "SOXCONF=private")
 void scan_SOXCONF(DGC*ctx,PCStr(conf))
 {	CStr(what,32);
 	CStr(value,64);

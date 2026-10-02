@@ -52,3 +52,21 @@ TEST(Params, TimeoutHasSubOptions) {
 	ASSERT_NE(nullptr, p);
 	EXPECT_GT(p->nsubs, 0);
 }
+
+TEST(Params, ConfParametersHaveSubOptions) {
+	const char *names[] = {"HTTPCONF", "FTPCONF", "SMTPCONF", "NNTPCONF", "POPCONF", "DNSCONF", "ICPCONF",
+		"TELNETCONF", "SOXCONF", "YYCONF", "ARPCONF", "PAMCONF", "MHGWCONF", "DELAY", "SOCKOPT", "IPV6",
+		"HTMLCONV", "MIMECONV", "COUNTER", "CACHE", "SYSLOG", "DGDEF", "STLS", "RELAY", "CONNECT", "MOUNT",
+		"DYCONF", "MAXIMA", "TIMEOUT", "TLSCONF"};
+	for (const char *name : names) {
+		const DgParam *p = find(name);
+		ASSERT_NE(nullptr, p) << name;
+		EXPECT_GT(p->nsubs, 0) << name;
+		std::set<std::string> seen;
+		for (int i = 0; i < p->nsubs; i++) {
+			EXPECT_TRUE(seen.insert(p->subs[i].name).second) << name << "/" << p->subs[i].name;
+			EXPECT_LE(strlen(p->subs[i].desc), 100u) << name << "/" << p->subs[i].name;
+			EXPECT_EQ(0, strncmp(p->subs[i].example, name, strlen(name))) << name << "/" << p->subs[i].name;
+		}
+	}
+}

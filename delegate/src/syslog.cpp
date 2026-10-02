@@ -359,6 +359,20 @@ logstart:
 }
 
 DG_PARAM(SYSLOG, "SYSLOG=[syslogOpts,][syslogServ]", "none", "Send log data to a syslog server, a local file or the local syslog", "SYSLOG=syslog://loghost:514")
+DG_PARAM_SUB(SYSLOG, "-vt", "-vt", "off", "Terse LOGFILE", "SYSLOG=-vt,file:/var/log/delegate/syslog.log")
+DG_PARAM_SUB(SYSLOG, "-vs", "-vs", "off", "Without LOGFILE", "SYSLOG=-vs,file:/var/log/delegate/syslog.log")
+DG_PARAM_SUB(SYSLOG, "-vS", "-vS", "off", "Without PROTOLOG", "SYSLOG=-vS,file:/var/log/delegate/syslog.log")
+DG_PARAM_SUB(SYSLOG, "-vH", "-vH", "off", "Without the syslog header", "SYSLOG=-vH,file:/var/log/delegate/syslog.log")
+DG_PARAM_SUB(SYSLOG, "-fname", "-fname", "daemon", "Use the facility name instead of daemon", "SYSLOG=-flocal1")
+DG_PARAM_SUB(SYSLOG, "-vc", "-vc", "off", "[ungeprüft] Sets a flag that no code reads", "SYSLOG=-vc")
+DG_PARAM_SUB(SYSLOG, "-vQ", "-vQ", "off", "Without the priority", "SYSLOG=-vQ")
+DG_PARAM_SUB(SYSLOG, "-vT", "-vT", "off", "Without the time stamp", "SYSLOG=-vT")
+DG_PARAM_SUB(SYSLOG, "-vD", "-vD", "off", "Without the host name", "SYSLOG=-vD")
+DG_PARAM_SUB(SYSLOG, "-vN", "-vN", "off", "Without the program name", "SYSLOG=-vN")
+DG_PARAM_SUB(SYSLOG, "-vP", "-vP", "off", "Without the process ID", "SYSLOG=-vP")
+DG_PARAM_SUB(SYSLOG, "-vM", "-vM", "off", "[ungeprüft] Sets a flag that no code reads", "SYSLOG=-vM")
+DG_PARAM_SUB(SYSLOG, "-vC", "-vC", "off", "[ungeprüft] Sets a flag that no code reads", "SYSLOG=-vC")
+DG_PARAM_SUB(SYSLOG, "-sname", "-sname", "none", "Severity (priority) used for debug messages, name or number", "SYSLOG=-serr")
 void scan_SYSLOG(DGC*Conn,PCStr(conf)){
 	const char *cp;
 	SysLog *SL;
