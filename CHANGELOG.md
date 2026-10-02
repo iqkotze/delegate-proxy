@@ -14,6 +14,7 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Skripte für Legacy-Build, Linkmap, Smoke-Test und Warnungsstatistik in `tools/` (`feature/tools-baseline`)
 
 ### Entfernt
+- 8 Parameter ohne Wirkung: `CFI`, `DBFILE`, `FILEACL`, `FILEOWNER`, `QPORT`, `SERVCONF`, `SOCKSCONF`, `VHOSTDIR` (`feature/remove-dead-params`)
 - 20 eigenständige Hilfsprogramme, die nie gebaut wurden, z. B. `expired`, `reclog`, `htwrap`, `netzip` (`feature/remove-unbuilt-tools`)
 - Make-basierter Legacy-Build samt Laufzeitproben und 116 ungenutzten Ersatzquellen in `maker/`, Spencer-Regex in `pds/regex` (`feature/remove-legacy-build`)
 - Code und Build-Dateien für alle Plattformen außer Linux amd64, rund 25.000 Zeilen (`feature/remove-non-linux-code`)

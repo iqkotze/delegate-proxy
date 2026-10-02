@@ -40,7 +40,6 @@ char P_CACHEDIR[] = "CACHEDIR";
 char P_CACHEFILE[]= "CACHEFILE";
 char P_CAPSKEY[]  = "CAPSKEY";
 char P_CERTDIR[]  = "CERTDIR";
-char P_CFI[]      = "CFI";
 char P_CGIENV[]   = "CGIENV";
 char P_CHARCODE[] = "CHARCODE";
 char P_CHARMAP[]  = "CHARMAP";
@@ -55,7 +54,6 @@ char P_CONFOPT[]  = "CONFOPT";
 char P_CONNECT[]  = "CONNECT";
 char P_COUNTER[]  = "COUNTER";
 char P_DATAPATH[] = "DATAPATH";
-char P_DBFILE[]   = "DBFILE";
 char P_DGDEF[]    = "DGDEF";
 char P_DGOPTS[]   = "DGOPTS";
 char P_DGPATH[]   = "DGPATH";
@@ -82,8 +80,6 @@ char P_FSV[]      = "FSV";
 char P_FFROMCL[]  = "FFROMCL";
 char P_FFROMSV[]  = "FFROMSV";
 char P_FFROMMD[]  = "FFROMMD";
-char P_FILEACL[]  = "FILEACL";
-char P_FILEOWNER[]= "FILEOWNER";
 char P_FILETYPE[] = "FILETYPE";
 char P_FORWARD[]  = "FORWARD";
 char P_FTOCL[]    = "FTOCL";
@@ -133,7 +129,6 @@ char P_POPCONF[]  = "POPCONF";
 char P_PORT[]     = "PORT";
 char P_PROTOLOG[] = "PROTOLOG";
 char P_PROXY[]    = "PROXY";
-char P_QPORT[]    = "QPORT";
 char P_RIDENT[]   = "RIDENT";
 char P_RPORT[]    = "RPORT";
 char P_REACHABLE[]= "REACHABLE";
@@ -153,7 +148,6 @@ char P_RELAY[]    = "RELAY";
 char P_ROUTE[]    = "ROUTE";
 char P_SAC[]      = "SAC";
 char P_SCREEN[]   = "SCREEN";
-char P_SERVCONF[] = "SERVCONF";
 char P_SERVER[]   = "SERVER";
 char P_SERVICE[]  = "SERVICE";
 char P_SHARE[]    = "SHARE";
@@ -163,7 +157,6 @@ char P_SMTPSERVER[] = "SMTPSERVER";
 char P_SOCKMUX[]  = "SOCKMUX";
 char P_SOCKOPT[]  = "SOCKOPT";
 char P_SOCKS[]    = "SOCKS";
-char P_SOCKSCONF[]= "SOCKSCONF";
 char P_SOCKSTAP[] = "SOCKSTAP";
 char P_SOXCONF[]  = "SOXCONF";
 char P_SRCIF[]    = "SRCIF";
@@ -185,7 +178,6 @@ char P_TRACELOG[] = "TRACELOG";
 char P_UMASK[]    = "UMASK";
 char P_URICONV[]  = "URICONV";
 char P_VARDIR[]   = "VARDIR";
-char P_VHOSTDIR[] = "VHOSTDIR";
 char P_VSAP[]     = "VSAP";
 char P_WORKDIR[]  = "WORKDIR";
 char P_XCOM[]     = "XCOM";
@@ -248,14 +240,6 @@ static const char Tno[] = "*o"; /* -X option */
 static const char Tns[] = "*s"; /* specific */
 static const char Tnu[] = "*u"; /* list of URLs */
 
-DG_PARAM_INTERNAL(CFI)
-DG_PARAM_INTERNAL(DBFILE)
-DG_PARAM_INTERNAL(FILEACL)
-DG_PARAM_INTERNAL(FILEOWNER)
-DG_PARAM_INTERNAL(QPORT)
-DG_PARAM_INTERNAL(SERVCONF)
-DG_PARAM_INTERNAL(SOCKSCONF)
-DG_PARAM_INTERNAL(VHOSTDIR)
 static ParamSpec params[] = {
 { "" },
 { P_ABORTLOG,	STD,M0,T1f,1,1},
@@ -273,7 +257,6 @@ static ParamSpec params[] = {
 { P_CACHEFILE,	STD,M0,T1f,1,1},
 { P_CAPSKEY,	EXP,M0,Tns,1,1},
 { P_CERTDIR,	STD,M0,T1d,1,1},
-{ P_CFI,	STD,M0,T1s,1,1},
 { P_CGIENV,	STD,M0,T1s,1,1},
 { P_CHARCODE,	STD,M0,Tns,0,1},
 { P_CHARMAP,	EXP,M0,Tns,0,1},
@@ -288,7 +271,6 @@ static ParamSpec params[] = {
 { P_CRONS,	EXP,M0,Tns,0,0},
 { P_CRYPT,	EXP,M0,T1s,1,1},
 { P_DATAPATH,	EXP,M0,T1p,1,1},
-{ P_DBFILE,	EXP,M0,T1s,1,1},
 { P_DGDEF,	STD,M0,T1s,1,1},
 { P_DGOPTS,	STD,M0,Tno,1,1},
 { P_DGPATH,	STD,M0,T1p,1,1},
@@ -315,8 +297,6 @@ static ParamSpec params[] = {
 { P_FFROMCL,	EXP,M0,T1s,0,0, 0,scan_FFROMCL},
 { P_FFROMMD,	EXP,M0,T1s,0,0},
 { P_FFROMSV,	EXP,M0,T1s,0,0, 0,scan_FFROMSV},
-{ P_FILEACL,	EXP,M0,Tns,0,0},
-{ P_FILEOWNER,	EXP,M0,Tns,0,0},
 { P_FILETYPE,	EXP,M0,Tns,0,0},
 { P_FORWARD,	EXP,M0,Tnc,0,0},
 { P_FTOCL,	EXP,M0,T1s,0,0, 0,scan_FTOCL},
@@ -365,7 +345,6 @@ static ParamSpec params[] = {
 { P_PORT,	EXP,M0,Tns,0,0},
 { P_PROTOLOG,	STD,M0,T1f,1,1},
 { P_PROXY,	STD,M0,Tnc,0,0},
-{ P_QPORT,	EXP,M0,T1s,1,1},
 { P_RIDENT,	EXP,M0,T1s,1,1, 0,scan_RIDENT},
 { P_RPORT,	EXP,M0,T1s,1,1},
 { P_REACHABLE,	DIS,M1,Tns,0,0},
@@ -386,7 +365,6 @@ static ParamSpec params[] = {
 { P_ROUTE,	STD,M0,Tnc,1,1},
 { P_SAC,	EXP,M0,Tns,1,1},
 { P_SCREEN,	STD,M0,Tns,0,0},
-{ P_SERVCONF,	STD,M0,Tns,0,0},
 { P_SERVER,	STD,M0,T1u,0,0},
 { P_SERVICE,	EXP,M0,Tns,0,0},
 { P_SHARE,	EXP,M0,T1s,1,1},
@@ -396,7 +374,6 @@ static ParamSpec params[] = {
 { P_SOCKMUX,	EXP,M0,Tnu,1,1},
 { P_SOCKOPT,	STD,M0,Tns,1,1},
 { P_SOCKS,	STD,M0,Tnc,1,1},
-{ P_SOCKSCONF,	EXP,M0,Tns,1,1},
 { P_SOCKSTAP,	EXP,M0,Tns,1,1},
 { P_SOXCONF,	STD,M0,Tns,1,1},
 { P_SRCIF,	STD,M0,Tnc,1,1},
@@ -418,7 +395,6 @@ static ParamSpec params[] = {
 { P_UMASK,	STD,M0,T1s,1,1},
 { P_URICONV,	STD,M0,Tns,0,1},
 { P_VARDIR,	STD,M0,T1d,1,1},
-{ P_VHOSTDIR,	STD,M0,T1d,1,1},
 { P_VSAP,	EXP,M0,Tns,0,0},
 { P_WORKDIR,	STD,M0,T1d,1,1},
 { P_XCOM,	EXP,M0,T1s,0,0},
