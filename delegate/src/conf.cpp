@@ -407,8 +407,8 @@ const char *getMssgX(PCStr(name),int *size,int *date){
 	return getIconX(name,size,date);
 }
 
-void scan_builtin_data(PCStr(name),int (*func)(const void*,...),PCStr(arg1),PCStr(arg2));
-void scanIcons(PCStr(name),int (*func)(const void*,...),PCStr(arg1),PCStr(arg2))
+void scan_builtin_data(PCStr(name),iFUNCP func,PCStr(arg1),PCStr(arg2));
+void scanIcons(PCStr(name),iFUNCP func,PCStr(arg1),PCStr(arg2))
 {
 	scan_builtin_data(name,func,arg1,arg2);
 }

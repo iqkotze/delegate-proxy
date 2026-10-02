@@ -3,6 +3,7 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include "yarg.h"
 
 #ifndef MAX_THREADS
 #define MAX_THREADS 64
@@ -46,7 +47,7 @@ int setInheritHandle(int fd,int on);
 
 #define MAINTHREADID	-2
 int   thread_PollIn(int fd,int timeout);
-int   (thread_fork)(int size,int gtid,PCStr(what),int (*func)(void*,...),...);
+int   (thread_fork)(int size,int gtid,PCStr(what),iFUNCP func,...);
 int   thread_wait(int tid,int timeout);
 int   thread_destroy(int tid);
 int   thread_priority(int pri);

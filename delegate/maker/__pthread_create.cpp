@@ -17,20 +17,22 @@ typedef struct {
 	char *a_saddr;
 	int   a_ssize;
   const char *a_name;
+	iFUNCP a_func;
 	char *a_argv[8];
 	pthread_attr_t a_attr;
 } ThreadArgs;
 int thread_done(void *xcode);
 int thread_start(const char *name,void *ta);
 
-static void *thread2(ThreadArgs *ta)
-{	vFUNCP func;
+static void *thread2(void *arg)
+{	ThreadArgs *ta = (ThreadArgs*)arg;
+	iFUNCP func;
 	char **av;
 	int si;
 
 	thread_start(ta->a_name,ta);
 	av = ta->a_argv;
-	func = (vFUNCP)av[0];
+	func = ta->a_func;
 	(*func)(av[1],av[2],av[3],av[4],av[5],av[6],av[7]);
 	if( ta->a_saddr ){
 		for( si = 0; si < ta->a_ssize; si++ ){
@@ -54,8 +56,8 @@ static void *thread2(ThreadArgs *ta)
 }
 typedef void *(*thchFuncp)(void *thcharg);
 void *thread_child(thchFuncp func,void *arg);
-static void *thread1(ThreadArgs *ta){
-	return thread_child((thchFuncp)thread2,ta);
+static void *thread1(void *ta){
+	return thread_child(thread2,ta);
 }
 
 pthread_t main_tid;
@@ -74,7 +76,8 @@ static int (thread_fork)(int ssize,const char *name,IFUNCP func,...)
 
 	ta = (ThreadArgs*)malloc(sizeof(ThreadArgs));
 	ta->a_name = name;
-	ta->a_argv[0] = (char*)func;
+	ta->a_func = func;
+	ta->a_argv[0] = 0;
 	for( ai = 0; ai < 7; ai++ )
 		ta->a_argv[1+ai] = va[ai];
 
@@ -95,7 +98,7 @@ static int (thread_fork)(int ssize,const char *name,IFUNCP func,...)
 		pthread_attr_setstack(&ta->a_attr,ta->a_saddr,ta->a_ssize);
 	}
 #endif
-	err = pthread_create(&thread,&ta->a_attr,(void*(*)(void*))thread1,ta);
+	err = pthread_create(&thread,&ta->a_attr,thread1,ta);
 	if( err )
 		porting_dbg("#### pthread_create() failed: %d",err);
 	else{

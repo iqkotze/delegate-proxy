@@ -36,7 +36,7 @@ void set_nameserver(PCStr(domain),PCStr(addr));
 void minit_reshost();
 int regGetResolvConf(PVStr(buf),PVStr(where));
 int connectTO(int sock,SAP addr,int leng,int timeout);
-void *(callFuncTimeout)(int sec,void *xcode,void *(*func)(void*,...),...);
+void *(callFuncTimeout)(int sec,void *xcode,pFUNCP func,...);
 
 void VSA_copy(VSAddr *dst,VSAddr *src);
 int VSA_comp(VSAddr *sa1,VSAddr *sa2);
@@ -279,9 +279,9 @@ static struct hostent *_GethostByname(PCStr(name))
 	double Et;
 
 	/*
-	hp = (struct hostent *)callFuncTimeout(3,NULL,(void*(*)(void*,...))EX_GETHOSTBYNAME,name);
+	hp = (struct hostent *)callFuncTimeout(3,NULL,(pFUNCP)EX_GETHOSTBYNAME,name);
 	*/
-	hp = (struct hostent *)callFuncTimeout(RES_SYS_TIMEOUT,NULL,(void*(*)(void*,...))EX_GETHOSTBYNAME,name);
+	hp = (struct hostent *)callFuncTimeout(RES_SYS_TIMEOUT,NULL,(pFUNCP)EX_GETHOSTBYNAME,name);
 	Et = Time() - St;
 	if( 3 <= Et ){
 		fprintf(stderr,"[%d] slow gethostbyname(%s)=%X [%.2f]\n",getpid(),name,p2i(hp),Et);
@@ -1069,7 +1069,7 @@ int FMT_res_debug(int flag,PCStr(fmt),...)
 		return 1;
 	}else	return 0;
 }
-int (*RES_log)(int,...);
+iFUNCP RES_log;
 void res_log(int which,int byname,PCStr(name),char *rv[],PCStr(cname))
 {
 	if( RES_log )

@@ -183,7 +183,7 @@ int protoeq(PCStr(proto1),PCStr(proto2))
 	s2 = servicex(proto2);
 	return services[s1].s_client == services[s2].s_client;
 }
-int (foreach_eqproto)(PCStr(proto),int (*func)(const void*,...),...)
+int (foreach_eqproto)(PCStr(proto),iFUNCP func,...)
 {	int sn,sx,si;
 	servFuncP svfunc;
 	const char *name;

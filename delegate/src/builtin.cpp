@@ -93,7 +93,7 @@ const char *get_builtin_data(PCStr(name),int *sizep,int *datep)
 	}
 	return 0;
 }
-void scan_builtin_data(PCStr(name),int (*func)(const void*,...),PCStr(arg1),PCStr(arg2))
+void scan_builtin_data(PCStr(name),iFUNCP func,PCStr(arg1),PCStr(arg2))
 {	const char *file1;
 	const char *name1;
 	const char *data1;

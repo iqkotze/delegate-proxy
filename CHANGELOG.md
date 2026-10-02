@@ -30,6 +30,7 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Code und Build-Dateien für alle Plattformen außer Linux amd64, rund 25.000 Zeilen (`feature/remove-non-linux-code`)
 
 ### Behoben
+- Callbacks werden mit ihrem echten Funktionstyp aufgerufen, clang-UBSan ohne Meldung, Preset `ubsan-clang` (`bugfix/callback-types`)
 - Typkonflikt beim MAXIMA-Callback (`bugfix/scan-list-callback-type`)
 - Lesen hinter dem Puffer bei langen Base64-, QP- und HTTP-Auth-Daten (`bugfix/vstr-overflow`)
 - TLS-Session-Cache arbeitet wieder, Handshake 95 ms auf 2,7 ms (`bugfix/tls-session-cache`)

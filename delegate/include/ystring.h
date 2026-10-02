@@ -570,7 +570,7 @@ const char *getMainArg(PCStr(where),PCStr(name));
 #include "yarg.h"
 */
 #include "yarg.h"
-typedef int (*IFUNCP)(void*,...);
+typedef iFUNCP IFUNCP;
 
 int Setproctitle(const char *fmt,...);
 
@@ -581,7 +581,7 @@ int Setproctitle(const char *fmt,...);
 #define STR_RO    4
 #define STR_QUOTE 0x8000 /* ignore ",{}" */
 
-typedef int (*scanListFuncP)(PCStr(elem),...);
+typedef iFUNCP scanListFuncP;
 #define scanListFunc int
 #define scanListCall (scanListFuncP)
 

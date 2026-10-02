@@ -40,7 +40,7 @@ int File_device(PCStr(path));
 int file_device(int fd);
 int fileIsremote1(int fd);
 int INHERENT_fchmod();
-void *(callFuncTimeout)(int sec,void *xcode,void *(*func)(void*,...),...);
+void *(callFuncTimeout)(int sec,void *xcode,pFUNCP func,...);
 
 int lock_for_rd(PCStr(what),int nretry,PCStr(cpath),FILE *fp)
 {	int rcode;
@@ -153,7 +153,7 @@ static int lock_TO(int fd,iiFUNCP funcNB,iiFUNCP func,int timeout,int *elapsedp)
 			int elapse1;
 
 			start = Time();
-			rcode = (long int)callFuncTimeout(remain/1000,(void*)-1,(void*(*)(void*,...))func,fd);
+			rcode = (long int)callFuncTimeout(remain/1000,(void*)-1,(pFUNCP)func,fd);
 			elapse1 = (int)((Time() - start) * 1000); 
 /*{
 static int n;

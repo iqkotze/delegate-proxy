@@ -62,7 +62,7 @@ const char *getTMPDIR();
 FILE *reusableTMPFILE(PCStr(what),iFUNCP where);
 
 
-typedef int (*scanDirCallP)(PCStr(elem),...);
+typedef iFUNCP scanDirCallP;
 #define scanDirFunc int
 #define scanDirCall (scanDirCallP)
 int   (Scandir)(PCStr(dirpath),scanDirCallP,...);

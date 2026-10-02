@@ -152,7 +152,7 @@ typedef struct {
 	int	 f_withLog;
   const	char	*f_proto;
   const	char	*f_name;
-       mainFunc *f_func;
+       iFUNCP f_func;
   const	char	*f_desc;
 	int	 f_stats;
 } SubFunc;
@@ -167,10 +167,10 @@ static SubFunc subfuncs[] = {
 {MS,0,0,"",	"help",	   help_main,	"show the list of functions"},
 {MN,0,0,"",	"ver",	   myid_main,	"show the ver. and conf. of mine"},
 {MS,0,0,"",	"param",	   param_main,	"show the list of parameters or the details of one"},
-{MV,0,0,"",	"cgi", (mainFunc*)cgi_delegate,"DeleGate as a cgi program"},
-{MS,0,0,"",	"ssi", (mainFunc*)ssi_main,"SHTML interpreter"},
+{MV,0,0,"",	"cgi", cgi_delegate,"DeleGate as a cgi program"},
+{MS,0,0,"",	"ssi", ssi_main,"SHTML interpreter"},
 {MS,0,0,"",	"ccx",	   ccx_main,	"character code converter"},
-{MS,0,0,"",	"urlccx",(mainFunc*)urlccx_main,"CCX for URL encoded text"},
+{MS,0,0,"",	"urlccx",urlccx_main,"CCX for URL encoded text"},
 {MS,0,0,"",	"dump",	   dump_main,	"dump configuration"},
 {MS,0,0,"",	"sched",   sched_main,	"scheduler compatible with `crond'"},
 {MS,0,0,"",	"star",    tar_main,	"simple tar"},
@@ -179,18 +179,18 @@ static SubFunc subfuncs[] = {
 {MS,0,0,"",	"urlenc",  urlescape_main,"escape URL with %XX encoding"},
 {MS,0,0,"",	"urldec",  urlunescape_main,"unescape URL %XX encoding"},
 {MS,0,0,"",	"dping",   dping_main,  "application level ping"},
-{MN,0,0,"",	"dget",	   (mainFunc*)dget_main,	"download by URL"},
-{MN,0,0,"",	"dput",	   (mainFunc*)dput_main,"upload to the URL"},
-{MN,0,0,"",	"yy11",    (mainFunc*)Y11_main,"X client callback server"},
-{MN,0,0,"",	"y11",     (mainFunc*)Y11_main,"X client callback server"},
-{MN,0,0,"",	"yy",      (mainFunc*)yymux_main,"yyMux multiplexer"},
-{MN,0,0,"",	"yysh",    (mainFunc*)yysh_main,"yyMux multiplexer"},
-{MN,0,0,"",	"mirror",  (mainFunc*)mirror_main, "download by URL"},
-{MN,0,0,"",	"poprelay",(mainFunc*)poprelay_main,"load from POP and relay to"},
-{MN,0,0,"",	"popdown", (mainFunc*)popdown_main,"POP to SMTP gateway"},
+{MN,0,0,"",	"dget",	   dget_main,	"download by URL"},
+{MN,0,0,"",	"dput",	   dput_main,"upload to the URL"},
+{MN,0,0,"",	"yy11",    Y11_main,"X client callback server"},
+{MN,0,0,"",	"y11",     Y11_main,"X client callback server"},
+{MN,0,0,"",	"yy",      yymux_main,"yyMux multiplexer"},
+{MN,0,0,"",	"yysh",    yysh_main,"yyMux multiplexer"},
+{MN,0,0,"",	"mirror",  mirror_main, "download by URL"},
+{MN,0,0,"",	"poprelay",poprelay_main,"load from POP and relay to"},
+{MN,0,0,"",	"popdown", popdown_main,"POP to SMTP gateway"},
 {MS,0,0,"",	"urlfind", urlfind_main,"network wide find"},
 {MS,0,0,"",	"thruwayd",thruwayd_main,"a circuit level proxy"},
-{MN,0,0,"tcprelay","connect",(mainFunc*)connect_main,"connect to remote port"},
+{MN,0,0,"tcprelay","connect",connect_main,"connect to remote port"},
 {MN,0,0,"",	"resolvy", resolvy_main,"host name resolver"},
 {MN,0,0,"icp",	"icp",	   icp_client,	"ICP client"},
 {MN,0,0,"http",	"htget",   htget_main,	"get by URL into HTML/HTTP format."},
@@ -210,13 +210,13 @@ static SubFunc subfuncs[] = {
 {MS,0,0,"",	"srcmd5",  srcmd5_main,	"MD5 of source code"},
 {MS,0,0,"",	"enMime",  ENMIME_main,	"mime encoder"},
 {MS,0,0,"",	"deMime",  DEMIME_main,	"mime decoder"},
-{MN,0,0,"",	"sendmail",(mainFunc*)sendmail_main,"SMTP poster"},
+{MN,0,0,"",	"sendmail",sendmail_main,"SMTP poster"},
 {MS,0,0,"",	"alias",   alias_main,	"expand aliases of mail address"},
 {MS,0,0,"",	"acle",    acledit_main,"edit ACL"},
-{MS,0,0,"",	"auth",    (mainFunc*)authedit_main,"edit auth. for AUTHORIZER"},
+{MS,0,0,"",	"auth",    authedit_main,"edit auth. for AUTHORIZER"},
 {MS,0,0,"",	"hosts",   hosts_main,  "edit host-set"},
 {MS,0,0,"",	"sleep",   sleep_main,  "sleep"},
-{MV,0,0,"",	"sockmux", (mainFunc*)sox_main,	"Socket Multiplexer"},
+{MV,0,0,"",	"sockmux", sox_main,	"Socket Multiplexer"},
 {MS,0,0,"",	"cksum",   cksum_main,	"cksum command compatible"},
 {MS,0,0,"",	"crc",     crc_main,	"CRC32 (32bits Cyclic Redundancy Code)"},
 {MS,0,0,"",	"crc8",    crc8_main,   "CRC8 for debugging"},
@@ -236,14 +236,14 @@ static SubFunc subfuncs[] = {
 {MS,0,0,"",	"rsasign", rsasign_main,"RSA sign"},
 {MS,0,0,"",	"rsavrfy", rsavrfy_main,"RSA verify"},
 {MS,0,0,"",	"exesign", exesign_main,"sign/verify executable file"},
-{MS,0,0,"",	"imp",     (mainFunc*)implant_main,"implant data into executable file"},
+{MS,0,0,"",	"imp",     implant_main,"implant data into executable file"},
 {MS,0,0,"",	"enc",     argenc_main,	"encrypt parameters to +=enc:"},
 {MS,0,0,"",	"dec",     argdec_main,	"decrypt parameters from +=enc:"},
 {MS,0,0,"",	"esign",   exesign_main,"sign/verify embedded RSA sign"},
 {MS,0,0,"",	"trx",     trx_main,    "conv. bytes to/from editable one"},
-{MS,0,0,"",	"sudo",    (mainFunc*)sudo_main,"do privileged ation"},
+{MS,0,0,"",	"sudo",    sudo_main,"do privileged ation"},
 {MS,0,0,"",	"mysym",   mysym_main,	"get the address of the symbol"},
-{MS,0,0,"",	"kill",    (mainFunc*)kill_main,"kill a DeleGate server"},
+{MS,0,0,"",	"kill",    kill_main,"kill a DeleGate server"},
 
 {MS,0,0,"",	"sslway",  sslway_main, "SSLway"},
 {MS,0,0,"",	"swft",    swft_main,	"SWF translator"},
@@ -332,13 +332,13 @@ const void *funcFunc(PCStr(func)){
 	if( strneq(func,"-F",2) )
 		func += 2;
 	if( fi = asFunc(func) )
-		return (void*)subfuncs[fi-1].f_func;
+		return (const void*)subfuncs[fi-1].f_func;
 	else	return 0;
 }
 const char *funcName(void *func){
 	int fi;
 	for( fi = 0; elnumof(subfuncs); fi++ ){
-		if( func == subfuncs[fi].f_func ){
+		if( func == (const void*)subfuncs[fi].f_func ){
 			return subfuncs[fi].f_name;
 		}
 	}
@@ -469,7 +469,7 @@ int AuthFunc(DGC*Conn,void*faddr,PCStr(File),int Line){
 
 	for( fi = 0; fi < elnumof(subfuncs); fi++ ){
 		Sf = &subfuncs[fi];
-		if( (void*)Sf->f_func == faddr ){
+		if( (const void*)Sf->f_func == faddr ){
 			found = 1;
 			break;
 		}
@@ -500,7 +500,7 @@ int AuthFunc(DGC*Conn,void*faddr,PCStr(File),int Line){
 	return 0;
 }
 
-typedef int (*mainFUNCP)(int ac,const char *av[],...);
+typedef iFUNCP mainFUNCP;
 int DELEGATE_subfunc(DGC*Conn,int ac,const char *av[],PCStr(func),int Fopt,int type)
 {	int fi;
 	const char *fname;
@@ -529,7 +529,7 @@ int DELEGATE_subfunc(DGC*Conn,int ac,const char *av[],PCStr(func),int Fopt,int t
 
 		if( geteuid() == 0 && getuid() != 0 )
 		if( (subfuncs[fi].f_stats & FC_ASROOT) == 0 )
-		if( subfuncs[fi].f_func != (mainFunc*)implant_main )
+		if( subfuncs[fi].f_func != (iFUNCP)implant_main )
 		{
 			/*
 			fprintf(stderr,"Not allowed in root: %s\n",fname);

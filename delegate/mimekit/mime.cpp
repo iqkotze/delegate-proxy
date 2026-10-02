@@ -577,12 +577,13 @@ ch = ((char*)sp)[Bx+lb];
 }
 
 typedef void (*convFunc)(const char*,int,PVStr(s),int);
+static void fromqp_v(PCStr(in),int isize,PVStr(out),int osize){ str_fromqp(in,isize,AVStr(out),osize); }
 static int decodeLine(PCStr(line),PVStr(dline),PCStr(encoding))
 {	convFunc conv;
 	int len;
 
 	if( strcasecmp(encoding,"quoted-printable") == 0 )
-		conv = (convFunc)str_fromqp;
+		conv = fromqp_v;
 	else
 	if( strcasecmp(encoding,"base64") == 0 )
 		conv = str_from64_safe;

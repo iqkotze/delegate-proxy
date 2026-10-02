@@ -9,7 +9,7 @@
 int scan_ino;
 #define D_INO(de)	de->d_ino
 
-int (Scandir)(const char *dirpath,int(*func)(const char*,...),...)
+int (Scandir)(const char *dirpath,iFUNCP func,...)
 {	DIR *dirp;
 	struct dirent *dir1;
 	int rcode;
