@@ -22,6 +22,7 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Code und Build-Dateien für alle Plattformen außer Linux amd64, rund 25.000 Zeilen (`feature/remove-non-linux-code`)
 
 ### Behoben
+- TLS-Session-Cache arbeitet wieder, Handshake 95 ms auf 2,7 ms (`bugfix/tls-session-cache`)
 - TLS zum Ursprung prüft mit `-Vrfy` auch Hostname bzw. IP-Adresse (`bugfix/tls-hostname-verify`)
 - Speicherlecks in `mkstab` und `sed_free` (`bugfix/asan-leaks`)
 - Ein- und Ausgabe-Polling mit `poll()` statt `select()`, funktioniert ab Dateideskriptor 1024 (`bugfix/poll`)

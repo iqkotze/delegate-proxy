@@ -93,7 +93,7 @@ Meldet Parameter, die der Code liest und die kein `DG_PARAM` haben. Es meldet au
 
 ## TLS-Tests
 
-Die Skripte `tests/tls/tls-tests.sh` und `tests/tls/lib.sh` prüfen `delegated` mit dem OpenSSL des Systems. Ein Aufruf führt einen Fall aus. `ctest` registriert jeden Fall als Test `tls-<fall>` mit dem Label `tls`. Der Exit-Code 77 bedeutet übersprungen.
+Die Skripte `tests/tls/tls-tests.sh`, `tests/tls/session-tests.sh` und `tests/tls/lib.sh` prüfen `delegated` mit dem OpenSSL des Systems. Ein Aufruf führt einen Fall aus. `ctest` registriert jeden Fall als Test `tls-<fall>` mit dem Label `tls`. Der Exit-Code 77 bedeutet übersprungen.
 
     tests/tls/tls-tests.sh build/debug/delegated tls13
     tests/tls/tls-tests.sh build/debug/delegated list
@@ -111,6 +111,7 @@ Die Fälle
 * `abort` und `origin-abort` brechen Clients und den Ursprung mitten in der Verbindung ab. `delegated` muss danach weiter antworten.
 * `generated-cert` prüft das selbst erzeugte Zertifikat (EC P-256, SHA-256, SAN, 825 Tage, Schlüssel mit Rechten 0600) und dessen Wiederverwendung.
 * `cert-env` prüft, dass `SSL_CERT_FILE` nur als Zertifikat mit Schlüssel gilt.
+* `session-resume` und `session-latency` starten `delegated` mit 200 zusätzlichen Umgebungsvariablen. Die zweite und dritte Verbindung müssen die TLS-Sitzung wiederaufnehmen (`Reused` bei `openssl s_client -sess_in`). Das Log darf keine Cache-Sperrfehler enthalten. Die beste Einrichtungszeit einer wiederaufgenommenen Verbindung liegt unter 30 ms. Ohne funktionierende Sperren dauert sie über 45 ms.
 * `parallel`, `large` und `cipher-list` prüfen parallele Verbindungen, Körper von 3 MB in beide Richtungen und die Option `-cipher`.
 
 Die Tests brauchen `openssl`, `curl` und `python3`. Die Ports liegen zufällig zwischen 20000 und 29999.

@@ -29,6 +29,7 @@ History:
 #include "log.h"
 #include <ctype.h>
 #include <errno.h>
+#include <vector>
 #include "dgparam.h"
 #define MY_CGIVER	"1.1"
 
@@ -54,6 +55,14 @@ void addList(PVStr(list),int lsize,PCStr(elem))
 		tp += strlen(tp);
 	}
 	linescanX(elem,AVStr(tp),lsize-(tp-list));
+}
+
+/// Pointer slots for a CGI environment: the current environment plus room for the added variables.
+static size_t envSlots(){
+	size_t n = 0;
+	while( environ[n] )
+		n++;
+	return n + 256;
 }
 
 static void cgi_head2env(PCStr(head),StrVec *Evp)
@@ -750,7 +759,8 @@ int exec_cgi(Connection *Conn,PCStr(req),PCStr(reqhead),PCStr(scriptpath),PCStr(
 	CStr(workdir,1024);
 	const char *tp;
 	const char *av[32]; /**/
-	const char *ev[128]; /**/
+	std::vector<const char*> evv(envSlots());
+	const char **ev = evv.data();
 	CStr(eb,0x10000);
 	StrVec Env;
 	CStr(conninfo,4096);
@@ -776,7 +786,7 @@ int exec_cgi(Connection *Conn,PCStr(req),PCStr(reqhead),PCStr(scriptpath),PCStr(
 		truncVStr(tp);
 	av[0] = (char*)scriptpath;
 
-	SVinit(&Env,"exec_cgi",ev,elnumof(ev)-1,AVStr(eb),sizeof(eb)); /* -1 for the entry of randenv */
+	SVinit(&Env,"exec_cgi",ev,(int)evv.size()-1,AVStr(eb),sizeof(eb)); /* -1 for the entry of randenv */
 	cgi_makeEnv(conninfo,req,reqhead,vurl,vpath,datapath,
 		scripturl,extpath, 31,&av[1],&Env);
 	pid = cgi_process(Conn,tc,scriptpath,workdir,av,ev,pfp);
@@ -1331,9 +1341,13 @@ int clientHTTP(Connection *Conn)
 
 typedef struct {
 	StrVec	 e_Env;
-  const	char	*e_ev[128]; /**/
+	std::vector<const char*> e_ev;
 	MStr(	 e_eb,0x10000);
 } CgiEnv;
+static void initCgiEnv(CgiEnv *E,PCStr(what)){
+	E->e_ev.assign(envSlots(),nullptr);
+	SVinit(&E->e_Env,what,E->e_ev.data(),(int)E->e_ev.size()-1,AVStr(E->e_eb),sizeof(E->e_eb));
+}
 static const char **getCgiEnv(Connection *Conn,CgiEnv *E)
 {	CStr(ci,4096);
 	CStr(ourl,1024);
@@ -1342,18 +1356,18 @@ static const char **getCgiEnv(Connection *Conn,CgiEnv *E)
 	if( (ClientFlags & PF_STLS_DO) ){
 		/* host-info. is necessary for SSL session cache in FCL */
 		make_conninfo(Conn,AVStr(ci));
-		SVinit(&E->e_Env,"substCGIENV",E->e_ev,elnumof(E->e_ev)-1,AVStr(E->e_eb),sizeof(E->e_eb));
+		initCgiEnv(E,"substCGIENV");
 		cgi_makeEnv(ci,"","","","","","","",0,NULL,&E->e_Env);
-		return E->e_ev;
+		return E->e_ev.data();
 	}else{
 		return (const char**)environ;
 	}
 
 	HTTP_originalURLx(Conn,AVStr(ourl),sizeof(ourl));
 	make_conninfo(Conn,AVStr(ci));
-	SVinit(&E->e_Env,"substCGIENV",E->e_ev,elnumof(E->e_ev)-1,AVStr(E->e_eb),sizeof(E->e_eb));
+	initCgiEnv(E,"substCGIENV");
 	cgi_makeEnv(ci,OREQ,OREQ_MSG,"",ourl,REQ_URL,"","",0,NULL,&E->e_Env);
-	return E->e_ev;
+	return E->e_ev.data();
 }
 
 const char **CFI_makeEnv(CgiEnv *Ev,PVStr(conninfo),Connection *Conn,PCStr(qhead),PCStr(rstat),PCStr(rhead)){
@@ -1366,7 +1380,7 @@ const char **CFI_makeEnv(CgiEnv *Ev,PVStr(conninfo),Connection *Conn,PCStr(qhead
 	const char *scp = ""; /* should be script path of CFI-script ? */
 
 	make_conninfo(Conn,AVStr(conninfo));
-	SVinit(&Ev->e_Env,"CFIsearch",Ev->e_ev,elnumof(Ev->e_ev)-1,AVStr(Ev->e_eb),sizeof(Ev->e_eb));
+	initCgiEnv(Ev,"CFIsearch");
 
 	/* these should be extracted from qhead */
 	HTTP_originalURLx(Conn,AVStr(ourl),sizeof(ourl));
@@ -1381,7 +1395,7 @@ const char **CFI_makeEnv(CgiEnv *Ev,PVStr(conninfo),Connection *Conn,PCStr(qhead
 	xp = oupath;
 
 	cgi_makeEnv(conninfo,OREQ,OREQ_MSG,vu,vup,dp,scp,xp,0,NULL,&Ev->e_Env);
-	return Ev->e_ev;
+	return Ev->e_ev.data();
 }
 const char *CFI_searchSpec(PCStr(ci),PCStr(sp),PCStr(st),PCStr(he),int silent);
 const char *CFI_searchSpecEnv(Connection *Conn,PCStr(sp),PCStr(rst),PCStr(rhead)){
@@ -1393,7 +1407,7 @@ const char *CFI_searchSpecEnv(Connection *Conn,PCStr(sp),PCStr(rst),PCStr(rhead)
 
 	savenv = environ;
 	CFI_makeEnv(&Ev,AVStr(conninfo),Conn,OREQ_MSG,rst,rhead);
-	environ = (char**)Ev.e_ev;
+	environ = (char**)Ev.e_ev.data();
 	silent = LOGLEVEL < 2;
 	sp1 = CFI_searchSpec(conninfo,sp,rst,rhead,silent);
 	environ = savenv;
@@ -1583,7 +1597,8 @@ void popCGIENV(Connection *Conn,void *sevp)
 
 void System(DGC *ctx,PCStr(command),FILE *in,FILE *out);
 void system_CGI(DGC *ctx,PCStr(conninfo),PCStr(oreq),PCStr(req),PVStr(head),PCStr(cgi),FILE *in,FILE *out)
-{	const char *ev[128]; /**/
+{	std::vector<const char*> evv(envSlots());
+	const char **ev = evv.data();
 	CStr(eb,0x10000);
 	FILE *tmp;
 	const char *xhead;
@@ -1599,7 +1614,7 @@ void system_CGI(DGC *ctx,PCStr(conninfo),PCStr(oreq),PCStr(req),PVStr(head),PCSt
 	ourl = oreqx.hq_url;
 	decomp_http_request(req,&reqx);
 	url = reqx.hq_url;
-	SVinit(&Env,"sysgem_CGI",ev,elnumof(ev)-1,AVStr(eb),sizeof(eb));
+	SVinit(&Env,"sysgem_CGI",ev,(int)evv.size()-1,AVStr(eb),sizeof(eb));
 	cgi_makeEnv(conninfo,req,xhead,"",ourl,url,"","",0,NULL,&Env);
 
 	oenv = (char const*const*)environ;
