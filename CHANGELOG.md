@@ -10,6 +10,7 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Quellen als C++20 (`.cpp`), Narrowing- und `register`-Altlasten behoben, kritische Warnungen als Fehler (`feature/cxx20`)
 
 ### Hinzugefügt
+- 12 getestete Konfigurationsbeispiele in `doc/examples/` (`docs/examples`)
 - 433 Unteroptionen für 27 Parameter dokumentiert, Lückenprüfung für alle 30 Parameter mit Unteroptionen (`docs/parameter-subs`)
 - Installation nach FHS, systemd-Unit mit Hardening, sysusers, tmpfiles, Beispielkonfiguration und Manpage (`feature/install-fhs`)
 - GitLab-CI mit Build, Tests, Sanitizern, Analyse, Coverage, Fuzzing, Lasttest, Doku und Docker; jeder Job lokal über `ci/jobs/` ausführbar (`feature/gitlab-ci`)

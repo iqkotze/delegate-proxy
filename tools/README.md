@@ -172,6 +172,18 @@ Die Unit startet `delegated -f DGROOT=/var/lib/delegate +=/etc/delegate/delegate
     tests/install/install-check.sh build/debug
     tests/install/install-run.sh build/debug --keep
 
+## Beispiele
+
+Das Verzeichnis `doc/examples/` enthält zwölf Konfigurationen für je ein Szenario. Sie benutzen Platzhalter zwischen `@`, etwa `@PORT@` und `@ORIGIN@`. `doc/examples/README.md` beschreibt jedes Beispiel mit dem Startbefehl.
+
+`tests/examples/run-example.sh` ersetzt die Platzhalter, startet `delegated` mit dem Beispiel und prüft das Verhalten mit `curl` und `openssl`. Als Ursprungsserver dient `python3 -m http.server`, für das FTP-Gateway `tests/examples/ftpd.py`. Die TLS-Beispiele erzeugen ihre Zertifikate selbst. `ctest` führt jedes Beispiel als Test `example-<name>` mit dem Label `examples` aus. Der Exit-Code 77 bedeutet übersprungen.
+
+    tests/examples/run-example.sh build/debug/delegated list
+    tests/examples/run-example.sh build/debug/delegated auth
+    ctest --test-dir build/debug -L examples
+
+Der Test `example-params` ruft `tests/examples/check-examples.py` auf. Das Skript prüft, dass die Beispiele nur Parameter und Unteroptionen aus `doc/reference/parameters.md` nutzen und dass jeder Kommentar eine Zeile lang ist. Ein neues Beispiel braucht eine Funktion `case_<name>` in `run-example.sh`, sonst schlägt der Test fehl.
+
 ## TLS-Tests
 
 Die Skripte `tests/tls/tls-tests.sh`, `tests/tls/session-tests.sh` und `tests/tls/lib.sh` prüfen `delegated` mit dem OpenSSL des Systems. Ein Aufruf führt einen Fall aus. `ctest` registriert jeden Fall als Test `tls-<fall>` mit dem Label `tls`. Der Exit-Code 77 bedeutet übersprungen.
