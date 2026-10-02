@@ -1,0 +1,33 @@
+# Compiler warning and language settings shared by all DeleGate targets.
+set(CMAKE_CXX_STANDARD ${DG_CXX_STANDARD})
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
+
+set(DG_CXX_WARNING_FLAGS -Wno-narrowing)
+if(DG_EXTRA_WARNINGS)
+  list(APPEND DG_CXX_WARNING_FLAGS -Wall -Wextra -Wno-parentheses -Wno-unused-variable
+       -Wno-unused-but-set-variable -Wno-unused-value -Wno-unused-parameter
+       -Wno-sign-compare -Wno-dangling-else -Wno-comment -Wno-misleading-indentation
+       -Wno-missing-field-initializers)
+endif()
+if(DG_WERROR)
+  list(APPEND DG_CXX_WARNING_FLAGS -Werror)
+endif()
+
+# Applies language, defines and include paths to a target built from the legacy C sources.
+function(dg_configure_target target)
+  cmake_parse_arguments(A "M64;SRC_INC;NO_EXCEPTIONS" "" "DEFS" ${ARGN})
+  target_include_directories(${target} PRIVATE ${DG_GEN_DIR} ${DG_ROOT}/include)
+  if(A_SRC_INC)
+    target_include_directories(${target} PRIVATE ${DG_ROOT}/src)
+  endif()
+  target_compile_definitions(${target} PRIVATE QS ${A_DEFS})
+  if(A_M64 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+    target_compile_definitions(${target} PRIVATE m64)
+  endif()
+  target_compile_options(${target} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${DG_CXX_WARNING_FLAGS}>)
+  if(A_NO_EXCEPTIONS)
+    target_compile_options(${target} PRIVATE -fno-exceptions)
+  endif()
+endfunction()
